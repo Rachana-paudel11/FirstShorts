@@ -1,7 +1,26 @@
 /**
  * FirstShorts Admin Styles
- * Split-screen layout for meta boxes
+ * Clean layout for meta boxes
  */
+
+/* Shortcode box after title */
+.firstshorts-shortcode-after-title {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    margin-bottom: 20px;
+    padding: 12px 16px;
+}
+
+.firstshorts-shortcode-after-title .inside {
+    margin: 0;
+    padding: 0;
+}
+
+.firstshorts-shortcode-after-title h2 {
+    display: none; /* Hide heading since context is clear */
+}
 
 /* Split-screen container for meta boxes */
 #poststuff .firstshorts-split-layout {
@@ -11,21 +30,16 @@
     margin-bottom: 20px;
 }
 
-/* Left column - Display Options */
-#firstshorts_video_display_options {
-    flex: 1;
-    min-width: 300px;
-}
-
-/* Right column - Video Details */
+/* Display Options & Video Details side by side */
+#firstshorts_video_display_options,
 #firstshorts_video_details {
     flex: 1;
     min-width: 300px;
 }
 
-/* Ensure shortcodes meta box stays full width */
-#firstshorts_video_shortcodes {
-    width: 100%;
+/* Editor below split layout */
+#postdivrich {
+    margin-top: 20px;
 }
 
 /* Meta box content wrapper */

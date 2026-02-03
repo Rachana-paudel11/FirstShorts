@@ -97,6 +97,27 @@ function firstshorts_enqueue_admin_styles($hook) {
         array(),
         '1.0.0'
     );
+    
+    // Add inline script to wrap meta boxes in split layout and move editor below
+    wp_add_inline_script('jquery', "
+        jQuery(document).ready(function($) {
+            // Wrap the two meta boxes in a split layout container
+            var displayBox = $('#firstshorts_video_display_options');
+            var detailsBox = $('#firstshorts_video_details');
+            
+            if (displayBox.length && detailsBox.length) {
+                var wrapper = $('<div class=\"firstshorts-split-layout\"></div>');
+                displayBox.before(wrapper);
+                wrapper.append(displayBox).append(detailsBox);
+                
+                // Move editor below the split meta boxes
+                var editorWrapper = $('#postdivrich');
+                if (editorWrapper.length) {
+                    wrapper.after(editorWrapper);
+                }
+            }
+        });
+    ");
 }
 add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_styles');
 
@@ -331,33 +352,74 @@ function firstshorts_render_shortcodes_metabox($post) {
                 <?php _e('Save the video to generate a shortcode.', 'firstshorts'); ?>
             </p>
         <?php endif; ?>
-        <p><strong><?php _e('Single Video', 'firstshorts'); ?></strong></p>
-        <div class="firstshorts-shortcode-row">
-            <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($single_shortcode); ?>" />
-            <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($single_shortcode); ?>">
-                <?php _e('Copy', 'firstshorts'); ?>
-            </button>
-        </div>
+        
+        <div class="firstshorts-shortcode-grid">
+            <!-- Single Video Shortcode -->
+            <div class="firstshorts-shortcode-item">
+                <label class="firstshorts-shortcode-label"><?php _e('Single Video', 'firstshorts'); ?></label>
+                <div class="firstshorts-shortcode-row">
+                    <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($single_shortcode); ?>" />
+                    <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($single_shortcode); ?>">
+                        <?php _e('Copy', 'firstshorts'); ?>
+                    </button>
+                </div>
+            </div>
 
-        <p style="margin-top: 12px;"><strong><?php _e('Video Slider', 'firstshorts'); ?></strong></p>
-        <div class="firstshorts-shortcode-row">
-            <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($slider_shortcode); ?>" />
-            <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($slider_shortcode); ?>">
-                <?php _e('Copy', 'firstshorts'); ?>
-            </button>
+            <!-- Video Slider Shortcode -->
+            <div class="firstshorts-shortcode-item">
+                <label class="firstshorts-shortcode-label"><?php _e('Video Slider', 'firstshorts'); ?></label>
+                <div class="firstshorts-shortcode-row">
+                    <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($slider_shortcode); ?>" />
+                    <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($slider_shortcode); ?>">
+                        <?php _e('Copy', 'firstshorts'); ?>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <style>
+        .firstshorts-shortcode-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .firstshorts-shortcode-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .firstshorts-shortcode-label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #1e1e1e;
+        }
+        
         .firstshorts-shortcode-row {
             display: flex;
             gap: 6px;
             align-items: center;
         }
+        
         .firstshorts-shortcode-input {
-            width: 100%;
+            flex: 1;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
             font-size: 12px;
+            padding: 6px 8px;
+        }
+        
+        .firstshorts-copy-btn {
+            padding: 4px 10px;
+            min-width: auto;
+            height: 30px;
+        }
+        
+        @media screen and (max-width: 782px) {
+            .firstshorts-shortcode-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
     <?php
@@ -412,8 +474,13 @@ function firstshorts_save_video_meta($post_id) {
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
         return; // Stop during autosave
     }
+    
+    // Step 4: Verify this is our post type
+    if (get_post_type($post_id) !== 'firstshorts_video') {
+        return;
+    }
 
-    // Step 4: Save display options (checkboxes for buttons)
+    // Step 5: Save display options (checkboxes for buttons)
     // Array of all checkbox field names
     $display_fields = array(
         'firstshorts_show_view_count',
@@ -435,7 +502,7 @@ function firstshorts_save_video_meta($post_id) {
         update_post_meta($post_id, $meta_key, $value);
     }
 
-    // Step 5: Save video details
+    // Step 6: Save video details
     
     // Save Video URL (with security: sanitize and escape)
     if (isset($_POST['firstshorts_video_url'])) {
@@ -463,7 +530,18 @@ function firstshorts_save_video_meta($post_id) {
             sanitize_text_field($_POST['firstshorts_video_duration']) // Convert to safe text
         );
     }
+    
+    // Save Display Type
+    if (isset($_POST['firstshorts_display_type'])) {
+        update_post_meta(
+            $post_id,
+            '_firstshorts_display_type',
+            sanitize_text_field($_POST['firstshorts_display_type'])
+        );
+    }
 }
+add_action('save_post_firstshorts_video', 'firstshorts_save_video_meta');
+
 /**
  * Enqueue Admin Scripts and Styles
  * 
