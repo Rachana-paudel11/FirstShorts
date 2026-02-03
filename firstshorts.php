@@ -16,7 +16,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Include plugin files
+require_once __DIR__ . '/includes/cpt-video-slider.php';
+require_once __DIR__ . '/includes/meta-boxes.php';
 require_once __DIR__ . '/includes/admin-settings.php';
+
+// Register Custom Post Type
+add_action('init', 'firstshorts_register_video_cpt');
 
 register_activation_hook(__FILE__, 'firstshorts_activate');
 register_deactivation_hook(__FILE__, 'firstshorts_deactivate');
