@@ -1,0 +1,139 @@
+/**
+ * FirstShorts Admin Styles
+ * Split-screen layout for meta boxes
+ */
+
+/* Split-screen container for meta boxes */
+#poststuff .firstshorts-split-layout {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+/* Left column - Display Options */
+#firstshorts_video_display_options {
+    flex: 1;
+    min-width: 300px;
+}
+
+/* Right column - Video Details */
+#firstshorts_video_details {
+    flex: 1;
+    min-width: 300px;
+}
+
+/* Ensure shortcodes meta box stays full width */
+#firstshorts_video_shortcodes {
+    width: 100%;
+}
+
+/* Meta box content wrapper */
+.firstshorts-metabox-content {
+    padding: 5px 0;
+}
+
+/* Meta box field styling */
+.firstshorts-meta-field {
+    margin-bottom: 20px;
+}
+
+.firstshorts-meta-field:last-child {
+    margin-bottom: 0;
+}
+
+.firstshorts-meta-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1e1e1e;
+}
+
+.firstshorts-meta-field input[type="text"],
+.firstshorts-meta-field input[type="url"],
+.firstshorts-meta-field input[type="number"],
+.firstshorts-meta-field select {
+    width: 100%;
+    max-width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.firstshorts-meta-field input[type="text"]:focus,
+.firstshorts-meta-field input[type="url"]:focus,
+.firstshorts-meta-field input[type="number"]:focus,
+.firstshorts-meta-field select:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: 2px solid transparent;
+}
+
+.firstshorts-meta-field .description {
+    color: #646970;
+    font-size: 13px;
+    font-style: normal;
+    margin-top: 6px;
+    display: block;
+    line-height: 1.5;
+}
+
+/* Checkbox group styling */
+.firstshorts-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 12px;
+    background: #f6f7f7;
+    border-radius: 4px;
+}
+
+.firstshorts-checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: normal;
+    margin: 0;
+    padding: 4px 0;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.firstshorts-checkbox-group label:hover {
+    color: #2271b1;
+}
+
+.firstshorts-checkbox-group input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+/* Upload button styling */
+.firstshorts-upload-btn {
+    margin-top: 10px;
+    display: inline-block;
+}
+
+/* Meta box headings */
+#firstshorts_video_display_options .hndle,
+#firstshorts_video_details .hndle {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Responsive: Stack on smaller screens */
+@media screen and (max-width: 782px) {
+    #poststuff .firstshorts-split-layout {
+        flex-direction: column;
+    }
+    
+    #firstshorts_video_display_options,
+    #firstshorts_video_details {
+        width: 100% !important;
+    }
+}
+

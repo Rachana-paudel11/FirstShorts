@@ -19,6 +19,7 @@ if (!defined('ABSPATH')) {
 // Include plugin files
 require_once __DIR__ . '/includes/cpt-video-slider.php';
 require_once __DIR__ . '/includes/meta-boxes.php';
+require_once __DIR__ . '/includes/shortcodes.php';
 require_once __DIR__ . '/includes/admin-settings.php';
 
 // Register Custom Post Type

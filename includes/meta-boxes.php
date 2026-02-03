@@ -19,17 +19,16 @@ if (!defined('ABSPATH')) {
  * - Position: Normal (below editor), Priority: High (top)
  */
 function firstshorts_register_meta_boxes() {
-    // Add meta box for display options (which buttons to show)
+    // Display Options and Video Details meta boxes in main area
     add_meta_box(
-        'firstshorts_video_display_options',  // Unique ID
-        __('Display Options', 'firstshorts'), // Title shown in admin
-        'firstshorts_render_display_options_metabox', // Callback function to render HTML
-        'firstshorts_video',  // Post type this meta box appears on
-        'normal',             // Location (normal = main area)
-        'high'                // Priority (high = top of section)
+        'firstshorts_video_display_options',
+        __('Display Options', 'firstshorts'),
+        'firstshorts_render_display_options_metabox',
+        'firstshorts_video',
+        'normal',
+        'high'
     );
 
-    // Add meta box for video details (URL, source, duration)
     add_meta_box(
         'firstshorts_video_details',
         __('Video Details', 'firstshorts'),
@@ -40,6 +39,81 @@ function firstshorts_register_meta_boxes() {
     );
 }
 add_action('add_meta_boxes', 'firstshorts_register_meta_boxes');
+
+/**
+ * Display Shortcode Meta Box After Title
+ * Position the shortcode box prominently after the post title
+ */
+function firstshorts_shortcode_after_title() {
+    global $post, $post_type;
+    
+    if ('firstshorts_video' !== $post_type) {
+        return;
+    }
+    
+    // Render shortcode meta box after title
+    ?>
+    <div id="firstshorts_video_shortcodes" class="firstshorts-shortcode-after-title">
+        <div class="inside">
+            <?php firstshorts_render_shortcodes_metabox($post); ?>
+        </div>
+    </div>
+    <?php
+}
+add_action('edit_form_after_title', 'firstshorts_shortcode_after_title');
+
+
+
+/**
+ * Disable Block Editor for FirstShorts Video CPT
+ * Ensures meta boxes display reliably on the edit screen.
+ */
+function firstshorts_disable_block_editor_for_video($use_block_editor, $post_type) {
+    if ($post_type === 'firstshorts_video') {
+        return false;
+    }
+
+    return $use_block_editor;
+}
+add_filter('use_block_editor_for_post_type', 'firstshorts_disable_block_editor_for_video', 10, 2);
+
+/**
+ * Enqueue admin styles for meta box layout
+ */
+function firstshorts_enqueue_admin_styles($hook) {
+    // Only load on post edit screens for our CPT
+    if ('post.php' !== $hook && 'post-new.php' !== $hook) {
+        return;
+    }
+    
+    global $post_type;
+    if ('firstshorts_video' !== $post_type) {
+        return;
+    }
+    
+    wp_enqueue_style(
+        'firstshorts-admin-style',
+        plugin_dir_url(dirname(__FILE__)) . 'assets/css/style.css',
+        array(),
+        '1.0.0'
+    );
+}
+add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_styles');
+
+
+/**
+ * Hide Permalink/Slug UI for FirstShorts Video
+ */
+function firstshorts_hide_video_permalink_ui() {
+    global $post_type;
+    if ($post_type !== 'firstshorts_video') {
+        return;
+    }
+
+    echo '<style>#edit-slug-box { display: none; }</style>';
+}
+add_action('admin_head', 'firstshorts_hide_video_permalink_ui');
+
 
 /**
  * Render Display Options Meta Box
@@ -73,110 +147,84 @@ function firstshorts_render_display_options_metabox($post) {
     $show_save = get_post_meta($post->ID, '_firstshorts_show_save', true);
     $show_share = get_post_meta($post->ID, '_firstshorts_show_share', true);
     $show_buy_button = get_post_meta($post->ID, '_firstshorts_show_buy_button', true);
+    $display_type = get_post_meta($post->ID, '_firstshorts_display_type', true);
+    if (empty($display_type)) {
+        $display_type = 'single';
+    }
 
     ?>
-    <div class="firstshorts-metabox-wrapper">
-        <p style="margin-bottom: 20px; color: #666; font-style: italic;">
-            <?php _e('Select which buttons to display on the frontend for this video.', 'firstshorts'); ?>
+    <div class="firstshorts-metabox-content">
+        <p class="description" style="margin-bottom: 15px;">
+            <?php _e('Configure how this video will be displayed on the frontend.', 'firstshorts'); ?>
         </p>
 
-        <table class="form-table">
-            <tr>
-                <th scope="row" style="width: 200px;">
-                    <label for="firstshorts_show_view_count">
-                        <?php _e('View Count Button', 'firstshorts'); ?>
-                    </label>
-                </th>
-                <td>
+        <div class="firstshorts-meta-field">
+            <label for="firstshorts_display_type">
+                <?php _e('Display Type', 'firstshorts'); ?>
+            </label>
+            <select id="firstshorts_display_type" name="firstshorts_display_type">
+                <option value="single" <?php selected($display_type, 'single'); ?>>
+                    <?php _e('Single Video', 'firstshorts'); ?>
+                </option>
+                <option value="slider" <?php selected($display_type, 'slider'); ?>>
+                    <?php _e('Video Slider', 'firstshorts'); ?>
+                </option>
+            </select>
+            <p class="description">
+                <?php _e('Choose which shortcode to show for this video.', 'firstshorts'); ?>
+            </p>
+        </div>
+
+        <div class="firstshorts-meta-field">
+            <label><?php _e('Button Visibility', 'firstshorts'); ?></label>
+            <div class="firstshorts-checkbox-group">
+                <label>
                     <input type="checkbox" 
                            id="firstshorts_show_view_count" 
                            name="firstshorts_show_view_count" 
                            value="1" 
                            <?php checked($show_view_count, 1); ?> />
-                    <span class="description"><?php _e('Show view count button on video', 'firstshorts'); ?></span>
-                </td>
-            </tr>
-
-            <tr>
-                <th scope="row">
-                    <label for="firstshorts_show_likes">
-                        <?php _e('Like Button', 'firstshorts'); ?>
-                    </label>
-                </th>
-                <td>
+                    <?php _e('View Count', 'firstshorts'); ?>
+                </label>
+                
+                <label>
                     <input type="checkbox" 
                            id="firstshorts_show_likes" 
                            name="firstshorts_show_likes" 
                            value="1" 
                            <?php checked($show_likes, 1); ?> />
-                    <span class="description"><?php _e('Show like/heart button on video', 'firstshorts'); ?></span>
-                </td>
-            </tr>
-
-            <tr>
-                <th scope="row">
-                    <label for="firstshorts_show_save">
-                        <?php _e('Save Button', 'firstshorts'); ?>
-                    </label>
-                </th>
-                <td>
+                    <?php _e('Like Button', 'firstshorts'); ?>
+                </label>
+                
+                <label>
                     <input type="checkbox" 
                            id="firstshorts_show_save" 
                            name="firstshorts_show_save" 
                            value="1" 
                            <?php checked($show_save, 1); ?> />
-                    <span class="description"><?php _e('Show save/bookmark button on video', 'firstshorts'); ?></span>
-                </td>
-            </tr>
-
-            <tr>
-                <th scope="row">
-                    <label for="firstshorts_show_share">
-                        <?php _e('Share Button', 'firstshorts'); ?>
-                    </label>
-                </th>
-                <td>
+                    <?php _e('Save Button', 'firstshorts'); ?>
+                </label>
+                
+                <label>
                     <input type="checkbox" 
                            id="firstshorts_show_share" 
                            name="firstshorts_show_share" 
                            value="1" 
                            <?php checked($show_share, 1); ?> />
-                    <span class="description"><?php _e('Show share button on video', 'firstshorts'); ?></span>
-                </td>
-            </tr>
-
-            <tr>
-                <th scope="row">
-                    <label for="firstshorts_show_buy_button">
-                        <?php _e('Buy Now / Add to Cart Button', 'firstshorts'); ?>
-                    </label>
-                </th>
-                <td>
+                    <?php _e('Share Button', 'firstshorts'); ?>
+                </label>
+                
+                <label>
                     <input type="checkbox" 
                            id="firstshorts_show_buy_button" 
                            name="firstshorts_show_buy_button" 
                            value="1" 
                            <?php checked($show_buy_button, 1); ?> />
-                    <span class="description"><?php _e('Show buy now / add to cart button on video', 'firstshorts'); ?></span>
-                </td>
-            </tr>
-        </table>
+                    <?php _e('Buy Now / Add to Cart', 'firstshorts'); ?>
+                </label>
+            </div>
+        </div>
     </div>
-
-    <style>
-        .firstshorts-metabox-wrapper .form-table td {
-            padding: 12px 0;
-        }
-        .firstshorts-metabox-wrapper input[type="checkbox"] {
-            margin-right: 8px;
-            cursor: pointer;
-        }
-        .firstshorts-metabox-wrapper .description {
-            display: inline-block;
-            color: #666;
-            margin-left: 5px;
-        }
-    </style>
     <?php
 }
 
@@ -206,60 +254,112 @@ function firstshorts_render_video_details_metabox($post) {
     $video_duration = get_post_meta($post->ID, '_firstshorts_video_duration', true);
 
     ?>
-    <table class="form-table">
-        <tr>
-            <th scope="row" style="width: 200px;">
-                <label for="firstshorts_video_url">
-                    <?php _e('Video URL', 'firstshorts'); ?>
-                </label>
-            </th>
-            <td>
-                <input type="url" 
-                       id="firstshorts_video_url" 
-                       name="firstshorts_video_url" 
-                       value="<?php echo esc_url($video_url); ?>"
-                       placeholder="https://example.com/video.mp4"
-                       style="width: 100%; max-width: 400px;" />
-                <p class="description"><?php _e('Enter the URL of the video (YouTube, Vimeo, or self-hosted)', 'firstshorts'); ?></p>
-            </td>
-        </tr>
+    <div class="firstshorts-metabox-content">
+        <p class="description" style="margin-bottom: 15px;">
+            <?php _e('Upload and configure your video file.', 'firstshorts'); ?>
+        </p>
+        
+        <div class="firstshorts-meta-field">
+            <label for="firstshorts_video_url">
+                <?php _e('Video File', 'firstshorts'); ?>
+            </label>
+            <input type="url" 
+                   id="firstshorts_video_url" 
+                   name="firstshorts_video_url" 
+                   value="<?php echo esc_url($video_url); ?>"
+                   placeholder="https://example.com/video.mp4" />
+            
+            <button type="button" 
+                    id="firstshorts_upload_video_btn" 
+                    class="button button-secondary firstshorts-upload-btn">
+                <?php _e('Upload Video', 'firstshorts'); ?>
+            </button>
+            
+            <p class="description"><?php _e('Upload or enter the URL of the video file (MP4, WebM, OGG)', 'firstshorts'); ?></p>
+        </div>
 
-        <tr>
-            <th scope="row">
-                <label for="firstshorts_video_source">
-                    <?php _e('Video Source', 'firstshorts'); ?>
-                </label>
-            </th>
-            <td>
-                <select id="firstshorts_video_source" 
-                        name="firstshorts_video_source"
-                        style="width: 100%; max-width: 400px;">
-                    <option value="self-hosted" <?php selected($video_source, 'self-hosted'); ?>>
-                        <?php _e('Self-Hosted', 'firstshorts'); ?>
-                    </option>
-                </select>
-                <p class="description"><?php _e('Videos are self-hosted on your server', 'firstshorts'); ?></p>
-            </td>
-        </tr>
+        <div class="firstshorts-meta-field">
+            <label for="firstshorts_video_source">
+                <?php _e('Video Source', 'firstshorts'); ?>
+            </label>
+            <select id="firstshorts_video_source" name="firstshorts_video_source">
+                <option value="self-hosted" <?php selected($video_source, 'self-hosted'); ?>>
+                    <?php _e('Self-Hosted', 'firstshorts'); ?>
+                </option>
+            </select>
+            <p class="description"><?php _e('Videos are self-hosted on your server', 'firstshorts'); ?></p>
+        </div>
 
-        <tr>
-            <th scope="row">
-                <label for="firstshorts_video_duration">
-                    <?php _e('Duration (seconds)', 'firstshorts'); ?>
-                </label>
-            </th>
-            <td>
-                <input type="number" 
-                       id="firstshorts_video_duration" 
-                       name="firstshorts_video_duration" 
-                       value="<?php echo esc_attr($video_duration); ?>"
-                       placeholder="300"
-                       min="0"
-                       style="width: 100%; max-width: 200px;" />
-                <p class="description"><?php _e('Duration of the video in seconds', 'firstshorts'); ?></p>
-            </td>
-        </tr>
-    </table>
+        <div class="firstshorts-meta-field">
+            <label for="firstshorts_video_duration">
+                <?php _e('Duration (seconds)', 'firstshorts'); ?>
+            </label>
+            <input type="number" 
+                   id="firstshorts_video_duration" 
+                   name="firstshorts_video_duration" 
+                   value="<?php echo esc_attr($video_duration); ?>"
+                   placeholder="300"
+                   min="0"
+                   style="width: 200px;" />
+            <p class="description"><?php _e('Duration of the video in seconds (optional)', 'firstshorts'); ?></p>
+        </div>
+    </div>
+    <?php
+}
+
+/**
+ * Render Shortcodes Meta Box
+ * Shows copyable shortcodes for single video and slider
+ *
+ * Parameters:
+ * @param WP_Post $post - The current post object
+ *
+ * Pseudo Code:
+ * 1. Build single video shortcode with current post ID
+ * 2. Provide slider shortcode for multiple videos
+ * 3. Show copy buttons for quick use
+ */
+function firstshorts_render_shortcodes_metabox($post) {
+    $video_id = intval($post->ID);
+    $single_shortcode = '[firstshorts_video id="' . $video_id . '"]';
+    $slider_shortcode = '[firstshorts_video_slider count="5"]';
+
+    ?>
+    <div class="firstshorts-shortcode-box">
+        <?php if (empty($video_id)): ?>
+            <p style="color: #b45309; margin: 0 0 10px;">
+                <?php _e('Save the video to generate a shortcode.', 'firstshorts'); ?>
+            </p>
+        <?php endif; ?>
+        <p><strong><?php _e('Single Video', 'firstshorts'); ?></strong></p>
+        <div class="firstshorts-shortcode-row">
+            <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($single_shortcode); ?>" />
+            <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($single_shortcode); ?>">
+                <?php _e('Copy', 'firstshorts'); ?>
+            </button>
+        </div>
+
+        <p style="margin-top: 12px;"><strong><?php _e('Video Slider', 'firstshorts'); ?></strong></p>
+        <div class="firstshorts-shortcode-row">
+            <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($slider_shortcode); ?>" />
+            <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($slider_shortcode); ?>">
+                <?php _e('Copy', 'firstshorts'); ?>
+            </button>
+        </div>
+    </div>
+
+    <style>
+        .firstshorts-shortcode-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .firstshorts-shortcode-input {
+            width: 100%;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 12px;
+        }
+    </style>
     <?php
 }
 
@@ -364,7 +464,41 @@ function firstshorts_save_video_meta($post_id) {
         );
     }
 }
-add_action('save_post_firstshorts_video', 'firstshorts_save_video_meta');
+/**
+ * Enqueue Admin Scripts and Styles
+ * 
+ * Pseudo Code:
+ * 1. Register media uploader script
+ * 2. Enqueue only on FirstShorts Video edit page
+ * 3. Pass media library configuration to JavaScript
+ */
+function firstshorts_enqueue_admin_scripts($hook) {
+    // Check if we're on FirstShorts Video edit page
+    global $post_type;
+    if ($post_type !== 'firstshorts_video' || !in_array($hook, array('post.php', 'post-new.php'))) {
+        return;
+    }
+
+    // Enqueue WordPress media library (required for uploads)
+    wp_enqueue_media();
+
+    // Enqueue custom admin script
+    wp_enqueue_script(
+        'firstshorts-admin',
+        plugin_dir_url(__FILE__) . '../assets/js/admin-video-upload.js',
+        array('jquery'),
+        '1.0.0',
+        true
+    );
+
+    // Pass data to JavaScript
+    wp_localize_script('firstshorts-admin', 'firstshortsAdmin', array(
+        'uploadTitle' => __('Select Video', 'firstshorts'),
+        'uploadButton' => __('Use this video', 'firstshorts'),
+        'allowedTypes' => array('video/mp4', 'video/webm', 'video/ogg'),
+    ));
+}
+add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_scripts');
 
 /**
  * Helper Function: Get Display Options for a Video

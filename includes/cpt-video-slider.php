@@ -46,7 +46,7 @@ function firstshorts_register_video_cpt() {
         'label'                 => __('FirstShorts Video', 'firstshorts'),
         'description'           => __('Video content for WooCommerce products and sliders', 'firstshorts'),
         'labels'                => $labels,
-        'supports'              => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+        'supports'              => array('title', 'editor', 'thumbnail'),
         'taxonomies'            => array(), // Can add 'category', 'post_tag' if needed
         'hierarchical'          => false,
         'public'                => true,
