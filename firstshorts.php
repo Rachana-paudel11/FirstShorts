@@ -17,6 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 require_once __DIR__ . '/includes/admin-settings.php';
+require_once __DIR__ . '/includes/react-enqueue.php';
 
 register_activation_hook(__FILE__, 'firstshorts_activate');
 register_deactivation_hook(__FILE__, 'firstshorts_deactivate');
