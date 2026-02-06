@@ -42,6 +42,27 @@
     margin-bottom: 24px;
 }
 
+#postimagediv {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+#postimagediv .hndle {
+    padding: 14px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 1px solid #eef0f3;
+    background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+#postimagediv .inside {
+    padding: 18px;
+}
+
 #poststuff .firstshorts-split-layout {
     display: flex;
     gap: 24px;
@@ -58,10 +79,11 @@
 }
 
 .firstshorts-save-btn {
-    border-radius: 10px;
-    padding: 8px 18px;
-    font-weight: 700;
-    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-weight: 600;
+    box-shadow: none;
+    font-size: 12px;
 }
 
 .firstshorts-copy-btn.is-copied {
@@ -207,6 +229,8 @@
     white-space: nowrap;
     border-radius: 10px;
     padding: 6px 12px;
+    border-color: #d1d5db;
+    background: #f9fafb;
 }
 
 /* Subtle focus style for admin buttons */
@@ -215,14 +239,18 @@
     border-color: #2563eb;
 }
 
-/* Meta box headings */
-/* Keep shortcode box consistent */
-.firstshorts-shortcode-after-title {
-    border-radius: 10px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+#firstshorts_upload_video_btn:hover {
+    background: #ffffff;
+    border-color: #cbd5f5;
 }
 
+#postimagediv img {
+    border-radius: 10px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+/* Meta box headings */
+/* Keep shortcode box consistent */
 /* Responsive: Stack on smaller screens */
 @media screen and (max-width: 782px) {
     #poststuff .firstshorts-split-layout {
@@ -233,7 +261,6 @@
     #firstshorts_video_details {
         width: 100% !important;
     }
-
     .firstshorts-main-actions {
         justify-content: stretch;
     }

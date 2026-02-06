@@ -118,9 +118,6 @@ function firstshorts_enqueue_admin_styles($hook) {
                 );
 
                 displayBox.before(mainWrapper);
-                if (thumbnailBox.length) {
-                    mainWrapper.before(thumbnailBox);
-                }
                 if (shortcodeBox.length) {
                     mainWrapper.append(shortcodeBox);
                 }
@@ -128,10 +125,18 @@ function firstshorts_enqueue_admin_styles($hook) {
                 splitWrapper.append(displayBox).append(detailsBox);
                 mainWrapper.append(actions);
 
-                // Move editor below the main container
+                if (thumbnailBox.length) {
+                    mainWrapper.after(thumbnailBox);
+                }
+
+                // Move editor below the thumbnail box
                 var editorWrapper = $('#postdivrich');
                 if (editorWrapper.length) {
-                    mainWrapper.after(editorWrapper);
+                    if (thumbnailBox.length) {
+                        thumbnailBox.after(editorWrapper);
+                    } else {
+                        mainWrapper.after(editorWrapper);
+                    }
                 }
 
                 var saveBtn = $('#save-post');
@@ -165,6 +170,19 @@ function firstshorts_hide_video_permalink_ui() {
     echo '<style>#edit-slug-box { display: none; }</style>';
 }
 add_action('admin_head', 'firstshorts_hide_video_permalink_ui');
+
+/**
+ * Hide Screen Options tab for FirstShorts Video
+ */
+function firstshorts_hide_screen_options_tab() {
+    global $post_type;
+    if ($post_type !== 'firstshorts_video') {
+        return;
+    }
+
+    echo '<style>#screen-options-link-wrap, #screen-meta { display: none; }</style>';
+}
+add_action('admin_head', 'firstshorts_hide_screen_options_tab');
 
 /**
  * Remove Publish meta box for FirstShorts Video

@@ -44,7 +44,7 @@ function firstshorts_video_shortcode($atts) {
     firstshorts_enqueue_react_frontend();
 
     $autoplay = filter_var($atts['autoplay'], FILTER_VALIDATE_BOOLEAN);
-
+    
     // Prepare props for React component
     $react_props = array(
         'videoId' => $video_id,
@@ -61,7 +61,6 @@ function firstshorts_video_shortcode($atts) {
         ),
         'autoplay' => $autoplay,
     );
-
     return sprintf(
         '<div class="firstshorts-video-react-root" data-props="%s"></div>',
         esc_attr(wp_json_encode($react_props))
@@ -103,7 +102,7 @@ function firstshorts_video_slider_shortcode($atts) {
 
     // Build video list for React
     $video_list = array();
-    while ($videos->have_posts()) :
+    while ($videos->have_posts()):
         $videos->the_post();
         $video_list[] = array(
             'id' => get_the_ID(),
