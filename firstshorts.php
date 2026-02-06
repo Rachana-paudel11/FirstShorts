@@ -21,6 +21,10 @@ require_once __DIR__ . '/includes/cpt-video-slider.php';
 require_once __DIR__ . '/includes/meta-boxes.php';
 require_once __DIR__ . '/includes/shortcodes.php';
 require_once __DIR__ . '/includes/admin-settings.php';
+require_once __DIR__ . '/includes/react-enqueue.php';
+
+// Register Custom Post Type
+add_action('init', 'firstshorts_register_video_cpt');
 
 // Register Custom Post Type
 add_action('init', 'firstshorts_register_video_cpt');

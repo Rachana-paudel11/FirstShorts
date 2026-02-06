@@ -7,12 +7,10 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-/**
- * Plugin Activation Hook
- */
 function firstshorts_activate() {
-	// Register CPT before flushing
-	firstshorts_register_video_cpt();
+	if (function_exists('firstshorts_register_video_cpt')) {
+		firstshorts_register_video_cpt();
+	}
 	flush_rewrite_rules();
 }
 

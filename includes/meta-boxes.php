@@ -37,6 +37,16 @@ function firstshorts_register_meta_boxes() {
         'normal',
         'high'
     );
+
+    add_meta_box(
+        'firstshorts_video_preview',
+        __('Preview', 'firstshorts'),
+        'firstshorts_render_preview_metabox',
+        'firstshorts_video',
+        'normal',
+        'high'
+    );
+
 }
 add_action('add_meta_boxes', 'firstshorts_register_meta_boxes');
 
@@ -91,29 +101,189 @@ function firstshorts_enqueue_admin_styles($hook) {
         return;
     }
     
+    $admin_css_path = plugin_dir_path(dirname(__FILE__)) . 'assets/css/style.css';
+    $admin_css_ver = file_exists($admin_css_path) ? filemtime($admin_css_path) : '1.0.0';
     wp_enqueue_style(
         'firstshorts-admin-style',
         plugin_dir_url(dirname(__FILE__)) . 'assets/css/style.css',
         array(),
-        '1.0.0'
+        $admin_css_ver
     );
     
     // Add inline script to wrap meta boxes in split layout and move editor below
     wp_add_inline_script('jquery', "
         jQuery(document).ready(function($) {
-            // Wrap the two meta boxes in a split layout container
             var displayBox = $('#firstshorts_video_display_options');
             var detailsBox = $('#firstshorts_video_details');
+                var thumbnailBox = $('#postimagediv');
+            var previewBox = $('#firstshorts_video_preview');
+            var shortcodeBox = $('#firstshorts_video_shortcodes');
             
             if (displayBox.length && detailsBox.length) {
-                var wrapper = $('<div class=\"firstshorts-split-layout\"></div>');
-                displayBox.before(wrapper);
-                wrapper.append(displayBox).append(detailsBox);
-                
-                // Move editor below the split meta boxes
+                var mainWrapper = $('<div class=\"firstshorts-admin-main-box\"></div>');
+                var splitWrapper = $('<div class=\"firstshorts-split-layout\"></div>');
+                var tabsWrapper = $('<div class=\"firstshorts-tabs\"></div>');
+                var tabsNav = $(
+                    '<div class=\"firstshorts-tabs-nav\">' +
+                        '<button type=\"button\" class=\"firstshorts-tab is-active\" data-tab=\"display\">Display Options</button>' +
+                        '<button type=\"button\" class=\"firstshorts-tab\" data-tab=\"details\">Video Details</button>' +
+                    '</div>'
+                );
+                var tabsBody = $('<div class=\"firstshorts-tabs-body\"></div>');
+                var displayPanel = $('<div class=\"firstshorts-tab-panel is-active\" data-tab-panel=\"display\"></div>');
+                var detailsPanel = $('<div class=\"firstshorts-tab-panel\" data-tab-panel=\"details\"></div>');
+                var actions = $(
+                    '<div class=\"firstshorts-main-actions\">' +
+                        '<span class=\"firstshorts-save-hint\">Make changes to enable save</span>' +
+                        '<button type=\"button\" class=\"button button-primary firstshorts-save-btn\">Save Settings</button>' +
+                    '</div>'
+                );
+
+                displayBox.before(mainWrapper);
+                if (shortcodeBox.length) {
+                    mainWrapper.append(shortcodeBox);
+                }
+                mainWrapper.append(splitWrapper);
+                displayPanel.append(displayBox);
+                detailsPanel.append(detailsBox);
+                tabsBody.append(displayPanel).append(detailsPanel);
+                tabsWrapper.append(tabsNav).append(tabsBody);
+                splitWrapper.append(tabsWrapper);
+                if (previewBox.length) {
+                    splitWrapper.append(previewBox);
+                }
+                mainWrapper.append(actions);
+
+                if (thumbnailBox.length) {
+                    var metaRow = $('<div class=\\\"firstshorts-meta-row\\\"></div>');
+                    mainWrapper.after(metaRow);
+                    metaRow.append(thumbnailBox);
+                }
+
+                // Move editor below the meta row
                 var editorWrapper = $('#postdivrich');
                 if (editorWrapper.length) {
-                    wrapper.after(editorWrapper);
+                    var metaRow = $('.firstshorts-meta-row');
+                    if (metaRow.length) {
+                        metaRow.after(editorWrapper);
+                    } else {
+                        mainWrapper.after(editorWrapper);
+                    }
+                }
+
+                var saveBtn = $('#save-post');
+                var videoUrlField = $('#firstshorts_video_url');
+                var displayTypeField = $('#firstshorts_display_type');
+                var displayCheckboxes = displayBox.find('input[type=\"checkbox\"]');
+                var initialDisplayState = {};
+                displayCheckboxes.each(function() {
+                    initialDisplayState[this.id] = this.checked ? '1' : '0';
+                });
+                var initialDisplayType = displayTypeField.val();
+
+                function updateSaveState() {
+                    var hasVideo = videoUrlField.val().trim() !== '';
+                    var hasDisplayChange = false;
+                    displayCheckboxes.each(function() {
+                        if ((this.checked ? '1' : '0') !== initialDisplayState[this.id]) {
+                            hasDisplayChange = true;
+                        }
+                    });
+                    if (displayTypeField.val() !== initialDisplayType) {
+                        hasDisplayChange = true;
+                    }
+
+                    var canSave = hasVideo && hasDisplayChange;
+                    var hint = actions.find('.firstshorts-save-hint');
+                    actions.find('.firstshorts-save-btn').prop('disabled', !canSave);
+                    if (!hasVideo) {
+                        hint.text('Add a video URL to enable save');
+                    } else if (!hasDisplayChange) {
+                        hint.text('Change at least one display option');
+                    } else {
+                        hint.text('Ready to save settings');
+                    }
+                }
+
+                function updatePreview() {
+                    if (!previewBox.length) {
+                        return;
+                    }
+                    var previewVideo = previewBox.find('.firstshorts-preview-video');
+                    var previewEmpty = previewBox.find('.firstshorts-preview-empty');
+                    var url = videoUrlField.val().trim();
+                    if (!url) {
+                        previewVideo.attr('src', '').hide();
+                        previewEmpty.show();
+                        return;
+                    }
+                    previewVideo.attr('src', url).show();
+                    previewEmpty.hide();
+                }
+
+                updateSaveState();
+                updatePreview();
+                videoUrlField.on('input', function() {
+                    updateSaveState();
+                    updatePreview();
+                });
+                displayTypeField.on('change', updateSaveState);
+                displayCheckboxes.on('change', updateSaveState);
+
+                tabsWrapper.on('click', '.firstshorts-tab', function() {
+                    var target = $(this).data('tab');
+                    tabsWrapper.find('.firstshorts-tab').removeClass('is-active');
+                    $(this).addClass('is-active');
+                    tabsWrapper.find('.firstshorts-tab-panel').removeClass('is-active');
+                    tabsWrapper.find('.firstshorts-tab-panel').filter(function() {
+                        return $(this).data('tab-panel') === target;
+                    }).addClass('is-active');
+                });
+
+                // Save Settings always keeps draft status
+                mainWrapper.on('click', '.firstshorts-save-btn', function() {
+                    var hasVideo = videoUrlField.val().trim() !== '';
+                    var hasDisplayChange = false;
+                    displayCheckboxes.each(function() {
+                        if ((this.checked ? '1' : '0') !== initialDisplayState[this.id]) {
+                            hasDisplayChange = true;
+                        }
+                    });
+                    if (displayTypeField.val() !== initialDisplayType) {
+                        hasDisplayChange = true;
+                    }
+
+                    if (!hasVideo) {
+                        showFirstshortsToast('Please add a video URL before saving.');
+                        return;
+                    }
+
+                    if (!hasDisplayChange) {
+                        showFirstshortsToast('Please change at least one display option before saving.');
+                        return;
+                    }
+
+                    $('#post_status').val('draft');
+                    $('#original_post_status').val('draft');
+                    if (saveBtn.length) {
+                        saveBtn.trigger('click');
+                    } else {
+                        $('#post').trigger('submit');
+                    }
+                });
+
+                function showFirstshortsToast(message) {
+                    var toast = $('#firstshorts-admin-toast');
+                    if (!toast.length) {
+                        toast = $('<div id=\"firstshorts-admin-toast\" class=\"firstshorts-admin-toast\"></div>');
+                        $('body').append(toast);
+                    }
+                    toast.text(message).addClass('is-visible');
+                    clearTimeout(toast.data('timeoutId'));
+                    var timeoutId = setTimeout(function() {
+                        toast.removeClass('is-visible');
+                    }, 2200);
+                    toast.data('timeoutId', timeoutId);
                 }
             }
         });
@@ -123,9 +293,9 @@ add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_styles');
 
 
 /**
- * Hide Permalink/Slug UI for FirstShorts Video
+ * Hide default permalink UI for FirstShorts Video
  */
-function firstshorts_hide_video_permalink_ui() {
+function firstshorts_hide_default_permalink_ui() {
     global $post_type;
     if ($post_type !== 'firstshorts_video') {
         return;
@@ -133,7 +303,58 @@ function firstshorts_hide_video_permalink_ui() {
 
     echo '<style>#edit-slug-box { display: none; }</style>';
 }
-add_action('admin_head', 'firstshorts_hide_video_permalink_ui');
+add_action('admin_head', 'firstshorts_hide_default_permalink_ui');
+
+/**
+ * Hide Screen Options tab for FirstShorts Video
+ */
+function firstshorts_hide_screen_options_tab() {
+    global $post_type;
+    if ($post_type !== 'firstshorts_video') {
+        return;
+    }
+
+    echo '<style>#screen-options-link-wrap, #screen-meta { display: none; }</style>';
+}
+add_action('admin_head', 'firstshorts_hide_screen_options_tab');
+
+/**
+ * Remove Publish meta box for FirstShorts Video
+ */
+function firstshorts_remove_publish_metabox() {
+    remove_meta_box('submitdiv', 'firstshorts_video', 'side');
+}
+add_action('add_meta_boxes_firstshorts_video', 'firstshorts_remove_publish_metabox', 99);
+
+/**
+ * Remove default slug metabox to hide slug UI
+ */
+function firstshorts_remove_default_slug_metabox() {
+    remove_meta_box('slugdiv', 'firstshorts_video', 'normal');
+    remove_meta_box('slugdiv', 'firstshorts_video', 'side');
+}
+add_action('add_meta_boxes_firstshorts_video', 'firstshorts_remove_default_slug_metabox', 100);
+
+/**
+ * Remove default slug metabox to avoid duplicate slug UI
+ */
+
+
+/**
+ * Move Featured Image (Short Thumbnail) metabox to main area
+ */
+function firstshorts_move_thumbnail_metabox() {
+    remove_meta_box('postimagediv', 'firstshorts_video', 'side');
+    add_meta_box(
+        'postimagediv',
+        __('Short Thumbnail', 'firstshorts'),
+        'post_thumbnail_meta_box',
+        'firstshorts_video',
+        'normal',
+        'high'
+    );
+}
+add_action('add_meta_boxes_firstshorts_video', 'firstshorts_move_thumbnail_metabox', 101);
 
 
 /**
@@ -199,53 +420,52 @@ function firstshorts_render_display_options_metabox($post) {
         <div class="firstshorts-meta-field">
             <label><?php _e('Button Visibility', 'firstshorts'); ?></label>
             <div class="firstshorts-checkbox-group">
-                <label>
+                <label class="firstshorts-checkbox-row">
                     <input type="checkbox" 
                            id="firstshorts_show_view_count" 
                            name="firstshorts_show_view_count" 
                            value="1" 
                            <?php checked($show_view_count, 1); ?> />
-                    <?php _e('View Count', 'firstshorts'); ?>
+                    <span class="firstshorts-checkbox-label"><?php _e('View Count', 'firstshorts'); ?></span>
                 </label>
                 
-                <label>
+                <label class="firstshorts-checkbox-row">
                     <input type="checkbox" 
                            id="firstshorts_show_likes" 
                            name="firstshorts_show_likes" 
                            value="1" 
                            <?php checked($show_likes, 1); ?> />
-                    <?php _e('Like Button', 'firstshorts'); ?>
+                    <span class="firstshorts-checkbox-label"><?php _e('Like Button', 'firstshorts'); ?></span>
                 </label>
                 
-                <label>
+                <label class="firstshorts-checkbox-row">
                     <input type="checkbox" 
                            id="firstshorts_show_save" 
                            name="firstshorts_show_save" 
                            value="1" 
                            <?php checked($show_save, 1); ?> />
-                    <?php _e('Save Button', 'firstshorts'); ?>
+                    <span class="firstshorts-checkbox-label"><?php _e('Save Button', 'firstshorts'); ?></span>
                 </label>
                 
-                <label>
+                <label class="firstshorts-checkbox-row">
                     <input type="checkbox" 
                            id="firstshorts_show_share" 
                            name="firstshorts_show_share" 
                            value="1" 
                            <?php checked($show_share, 1); ?> />
-                    <?php _e('Share Button', 'firstshorts'); ?>
+                    <span class="firstshorts-checkbox-label"><?php _e('Share Button', 'firstshorts'); ?></span>
                 </label>
                 
-                <label>
+                <label class="firstshorts-checkbox-row">
                     <input type="checkbox" 
                            id="firstshorts_show_buy_button" 
                            name="firstshorts_show_buy_button" 
                            value="1" 
                            <?php checked($show_buy_button, 1); ?> />
-                    <?php _e('Buy Now / Add to Cart', 'firstshorts'); ?>
+                    <span class="firstshorts-checkbox-label"><?php _e('Buy Now / Add to Cart', 'firstshorts'); ?></span>
                 </label>
+                </div>
             </div>
-        </div>
-    </div>
     <?php
 }
 
@@ -284,17 +504,19 @@ function firstshorts_render_video_details_metabox($post) {
             <label for="firstshorts_video_url">
                 <?php _e('Video File', 'firstshorts'); ?>
             </label>
-            <input type="url" 
-                   id="firstshorts_video_url" 
-                   name="firstshorts_video_url" 
-                   value="<?php echo esc_url($video_url); ?>"
-                   placeholder="https://example.com/video.mp4" />
-            
-            <button type="button" 
-                    id="firstshorts_upload_video_btn" 
-                    class="button button-secondary firstshorts-upload-btn">
-                <?php _e('Upload Video', 'firstshorts'); ?>
-            </button>
+            <div class="firstshorts-input-row">
+                <input type="url" 
+                       id="firstshorts_video_url" 
+                       name="firstshorts_video_url" 
+                       value="<?php echo esc_url($video_url); ?>"
+                       placeholder="https://example.com/video.mp4" />
+                
+                <button type="button" 
+                        id="firstshorts_upload_video_btn" 
+                        class="button button-secondary firstshorts-upload-btn">
+                    <?php _e('Upload Video', 'firstshorts'); ?>
+                </button>
+            </div>
             
             <p class="description"><?php _e('Upload or enter the URL of the video file (MP4, WebM, OGG)', 'firstshorts'); ?></p>
         </div>
@@ -329,6 +551,22 @@ function firstshorts_render_video_details_metabox($post) {
 }
 
 /**
+ * Render Preview Meta Box
+ */
+function firstshorts_render_preview_metabox($post) {
+    $video_url = get_post_meta($post->ID, '_firstshorts_video_url', true);
+    ?>
+    <div class="firstshorts-preview-body">
+        <p class="firstshorts-preview-empty" <?php echo empty($video_url) ? '' : 'style="display:none;"'; ?>>
+            <?php _e('Add a video URL to see a preview.', 'firstshorts'); ?>
+        </p>
+        <video class="firstshorts-preview-video" controls preload="metadata" <?php echo empty($video_url) ? 'style="display:none;"' : ''; ?>
+               src="<?php echo esc_url($video_url); ?>"></video>
+    </div>
+    <?php
+}
+
+/**
  * Render Shortcodes Meta Box
  * Shows copyable shortcodes for single video and slider
  *
@@ -342,40 +580,49 @@ function firstshorts_render_video_details_metabox($post) {
  */
 function firstshorts_render_shortcodes_metabox($post) {
     $video_id = intval($post->ID);
+    $display_type = get_post_meta($post->ID, '_firstshorts_display_type', true);
+    $post_status = get_post_status($post);
+    $saved_once = get_post_meta($post->ID, '_firstshorts_saved_once', true);
     $single_shortcode = '[firstshorts_video id="' . $video_id . '"]';
     $slider_shortcode = '[firstshorts_video_slider count="5"]';
 
     ?>
     <div class="firstshorts-shortcode-box">
-        <?php if (empty($video_id)): ?>
+        <?php if ($post_status === 'auto-draft' || empty($video_id) || empty($saved_once)) : ?>
             <p style="color: #b45309; margin: 0 0 10px;">
-                <?php _e('Save the video to generate a shortcode.', 'firstshorts'); ?>
+                <?php _e('Save settings to generate a shortcode.', 'firstshorts'); ?>
             </p>
+        <?php else : ?>
+            <?php if (empty($display_type)) : ?>
+                <p style="color: #b45309; margin: 0 0 10px;">
+                    <?php _e('Select a display type and save settings to generate a shortcode.', 'firstshorts'); ?>
+                </p>
+            <?php else : ?>
+                <div class="firstshorts-shortcode-grid">
+                    <?php if ($display_type === 'slider') : ?>
+                        <div class="firstshorts-shortcode-item">
+                            <label class="firstshorts-shortcode-label"><?php _e('Video Slider', 'firstshorts'); ?></label>
+                            <div class="firstshorts-shortcode-row">
+                                <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($slider_shortcode); ?>" />
+                                <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($slider_shortcode); ?>">
+                                    <?php _e('Copy', 'firstshorts'); ?>
+                                </button>
+                            </div>
+                        </div>
+                    <?php else : ?>
+                        <div class="firstshorts-shortcode-item">
+                            <label class="firstshorts-shortcode-label"><?php _e('Single Video', 'firstshorts'); ?></label>
+                            <div class="firstshorts-shortcode-row">
+                                <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($single_shortcode); ?>" />
+                                <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($single_shortcode); ?>">
+                                    <?php _e('Copy', 'firstshorts'); ?>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
-        
-        <div class="firstshorts-shortcode-grid">
-            <!-- Single Video Shortcode -->
-            <div class="firstshorts-shortcode-item">
-                <label class="firstshorts-shortcode-label"><?php _e('Single Video', 'firstshorts'); ?></label>
-                <div class="firstshorts-shortcode-row">
-                    <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($single_shortcode); ?>" />
-                    <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($single_shortcode); ?>">
-                        <?php _e('Copy', 'firstshorts'); ?>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Video Slider Shortcode -->
-            <div class="firstshorts-shortcode-item">
-                <label class="firstshorts-shortcode-label"><?php _e('Video Slider', 'firstshorts'); ?></label>
-                <div class="firstshorts-shortcode-row">
-                    <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($slider_shortcode); ?>" />
-                    <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($slider_shortcode); ?>">
-                        <?php _e('Copy', 'firstshorts'); ?>
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <style>
@@ -539,6 +786,9 @@ function firstshorts_save_video_meta($post_id) {
             sanitize_text_field($_POST['firstshorts_display_type'])
         );
     }
+
+    // Mark that settings have been saved at least once
+    update_post_meta($post_id, '_firstshorts_saved_once', 1);
 }
 add_action('save_post_firstshorts_video', 'firstshorts_save_video_meta');
 

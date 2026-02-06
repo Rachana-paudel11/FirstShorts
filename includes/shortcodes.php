@@ -40,76 +40,31 @@ function firstshorts_video_shortcode($atts) {
         return '<p>' . __('Video URL not configured.', 'firstshorts') . '</p>';
     }
 
-    // Enqueue assets
-    wp_enqueue_style('firstshorts-frontend', plugin_dir_url(__FILE__) . '../assets/css/video-slider.css');
-    wp_enqueue_script('firstshorts-frontend', plugin_dir_url(__FILE__) . '../assets/js/video-slider.js', array('jquery'), '1.0.0', true);
+    // Enqueue React assets
+    firstshorts_enqueue_react_frontend();
 
     $autoplay = filter_var($atts['autoplay'], FILTER_VALIDATE_BOOLEAN);
-
-    ob_start();
-    ?>
-    <div class="firstshorts-video-container">
-        <!-- Video Player -->
-        <div class="firstshorts-video-player-wrapper">
-            <video 
-                class="firstshorts-video-player"
-                width="100%"
-                <?php echo $autoplay ? 'autoplay' : ''; ?>
-                controls
-                poster="<?php echo esc_url($thumbnail_url); ?>"
-                style="background-color: #000; border-radius: 8px;">
-                <source src="<?php echo esc_url($video_details['url']); ?>" type="video/mp4">
-            </video>
-        </div>
-
-        <!-- Video Info -->
-        <div class="firstshorts-video-info">
-            <h2 class="firstshorts-video-title"><?php echo esc_html($video_post->post_title); ?></h2>
-            
-            <?php if (!empty($video_post->post_content)): ?>
-                <div class="firstshorts-video-description">
-                    <?php echo wp_kses_post($video_post->post_content); ?>
-                </div>
-            <?php endif; ?>
-
-            <!-- Video Controls - Buttons -->
-            <div class="firstshorts-video-controls">
-                
-                <?php if ($display_options['view_count']): ?>
-                    <button class="firstshorts-btn firstshorts-btn-view-count" title="<?php _e('View Count', 'firstshorts'); ?>">
-                        👁️ <span>0</span>
-                    </button>
-                <?php endif; ?>
-
-                <?php if ($display_options['likes']): ?>
-                    <button class="firstshorts-btn firstshorts-btn-like" title="<?php _e('Like', 'firstshorts'); ?>">
-                        ❤️ <span>0</span>
-                    </button>
-                <?php endif; ?>
-
-                <?php if ($display_options['save']): ?>
-                    <button class="firstshorts-btn firstshorts-btn-save" title="<?php _e('Save', 'firstshorts'); ?>">
-                        📌 <?php _e('Save', 'firstshorts'); ?>
-                    </button>
-                <?php endif; ?>
-
-                <?php if ($display_options['share']): ?>
-                    <button class="firstshorts-btn firstshorts-btn-share" title="<?php _e('Share', 'firstshorts'); ?>">
-                        🔗 <?php _e('Share', 'firstshorts'); ?>
-                    </button>
-                <?php endif; ?>
-
-                <?php if ($display_options['buy_button']): ?>
-                    <button class="firstshorts-btn firstshorts-btn-buy" title="<?php _e('Buy Now', 'firstshorts'); ?>">
-                        🛒 <?php _e('Add to Cart', 'firstshorts'); ?>
-                    </button>
-                <?php endif; ?>
-
-            </div>
-        </div>
-    </div>
-    <?php
-    return ob_get_clean();
+    
+    // Prepare props for React component
+    $react_props = array(
+        'videoId' => $video_id,
+        'videoUrl' => $video_details['url'],
+        'thumbnailUrl' => $thumbnail_url,
+        'title' => $video_post->post_title,
+        'description' => apply_filters('the_content', $video_post->post_content),
+        'displayOptions' => array(
+            'showViewCount' => (bool) $display_options['view_count'],
+            'showLikes' => (bool) $display_options['likes'],
+            'showSave' => (bool) $display_options['save'],
+            'showShare' => (bool) $display_options['share'],
+            'showBuyButton' => (bool) $display_options['buy_button'],
+        ),
+        'autoplay' => $autoplay,
+    );
+    return sprintf(
+        '<div class="firstshorts-video-react-root" data-props="%s"></div>',
+        esc_attr(wp_json_encode($react_props))
+    );
 }
 add_shortcode('firstshorts_video', 'firstshorts_video_shortcode');
 
@@ -142,49 +97,31 @@ function firstshorts_video_slider_shortcode($atts) {
         return '<p>' . __('No videos found.', 'firstshorts') . '</p>';
     }
 
-    // Enqueue assets
-    wp_enqueue_style('firstshorts-slider', plugin_dir_url(__FILE__) . '../assets/css/video-slider.css');
-    wp_enqueue_script('firstshorts-slider', plugin_dir_url(__FILE__) . '../assets/js/video-slider.js', array('jquery'), '1.0.0', true);
+    // Enqueue React assets
+    firstshorts_enqueue_react_frontend();
 
-    ob_start();
-    ?>
-    <div class="firstshorts-slider-container">
-        <div class="firstshorts-slider-wrapper">
-            <div class="firstshorts-slider">
-                
-                <?php while ($videos->have_posts()): $videos->the_post(); ?>
-                    <div class="firstshorts-slide">
-                        <div class="firstshorts-slide-thumbnail">
-                            <img src="<?php echo esc_url(get_the_post_thumbnail_url(get_the_ID(), 'large')); ?>" 
-                                 alt="<?php echo esc_attr(get_the_title()); ?>"
-                                 class="firstshorts-slide-image">
-                            <div class="firstshorts-play-overlay">
-                                <button class="firstshorts-play-btn">▶</button>
-                            </div>
-                        </div>
-                        <div class="firstshorts-slide-info">
-                            <h3><?php the_title(); ?></h3>
-                            <p><?php echo wp_trim_words(get_the_excerpt(), 15); ?></p>
-                        </div>
-                    </div>
-                <?php endwhile;
-                wp_reset_postdata(); ?>
+    // Build video list for React
+    $video_list = array();
+    while ($videos->have_posts()):
+        $videos->the_post();
+        $video_list[] = array(
+            'id' => get_the_ID(),
+            'title' => get_the_title(),
+            'excerpt' => wp_trim_words(get_the_excerpt(), 15),
+            'thumbnail' => get_the_post_thumbnail_url(get_the_ID(), 'large'),
+            'permalink' => get_permalink(),
+        );
+    endwhile;
+    wp_reset_postdata();
 
-            </div>
-        </div>
+    $react_props = array(
+        'videos' => $video_list,
+        'count' => intval($atts['count']),
+    );
 
-        <!-- Navigation -->
-        <button class="firstshorts-slider-prev">❮</button>
-        <button class="firstshorts-slider-next">❯</button>
-
-        <!-- Dots -->
-        <div class="firstshorts-slider-dots">
-            <?php for ($i = 0; $i < $videos->post_count; $i++): ?>
-                <button class="firstshorts-dot <?php echo $i === 0 ? 'active' : ''; ?>" data-slide="<?php echo $i; ?>"></button>
-            <?php endfor; ?>
-        </div>
-    </div>
-    <?php
-    return ob_get_clean();
+    return sprintf(
+        '<div class="firstshorts-slider-react-root" data-props="%s"></div>',
+        esc_attr(wp_json_encode($react_props))
+    );
 }
 add_shortcode('firstshorts_video_slider', 'firstshorts_video_slider_shortcode');
