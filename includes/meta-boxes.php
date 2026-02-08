@@ -175,7 +175,6 @@ function firstshorts_enqueue_admin_styles($hook) {
                 var videoUrlField = $('#firstshorts_video_url');
                 var displayTypeField = $('#firstshorts_display_type');
                 var displayCheckboxes = displayBox.find('input[type=\"checkbox\"]');
-                var videoSourceField = $('#firstshorts_video_source');
                 var videoDurationField = $('#firstshorts_video_duration');
                 var initialDisplayState = {};
                 displayCheckboxes.each(function() {
@@ -183,7 +182,6 @@ function firstshorts_enqueue_admin_styles($hook) {
                 });
                 var initialDisplayType = displayTypeField.val();
                 var initialVideoUrl = videoUrlField.val();
-                var initialVideoSource = videoSourceField.val();
                 var initialVideoDuration = videoDurationField.val();
 
                 function updateSaveState() {
@@ -200,9 +198,6 @@ function firstshorts_enqueue_admin_styles($hook) {
 
                     var hasVideoDetailsChange = false;
                     if (videoUrlField.val() !== initialVideoUrl) {
-                        hasVideoDetailsChange = true;
-                    }
-                    if (videoSourceField.val() !== initialVideoSource) {
                         hasVideoDetailsChange = true;
                     }
                     if (videoDurationField.val() !== initialVideoDuration) {
@@ -245,7 +240,6 @@ function firstshorts_enqueue_admin_styles($hook) {
                 });
                 displayTypeField.on('change', updateSaveState);
                 displayCheckboxes.on('change', updateSaveState);
-                videoSourceField.on('change', updateSaveState);
                 videoDurationField.on('input', updateSaveState);
 
                 tabsWrapper.on('click', '.firstshorts-tab', function() {
@@ -273,9 +267,6 @@ function firstshorts_enqueue_admin_styles($hook) {
 
                     var hasVideoDetailsChange = false;
                     if (videoUrlField.val() !== initialVideoUrl) {
-                        hasVideoDetailsChange = true;
-                    }
-                    if (videoSourceField.val() !== initialVideoSource) {
                         hasVideoDetailsChange = true;
                     }
                     if (videoDurationField.val() !== initialVideoDuration) {
@@ -524,7 +515,6 @@ function firstshorts_render_display_options_metabox($post) {
 function firstshorts_render_video_details_metabox($post) {
     // Retrieve saved values from database, default to empty string if not found
     $video_url = get_post_meta($post->ID, '_firstshorts_video_url', true);
-    $video_source = get_post_meta($post->ID, '_firstshorts_video_source', true);
     $video_duration = get_post_meta($post->ID, '_firstshorts_video_duration', true);
 
     ?>
@@ -552,18 +542,6 @@ function firstshorts_render_video_details_metabox($post) {
             </div>
             
             <p class="description"><?php _e('Upload or enter the URL of the video file (MP4, WebM, OGG)', 'firstshorts'); ?></p>
-        </div>
-
-        <div class="firstshorts-meta-field">
-            <label for="firstshorts_video_source">
-                <?php _e('Video Source', 'firstshorts'); ?>
-            </label>
-            <select id="firstshorts_video_source" name="firstshorts_video_source">
-                <option value="self-hosted" <?php selected($video_source, 'self-hosted'); ?>>
-                    <?php _e('Self-Hosted', 'firstshorts'); ?>
-                </option>
-            </select>
-            <p class="description"><?php _e('Videos are self-hosted on your server', 'firstshorts'); ?></p>
         </div>
 
         <div class="firstshorts-meta-field">
@@ -790,15 +768,6 @@ function firstshorts_save_video_meta($post_id) {
             $post_id,
             '_firstshorts_video_url',
             esc_url_raw($_POST['firstshorts_video_url']) // Validates and escapes URL
-        );
-    }
-
-    // Save Video Source (sanitize to prevent injection)
-    if (isset($_POST['firstshorts_video_source'])) {
-        update_post_meta(
-            $post_id,
-            '_firstshorts_video_source',
-            sanitize_text_field($_POST['firstshorts_video_source']) // Remove HTML/scripts
         );
     }
 
