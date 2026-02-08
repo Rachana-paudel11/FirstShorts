@@ -176,6 +176,7 @@ function firstshorts_enqueue_admin_styles($hook) {
                 var displayTypeField = $('#firstshorts_display_type');
                 var displayCheckboxes = displayBox.find('input[type=\"checkbox\"]');
                 var videoDurationField = $('#firstshorts_video_duration');
+                var maxWidthField = $('#firstshorts_video_max_width');
                 var initialDisplayState = {};
                 displayCheckboxes.each(function() {
                     initialDisplayState[this.id] = this.checked ? '1' : '0';
@@ -183,6 +184,7 @@ function firstshorts_enqueue_admin_styles($hook) {
                 var initialDisplayType = displayTypeField.val();
                 var initialVideoUrl = videoUrlField.val();
                 var initialVideoDuration = videoDurationField.val();
+                var initialMaxWidth = maxWidthField.val();
 
                 function updateSaveState() {
                     var hasVideo = videoUrlField.val().trim() !== '';
@@ -201,6 +203,9 @@ function firstshorts_enqueue_admin_styles($hook) {
                         hasVideoDetailsChange = true;
                     }
                     if (videoDurationField.val() !== initialVideoDuration) {
+                        hasVideoDetailsChange = true;
+                    }
+                    if (maxWidthField.val() !== initialMaxWidth) {
                         hasVideoDetailsChange = true;
                     }
 
@@ -241,6 +246,7 @@ function firstshorts_enqueue_admin_styles($hook) {
                 displayTypeField.on('change', updateSaveState);
                 displayCheckboxes.on('change', updateSaveState);
                 videoDurationField.on('input', updateSaveState);
+                maxWidthField.on('input', updateSaveState);
 
                 tabsWrapper.on('click', '.firstshorts-tab', function() {
                     var target = $(this).data('tab');
@@ -270,6 +276,9 @@ function firstshorts_enqueue_admin_styles($hook) {
                         hasVideoDetailsChange = true;
                     }
                     if (videoDurationField.val() !== initialVideoDuration) {
+                        hasVideoDetailsChange = true;
+                    }
+                    if (maxWidthField.val() !== initialMaxWidth) {
                         hasVideoDetailsChange = true;
                     }
 
@@ -414,8 +423,12 @@ function firstshorts_render_display_options_metabox($post) {
     $show_share = get_post_meta($post->ID, '_firstshorts_show_share', true);
     $show_buy_button = get_post_meta($post->ID, '_firstshorts_show_buy_button', true);
     $display_type = get_post_meta($post->ID, '_firstshorts_display_type', true);
+    $max_width = get_post_meta($post->ID, '_firstshorts_video_max_width', true);
     if (empty($display_type)) {
         $display_type = 'single';
+    }
+    if (empty($max_width)) {
+        $max_width = 500;
     }
 
     ?>
@@ -490,6 +503,21 @@ function firstshorts_render_display_options_metabox($post) {
                 </label>
                 </div>
             </div>
+
+        <div class="firstshorts-meta-field">
+            <label for="firstshorts_video_max_width">
+                <?php _e('Max Video Width (px)', 'firstshorts'); ?>
+            </label>
+            <input type="number"
+                   id="firstshorts_video_max_width"
+                   name="firstshorts_video_max_width"
+                   value="<?php echo esc_attr($max_width); ?>"
+                   min="200"
+                   max="500"
+                   step="10"
+                   style="width: 200px;" />
+            <p class="description"><?php _e('Controls the max width for the video player (200–500px).', 'firstshorts'); ?></p>
+        </div>
     <?php
 }
 
@@ -779,6 +807,20 @@ function firstshorts_save_video_meta($post_id) {
             sanitize_text_field($_POST['firstshorts_video_duration']) // Convert to safe text
         );
     }
+
+    if (isset($_POST['firstshorts_video_max_width'])) {
+        $max_width = absint($_POST['firstshorts_video_max_width']);
+        if ($max_width < 200) {
+            $max_width = 200;
+        } elseif ($max_width > 500) {
+            $max_width = 500;
+        }
+        update_post_meta(
+            $post_id,
+            '_firstshorts_video_max_width',
+            $max_width
+        );
+    }
     
     // Save Display Type
     if (isset($_POST['firstshorts_display_type'])) {
@@ -861,6 +903,7 @@ function firstshorts_get_display_options($post_id) {
         'save' => (bool) get_post_meta($post_id, '_firstshorts_show_save', true),
         'share' => (bool) get_post_meta($post_id, '_firstshorts_show_share', true),
         'buy_button' => (bool) get_post_meta($post_id, '_firstshorts_show_buy_button', true),
+        'max_width' => (int) get_post_meta($post_id, '_firstshorts_video_max_width', true),
     );
 }
 

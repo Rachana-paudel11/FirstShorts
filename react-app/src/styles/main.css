@@ -2,7 +2,8 @@
 
 /* Video Container */
 .firstshorts-video-container {
-  max-width: 900px;
+  width: 100%;
+  max-width: 500px;
   margin: 0 auto;
   padding: 24px;
   background: #fff;
@@ -14,6 +15,7 @@
 .firstshorts-video-player-wrapper {
   position: relative;
   width: 100%;
+  aspect-ratio: 9 / 16;
   border-radius: 14px;
   overflow: hidden;
   background: #0b0b0b;
@@ -22,8 +24,9 @@
 
 .firstshorts-video-player {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
+  object-fit: cover;
 }
 
 .firstshorts-video-overlay {
@@ -38,8 +41,9 @@
   right: 14px;
   bottom: 14px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: center;
+  flex-wrap: wrap;
   pointer-events: auto;
 }
 
@@ -84,13 +88,13 @@
 .firstshorts-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: 6px;
+  padding: 8px 12px;
   border: 1px solid #e5e7eb;
   border-radius: 999px;
   background: #f9fafb;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #111827;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
@@ -138,6 +142,9 @@
   border-color: transparent;
   box-shadow: 0 10px 24px rgba(37, 99, 235, 0.35);
   pointer-events: auto;
+  flex: 1 1 140px;
+  min-width: 120px;
+  justify-content: center;
 }
 
 .firstshorts-btn-cta:hover {
@@ -178,7 +185,7 @@
 }
 
 .firstshorts-btn-symbol {
-  font-size: 18px;
+  font-size: clamp(14px, 3.4vw, 18px);
   line-height: 1;
   font-weight: 700;
 }
@@ -192,7 +199,19 @@
 
 .firstshorts-btn-text {
   font-weight: 600;
-  font-size: 12px;
+  font-size: clamp(11px, 2.8vw, 13px);
+}
+
+@media screen and (max-width: 520px) {
+  .firstshorts-video-cta-row {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .firstshorts-btn-cta {
+    min-width: 0;
+  }
 }
 
 .firstshorts-btn-count {

@@ -58,6 +58,7 @@ function firstshorts_video_shortcode($atts) {
             'showSave' => (bool) $display_options['save'],
             'showShare' => (bool) $display_options['share'],
             'showBuyButton' => (bool) $display_options['buy_button'],
+            'maxWidth' => (int) $display_options['max_width'],
         ),
         'autoplay' => $autoplay,
     );

@@ -69,8 +69,11 @@ const VideoPlayer = ({
     console.log('Add to cart functionality');
   };
 
+  const maxWidth = Number(displayOptions.maxWidth) || 500;
+  const clampedMaxWidth = Math.min(500, Math.max(200, maxWidth));
+
   return (
-    <div className="firstshorts-video-container">
+    <div className="firstshorts-video-container" style={{ maxWidth: `${clampedMaxWidth}px` }}>
       {/* Video Player */}
       <div className="firstshorts-video-player-wrapper">
         <video 
