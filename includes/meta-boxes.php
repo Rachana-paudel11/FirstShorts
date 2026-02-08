@@ -175,11 +175,16 @@ function firstshorts_enqueue_admin_styles($hook) {
                 var videoUrlField = $('#firstshorts_video_url');
                 var displayTypeField = $('#firstshorts_display_type');
                 var displayCheckboxes = displayBox.find('input[type=\"checkbox\"]');
+                var videoSourceField = $('#firstshorts_video_source');
+                var videoDurationField = $('#firstshorts_video_duration');
                 var initialDisplayState = {};
                 displayCheckboxes.each(function() {
                     initialDisplayState[this.id] = this.checked ? '1' : '0';
                 });
                 var initialDisplayType = displayTypeField.val();
+                var initialVideoUrl = videoUrlField.val();
+                var initialVideoSource = videoSourceField.val();
+                var initialVideoDuration = videoDurationField.val();
 
                 function updateSaveState() {
                     var hasVideo = videoUrlField.val().trim() !== '';
@@ -193,13 +198,24 @@ function firstshorts_enqueue_admin_styles($hook) {
                         hasDisplayChange = true;
                     }
 
-                    var canSave = hasVideo && hasDisplayChange;
+                    var hasVideoDetailsChange = false;
+                    if (videoUrlField.val() !== initialVideoUrl) {
+                        hasVideoDetailsChange = true;
+                    }
+                    if (videoSourceField.val() !== initialVideoSource) {
+                        hasVideoDetailsChange = true;
+                    }
+                    if (videoDurationField.val() !== initialVideoDuration) {
+                        hasVideoDetailsChange = true;
+                    }
+
+                    var canSave = hasVideo && (hasDisplayChange || hasVideoDetailsChange);
                     var hint = actions.find('.firstshorts-save-hint');
                     actions.find('.firstshorts-save-btn').prop('disabled', !canSave);
                     if (!hasVideo) {
-                        hint.text('Add a video URL to enable save');
-                    } else if (!hasDisplayChange) {
-                        hint.text('Change at least one display option');
+                        hint.text('Video URL is required');
+                    } else if (!hasDisplayChange && !hasVideoDetailsChange) {
+                        hint.text('Change at least one setting');
                     } else {
                         hint.text('Ready to save settings');
                     }
@@ -229,6 +245,8 @@ function firstshorts_enqueue_admin_styles($hook) {
                 });
                 displayTypeField.on('change', updateSaveState);
                 displayCheckboxes.on('change', updateSaveState);
+                videoSourceField.on('change', updateSaveState);
+                videoDurationField.on('input', updateSaveState);
 
                 tabsWrapper.on('click', '.firstshorts-tab', function() {
                     var target = $(this).data('tab');
@@ -253,16 +271,31 @@ function firstshorts_enqueue_admin_styles($hook) {
                         hasDisplayChange = true;
                     }
 
+                    var hasVideoDetailsChange = false;
+                    if (videoUrlField.val() !== initialVideoUrl) {
+                        hasVideoDetailsChange = true;
+                    }
+                    if (videoSourceField.val() !== initialVideoSource) {
+                        hasVideoDetailsChange = true;
+                    }
+                    if (videoDurationField.val() !== initialVideoDuration) {
+                        hasVideoDetailsChange = true;
+                    }
+
                     if (!hasVideo) {
-                        showFirstshortsToast('Please add a video URL before saving.');
+                        showFirstshortsToast('Video URL is required.');
                         return;
                     }
 
-                    if (!hasDisplayChange) {
-                        showFirstshortsToast('Please change at least one display option before saving.');
+                    if (!hasDisplayChange && !hasVideoDetailsChange) {
+                        showFirstshortsToast('Please change at least one setting before saving.');
                         return;
                     }
 
+                    $(window).off('beforeunload');
+                    if (window.onbeforeunload) {
+                        window.onbeforeunload = null;
+                    }
                     $('#post_status').val('draft');
                     $('#original_post_status').val('draft');
                     if (saveBtn.length) {
