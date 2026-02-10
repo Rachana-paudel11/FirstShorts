@@ -22,7 +22,7 @@ function firstshorts_register_meta_boxes() {
     // Display Options and Video Details meta boxes in main area
     add_meta_box(
         'firstshorts_video_display_options',
-        __('Display Options', 'firstshorts'),
+        __('Display & Actions', 'firstshorts'),
         'firstshorts_render_display_options_metabox',
         'firstshorts_video',
         'normal',
@@ -31,7 +31,7 @@ function firstshorts_register_meta_boxes() {
 
     add_meta_box(
         'firstshorts_video_details',
-        __('Video Details', 'firstshorts'),
+        __('Short Video', 'firstshorts'),
         'firstshorts_render_video_details_metabox',
         'firstshorts_video',
         'normal',
@@ -40,7 +40,7 @@ function firstshorts_register_meta_boxes() {
 
     add_meta_box(
         'firstshorts_video_preview',
-        __('Preview', 'firstshorts'),
+        __('Live Preview', 'firstshorts'),
         'firstshorts_render_preview_metabox',
         'firstshorts_video',
         'normal',
@@ -206,40 +206,29 @@ function firstshorts_render_display_options_metabox($post) {
     $show_save = get_post_meta($post->ID, '_firstshorts_show_save', true);
     $show_share = get_post_meta($post->ID, '_firstshorts_show_share', true);
     $show_buy_button = get_post_meta($post->ID, '_firstshorts_show_buy_button', true);
-    $display_type = get_post_meta($post->ID, '_firstshorts_display_type', true);
     $max_width = get_post_meta($post->ID, '_firstshorts_video_max_width', true);
-    if (empty($display_type)) {
-        $display_type = 'single';
-    }
+    $cta_text = get_post_meta($post->ID, '_firstshorts_cta_text', true);
+    $cta_style = get_post_meta($post->ID, '_firstshorts_cta_style', true);
     if (empty($max_width)) {
         $max_width = 500;
+    }
+    if (empty($cta_text)) {
+        $cta_text = __('Buy Now', 'firstshorts');
+    }
+    if (empty($cta_style)) {
+        $cta_style = 'primary';
     }
 
     ?>
     <div class="firstshorts-metabox-content">
-        <p class="description" style="margin-bottom: 15px;">
-            <?php _e('Configure how this video will be displayed on the frontend.', 'firstshorts'); ?>
-        </p>
-
-        <div class="firstshorts-meta-field">
-            <label for="firstshorts_display_type">
-                <?php _e('Display Type', 'firstshorts'); ?>
-            </label>
-            <select id="firstshorts_display_type" name="firstshorts_display_type">
-                <option value="single" <?php selected($display_type, 'single'); ?>>
-                    <?php _e('Single Video', 'firstshorts'); ?>
-                </option>
-                <option value="slider" <?php selected($display_type, 'slider'); ?>>
-                    <?php _e('Video Slider', 'firstshorts'); ?>
-                </option>
-            </select>
+        <div class="firstshorts-section">
+            <div class="firstshorts-section-title">
+                <?php _e('Viewer Engagement', 'firstshorts'); ?>
+            </div>
             <p class="description">
-                <?php _e('Choose which shortcode to show for this video.', 'firstshorts'); ?>
+                <?php _e('Social interactions shown on the video.', 'firstshorts'); ?>
             </p>
-        </div>
 
-        <div class="firstshorts-meta-field">
-            <label><?php _e('Button Visibility', 'firstshorts'); ?></label>
             <div class="firstshorts-checkbox-group">
                 <label class="firstshorts-checkbox-row">
                     <input type="checkbox" 
@@ -247,7 +236,7 @@ function firstshorts_render_display_options_metabox($post) {
                            name="firstshorts_show_view_count" 
                            value="1" 
                            <?php checked($show_view_count, 1); ?> />
-                    <span class="firstshorts-checkbox-label"><?php _e('View Count', 'firstshorts'); ?></span>
+                    <span class="firstshorts-checkbox-label"><?php _e('Show View Count', 'firstshorts'); ?></span>
                 </label>
                 
                 <label class="firstshorts-checkbox-row">
@@ -256,7 +245,7 @@ function firstshorts_render_display_options_metabox($post) {
                            name="firstshorts_show_likes" 
                            value="1" 
                            <?php checked($show_likes, 1); ?> />
-                    <span class="firstshorts-checkbox-label"><?php _e('Like Button', 'firstshorts'); ?></span>
+                    <span class="firstshorts-checkbox-label"><?php _e('Enable Likes', 'firstshorts'); ?></span>
                 </label>
                 
                 <label class="firstshorts-checkbox-row">
@@ -265,7 +254,7 @@ function firstshorts_render_display_options_metabox($post) {
                            name="firstshorts_show_save" 
                            value="1" 
                            <?php checked($show_save, 1); ?> />
-                    <span class="firstshorts-checkbox-label"><?php _e('Save Button', 'firstshorts'); ?></span>
+                    <span class="firstshorts-checkbox-label"><?php _e('Allow Save', 'firstshorts'); ?></span>
                 </label>
                 
                 <label class="firstshorts-checkbox-row">
@@ -274,23 +263,59 @@ function firstshorts_render_display_options_metabox($post) {
                            name="firstshorts_show_share" 
                            value="1" 
                            <?php checked($show_share, 1); ?> />
-                    <span class="firstshorts-checkbox-label"><?php _e('Share Button', 'firstshorts'); ?></span>
+                    <span class="firstshorts-checkbox-label"><?php _e('Allow Share', 'firstshorts'); ?></span>
                 </label>
-                
+            </div>
+        </div>
+
+        <div class="firstshorts-section">
+            <div class="firstshorts-section-title firstshorts-section-title--accent">
+                <?php _e('Product Action', 'firstshorts'); ?>
+            </div>
+            <p class="description">
+                <?php _e('This button lets viewers buy the product directly.', 'firstshorts'); ?>
+            </p>
+            <div class="firstshorts-checkbox-group">
                 <label class="firstshorts-checkbox-row">
                     <input type="checkbox" 
                            id="firstshorts_show_buy_button" 
                            name="firstshorts_show_buy_button" 
                            value="1" 
                            <?php checked($show_buy_button, 1); ?> />
-                    <span class="firstshorts-checkbox-label"><?php _e('Buy Now / Add to Cart', 'firstshorts'); ?></span>
+                    <span class="firstshorts-checkbox-label"><?php _e('Enable Product CTA', 'firstshorts'); ?></span>
                 </label>
-                </div>
             </div>
+
+            <div class="firstshorts-meta-field">
+                <label for="firstshorts_cta_text">
+                    <?php _e('CTA Text', 'firstshorts'); ?>
+                </label>
+                <input type="text"
+                       id="firstshorts_cta_text"
+                       name="firstshorts_cta_text"
+                       value="<?php echo esc_attr($cta_text); ?>"
+                       placeholder="Buy Now" />
+            </div>
+
+            <div class="firstshorts-meta-field">
+                <label for="firstshorts_cta_style">
+                    <?php _e('CTA Style', 'firstshorts'); ?>
+                </label>
+                <select id="firstshorts_cta_style" name="firstshorts_cta_style">
+                    <option value="primary" <?php selected($cta_style, 'primary'); ?>>
+                        <?php _e('Primary', 'firstshorts'); ?>
+                    </option>
+                    <option value="secondary" <?php selected($cta_style, 'secondary'); ?>>
+                        <?php _e('Secondary', 'firstshorts'); ?>
+                    </option>
+                </select>
+            </div>
+
+        </div>
 
         <div class="firstshorts-meta-field">
             <label for="firstshorts_video_max_width">
-                <?php _e('Max Video Width (px)', 'firstshorts'); ?>
+                <?php _e('Card Width (px)', 'firstshorts'); ?>
             </label>
             <input type="number"
                    id="firstshorts_video_max_width"
@@ -300,7 +325,7 @@ function firstshorts_render_display_options_metabox($post) {
                    max="500"
                    step="10"
                    style="width: 200px;" />
-            <p class="description"><?php _e('Controls the max width for the video player (200–500px).', 'firstshorts'); ?></p>
+            <p class="description"><?php _e('Recommended: 280–360px', 'firstshorts'); ?></p>
         </div>
     <?php
 }
@@ -332,12 +357,15 @@ function firstshorts_render_video_details_metabox($post) {
     ?>
     <div class="firstshorts-metabox-content">
         <p class="description" style="margin-bottom: 15px;">
-            <?php _e('Upload and configure your video file.', 'firstshorts'); ?>
+            <?php _e('Upload Short Video', 'firstshorts'); ?>
+        </p>
+        <p class="description" style="margin: 0 0 15px;">
+            <?php _e('Short videos work best under 20 seconds.', 'firstshorts'); ?>
         </p>
         
         <div class="firstshorts-meta-field">
             <label for="firstshorts_video_url">
-                <?php _e('Video File', 'firstshorts'); ?>
+                <?php _e('Video Source', 'firstshorts'); ?>
             </label>
             <div class="firstshorts-input-row">
                 <input type="url" 
@@ -361,7 +389,7 @@ function firstshorts_render_video_details_metabox($post) {
 
         <div class="firstshorts-meta-field">
             <label for="firstshorts_bulk_upload_btn">
-                <?php _e('Bulk Upload Videos', 'firstshorts'); ?>
+                <?php _e('Bulk Create Shorts', 'firstshorts'); ?>
             </label>
             <div class="firstshorts-input-row">
                 <button type="button"
@@ -374,7 +402,23 @@ function firstshorts_render_video_details_metabox($post) {
                        name="firstshorts_bulk_video_ids"
                        value="" />
             </div>
-            <ul class="firstshorts-bulk-list" style="margin: 8px 0 0 18px;"></ul>
+            <div class="firstshorts-bulk-summary">
+                <span class="firstshorts-bulk-count">0 videos selected</span>
+                <span class="firstshorts-bulk-size">Total size: --</span>
+            </div>
+            <div class="firstshorts-bulk-actions">
+                <button type="button" class="button firstshorts-bulk-select-all" disabled>
+                    <?php _e('Select all', 'firstshorts'); ?>
+                </button>
+                <button type="button" class="button firstshorts-bulk-remove-selected" disabled>
+                    <?php _e('Remove selected', 'firstshorts'); ?>
+                </button>
+                <button type="button" class="button firstshorts-bulk-clear" disabled>
+                    <?php _e('Clear list', 'firstshorts'); ?>
+                </button>
+            </div>
+            <div class="firstshorts-bulk-feedback" aria-live="polite"></div>
+            <ul class="firstshorts-bulk-list" aria-label="Selected videos"></ul>
             <p class="description">
                 <?php _e('Select multiple videos to create separate FirstShorts entries on save.', 'firstshorts'); ?>
             </p>
@@ -382,16 +426,16 @@ function firstshorts_render_video_details_metabox($post) {
 
         <div class="firstshorts-meta-field">
             <label for="firstshorts_video_duration">
-                <?php _e('Duration (seconds)', 'firstshorts'); ?>
+                <?php _e('Video Duration', 'firstshorts'); ?>
             </label>
             <input type="number" 
                    id="firstshorts_video_duration" 
                    name="firstshorts_video_duration" 
                    value="<?php echo esc_attr($video_duration); ?>"
                    placeholder="300"
-                   min="0"
+                     min="0"
                    style="width: 200px;" />
-            <p class="description"><?php _e('Duration of the video in seconds (optional)', 'firstshorts'); ?></p>
+                 <p class="description"><?php _e('Duration of the video in seconds (optional)', 'firstshorts'); ?></p>
         </div>
     </div>
     <?php
@@ -614,6 +658,23 @@ function firstshorts_save_video_meta($post_id) {
             sanitize_text_field($_POST['firstshorts_video_duration']) // Convert to safe text
         );
     }
+
+    if (isset($_POST['firstshorts_cta_text'])) {
+        update_post_meta(
+            $post_id,
+            '_firstshorts_cta_text',
+            sanitize_text_field($_POST['firstshorts_cta_text'])
+        );
+    }
+
+    if (isset($_POST['firstshorts_cta_style'])) {
+        update_post_meta(
+            $post_id,
+            '_firstshorts_cta_style',
+            sanitize_text_field($_POST['firstshorts_cta_style'])
+        );
+    }
+
 
     // Bulk create videos from media library selection
     if (isset($_POST['firstshorts_bulk_video_ids'])) {
