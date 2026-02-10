@@ -105,12 +105,20 @@ function firstshorts_video_slider_shortcode($atts) {
     $video_list = array();
     while ($videos->have_posts()):
         $videos->the_post();
+        $display_options = firstshorts_get_display_options(get_the_ID());
         $video_list[] = array(
             'id' => get_the_ID(),
             'title' => get_the_title(),
             'excerpt' => wp_trim_words(get_the_excerpt(), 15),
             'thumbnail' => get_the_post_thumbnail_url(get_the_ID(), 'large'),
             'permalink' => get_permalink(),
+            'displayOptions' => array(
+                'showViewCount' => (bool) $display_options['view_count'],
+                'showLikes' => (bool) $display_options['likes'],
+                'showSave' => (bool) $display_options['save'],
+                'showShare' => (bool) $display_options['share'],
+                'showBuyButton' => (bool) $display_options['buy_button'],
+            ),
         );
     endwhile;
     wp_reset_postdata();

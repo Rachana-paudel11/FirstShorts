@@ -56,12 +56,10 @@ add_action('add_meta_boxes', 'firstshorts_register_meta_boxes');
  */
 function firstshorts_shortcode_after_title() {
     global $post, $post_type;
-    
+
     if ('firstshorts_video' !== $post_type) {
         return;
     }
-    
-    // Render shortcode meta box after title
     ?>
     <div id="firstshorts_video_shortcodes" class="firstshorts-shortcode-after-title">
         <div class="inside">
@@ -71,8 +69,6 @@ function firstshorts_shortcode_after_title() {
     <?php
 }
 add_action('edit_form_after_title', 'firstshorts_shortcode_after_title');
-
-
 
 /**
  * Disable Block Editor for FirstShorts Video CPT
@@ -95,12 +91,12 @@ function firstshorts_enqueue_admin_styles($hook) {
     if ('post.php' !== $hook && 'post-new.php' !== $hook) {
         return;
     }
-    
+
     global $post_type;
     if ('firstshorts_video' !== $post_type) {
         return;
     }
-    
+
     $admin_css_path = plugin_dir_path(dirname(__FILE__)) . 'assets/css/style.css';
     $admin_css_ver = file_exists($admin_css_path) ? filemtime($admin_css_path) : '1.0.0';
     wp_enqueue_style(
@@ -109,218 +105,6 @@ function firstshorts_enqueue_admin_styles($hook) {
         array(),
         $admin_css_ver
     );
-    
-    // Add inline script to wrap meta boxes in split layout and move editor below
-    wp_add_inline_script('jquery', "
-        jQuery(document).ready(function($) {
-            var displayBox = $('#firstshorts_video_display_options');
-            var detailsBox = $('#firstshorts_video_details');
-                var thumbnailBox = $('#postimagediv');
-            var previewBox = $('#firstshorts_video_preview');
-            var shortcodeBox = $('#firstshorts_video_shortcodes');
-            
-            if (displayBox.length && detailsBox.length) {
-                var mainWrapper = $('<div class=\"firstshorts-admin-main-box\"></div>');
-                var splitWrapper = $('<div class=\"firstshorts-split-layout\"></div>');
-                var tabsWrapper = $('<div class=\"firstshorts-tabs\"></div>');
-                var tabsNav = $(
-                    '<div class=\"firstshorts-tabs-nav\">' +
-                        '<button type=\"button\" class=\"firstshorts-tab is-active\" data-tab=\"display\">Display Options</button>' +
-                        '<button type=\"button\" class=\"firstshorts-tab\" data-tab=\"details\">Video Details</button>' +
-                    '</div>'
-                );
-                var tabsBody = $('<div class=\"firstshorts-tabs-body\"></div>');
-                var displayPanel = $('<div class=\"firstshorts-tab-panel is-active\" data-tab-panel=\"display\"></div>');
-                var detailsPanel = $('<div class=\"firstshorts-tab-panel\" data-tab-panel=\"details\"></div>');
-                var actions = $(
-                    '<div class=\"firstshorts-main-actions\">' +
-                        '<span class=\"firstshorts-save-hint\">Make changes to enable save</span>' +
-                        '<button type=\"button\" class=\"button button-primary firstshorts-save-btn\">Save Settings</button>' +
-                    '</div>'
-                );
-
-                displayBox.before(mainWrapper);
-                if (shortcodeBox.length) {
-                    mainWrapper.append(shortcodeBox);
-                }
-                mainWrapper.append(splitWrapper);
-                displayPanel.append(displayBox);
-                detailsPanel.append(detailsBox);
-                tabsBody.append(displayPanel).append(detailsPanel);
-                tabsWrapper.append(tabsNav).append(tabsBody);
-                splitWrapper.append(tabsWrapper);
-                if (previewBox.length) {
-                    splitWrapper.append(previewBox);
-                }
-                mainWrapper.append(actions);
-
-                if (thumbnailBox.length) {
-                    var metaRow = $('<div class=\\\"firstshorts-meta-row\\\"></div>');
-                    mainWrapper.after(metaRow);
-                    metaRow.append(thumbnailBox);
-                }
-
-                // Move editor below the meta row
-                var editorWrapper = $('#postdivrich');
-                if (editorWrapper.length) {
-                    var metaRow = $('.firstshorts-meta-row');
-                    if (metaRow.length) {
-                        metaRow.after(editorWrapper);
-                    } else {
-                        mainWrapper.after(editorWrapper);
-                    }
-                }
-
-                var saveBtn = $('#save-post');
-                var videoUrlField = $('#firstshorts_video_url');
-                var displayTypeField = $('#firstshorts_display_type');
-                var displayCheckboxes = displayBox.find('input[type=\"checkbox\"]');
-                var videoDurationField = $('#firstshorts_video_duration');
-                var maxWidthField = $('#firstshorts_video_max_width');
-                var initialDisplayState = {};
-                displayCheckboxes.each(function() {
-                    initialDisplayState[this.id] = this.checked ? '1' : '0';
-                });
-                var initialDisplayType = displayTypeField.val();
-                var initialVideoUrl = videoUrlField.val();
-                var initialVideoDuration = videoDurationField.val();
-                var initialMaxWidth = maxWidthField.val();
-
-                function updateSaveState() {
-                    var hasVideo = videoUrlField.val().trim() !== '';
-                    var hasDisplayChange = false;
-                    displayCheckboxes.each(function() {
-                        if ((this.checked ? '1' : '0') !== initialDisplayState[this.id]) {
-                            hasDisplayChange = true;
-                        }
-                    });
-                    if (displayTypeField.val() !== initialDisplayType) {
-                        hasDisplayChange = true;
-                    }
-
-                    var hasVideoDetailsChange = false;
-                    if (videoUrlField.val() !== initialVideoUrl) {
-                        hasVideoDetailsChange = true;
-                    }
-                    if (videoDurationField.val() !== initialVideoDuration) {
-                        hasVideoDetailsChange = true;
-                    }
-                    if (maxWidthField.val() !== initialMaxWidth) {
-                        hasVideoDetailsChange = true;
-                    }
-
-                    var canSave = hasVideo && (hasDisplayChange || hasVideoDetailsChange);
-                    var hint = actions.find('.firstshorts-save-hint');
-                    actions.find('.firstshorts-save-btn').prop('disabled', !canSave);
-                    if (!hasVideo) {
-                        hint.text('Video URL is required');
-                    } else if (!hasDisplayChange && !hasVideoDetailsChange) {
-                        hint.text('Change at least one setting');
-                    } else {
-                        hint.text('Ready to save settings');
-                    }
-                }
-
-                function updatePreview() {
-                    if (!previewBox.length) {
-                        return;
-                    }
-                    var previewVideo = previewBox.find('.firstshorts-preview-video');
-                    var previewEmpty = previewBox.find('.firstshorts-preview-empty');
-                    var url = videoUrlField.val().trim();
-                    if (!url) {
-                        previewVideo.attr('src', '').hide();
-                        previewEmpty.show();
-                        return;
-                    }
-                    previewVideo.attr('src', url).show();
-                    previewEmpty.hide();
-                }
-
-                updateSaveState();
-                updatePreview();
-                videoUrlField.on('input', function() {
-                    updateSaveState();
-                    updatePreview();
-                });
-                displayTypeField.on('change', updateSaveState);
-                displayCheckboxes.on('change', updateSaveState);
-                videoDurationField.on('input', updateSaveState);
-                maxWidthField.on('input', updateSaveState);
-
-                tabsWrapper.on('click', '.firstshorts-tab', function() {
-                    var target = $(this).data('tab');
-                    tabsWrapper.find('.firstshorts-tab').removeClass('is-active');
-                    $(this).addClass('is-active');
-                    tabsWrapper.find('.firstshorts-tab-panel').removeClass('is-active');
-                    tabsWrapper.find('.firstshorts-tab-panel').filter(function() {
-                        return $(this).data('tab-panel') === target;
-                    }).addClass('is-active');
-                });
-
-                // Save Settings always keeps draft status
-                mainWrapper.on('click', '.firstshorts-save-btn', function() {
-                    var hasVideo = videoUrlField.val().trim() !== '';
-                    var hasDisplayChange = false;
-                    displayCheckboxes.each(function() {
-                        if ((this.checked ? '1' : '0') !== initialDisplayState[this.id]) {
-                            hasDisplayChange = true;
-                        }
-                    });
-                    if (displayTypeField.val() !== initialDisplayType) {
-                        hasDisplayChange = true;
-                    }
-
-                    var hasVideoDetailsChange = false;
-                    if (videoUrlField.val() !== initialVideoUrl) {
-                        hasVideoDetailsChange = true;
-                    }
-                    if (videoDurationField.val() !== initialVideoDuration) {
-                        hasVideoDetailsChange = true;
-                    }
-                    if (maxWidthField.val() !== initialMaxWidth) {
-                        hasVideoDetailsChange = true;
-                    }
-
-                    if (!hasVideo) {
-                        showFirstshortsToast('Video URL is required.');
-                        return;
-                    }
-
-                    if (!hasDisplayChange && !hasVideoDetailsChange) {
-                        showFirstshortsToast('Please change at least one setting before saving.');
-                        return;
-                    }
-
-                    $(window).off('beforeunload');
-                    if (window.onbeforeunload) {
-                        window.onbeforeunload = null;
-                    }
-                    $('#post_status').val('draft');
-                    $('#original_post_status').val('draft');
-                    if (saveBtn.length) {
-                        saveBtn.trigger('click');
-                    } else {
-                        $('#post').trigger('submit');
-                    }
-                });
-
-                function showFirstshortsToast(message) {
-                    var toast = $('#firstshorts-admin-toast');
-                    if (!toast.length) {
-                        toast = $('<div id=\"firstshorts-admin-toast\" class=\"firstshorts-admin-toast\"></div>');
-                        $('body').append(toast);
-                    }
-                    toast.text(message).addClass('is-visible');
-                    clearTimeout(toast.data('timeoutId'));
-                    var timeoutId = setTimeout(function() {
-                        toast.removeClass('is-visible');
-                    }, 2200);
-                    toast.data('timeoutId', timeoutId);
-                }
-            }
-        });
-    ");
 }
 add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_styles');
 
@@ -570,6 +354,30 @@ function firstshorts_render_video_details_metabox($post) {
             </div>
             
             <p class="description"><?php _e('Upload or enter the URL of the video file (MP4, WebM, OGG)', 'firstshorts'); ?></p>
+            <p class="firstshorts-inline-error" style="display: none; color: #b91c1c; margin: 6px 0 0;">
+                <?php _e('Video URL is required.', 'firstshorts'); ?>
+            </p>
+        </div>
+
+        <div class="firstshorts-meta-field">
+            <label for="firstshorts_bulk_upload_btn">
+                <?php _e('Bulk Upload Videos', 'firstshorts'); ?>
+            </label>
+            <div class="firstshorts-input-row">
+                <button type="button"
+                        id="firstshorts_bulk_upload_btn"
+                        class="button button-secondary firstshorts-upload-btn">
+                    <?php _e('Select Multiple Videos', 'firstshorts'); ?>
+                </button>
+                <input type="hidden"
+                       id="firstshorts_bulk_video_ids"
+                       name="firstshorts_bulk_video_ids"
+                       value="" />
+            </div>
+            <ul class="firstshorts-bulk-list" style="margin: 8px 0 0 18px;"></ul>
+            <p class="description">
+                <?php _e('Select multiple videos to create separate FirstShorts entries on save.', 'firstshorts'); ?>
+            </p>
         </div>
 
         <div class="firstshorts-meta-field">
@@ -634,37 +442,36 @@ function firstshorts_render_shortcodes_metabox($post) {
         <?php else : ?>
             <?php if (empty($display_type)) : ?>
                 <p style="color: #b45309; margin: 0 0 10px;">
-                    <?php _e('Select a display type and save settings to generate a shortcode.', 'firstshorts'); ?>
+                    <?php _e('Select a display type to show the matching shortcode.', 'firstshorts'); ?>
                 </p>
-            <?php else : ?>
-                <div class="firstshorts-shortcode-grid">
-                    <?php if ($display_type === 'slider') : ?>
-                        <div class="firstshorts-shortcode-item">
-                            <label class="firstshorts-shortcode-label"><?php _e('Video Slider', 'firstshorts'); ?></label>
-                            <div class="firstshorts-shortcode-row">
-                                <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($slider_shortcode); ?>" />
-                                <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($slider_shortcode); ?>">
-                                    <?php _e('Copy', 'firstshorts'); ?>
-                                </button>
-                            </div>
-                        </div>
-                    <?php else : ?>
-                        <div class="firstshorts-shortcode-item">
-                            <label class="firstshorts-shortcode-label"><?php _e('Single Video', 'firstshorts'); ?></label>
-                            <div class="firstshorts-shortcode-row">
-                                <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($single_shortcode); ?>" />
-                                <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($single_shortcode); ?>">
-                                    <?php _e('Copy', 'firstshorts'); ?>
-                                </button>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
             <?php endif; ?>
+            <div class="firstshorts-shortcode-grid" data-display-type="<?php echo esc_attr($display_type); ?>">
+                <div class="firstshorts-shortcode-item" data-shortcode-type="slider">
+                    <label class="firstshorts-shortcode-label"><?php _e('Video Slider', 'firstshorts'); ?></label>
+                    <div class="firstshorts-shortcode-row">
+                        <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($slider_shortcode); ?>" />
+                        <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($slider_shortcode); ?>">
+                            <?php _e('Copy', 'firstshorts'); ?>
+                        </button>
+                    </div>
+                </div>
+                <div class="firstshorts-shortcode-item" data-shortcode-type="single">
+                    <label class="firstshorts-shortcode-label"><?php _e('Single Video', 'firstshorts'); ?></label>
+                    <div class="firstshorts-shortcode-row">
+                        <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($single_shortcode); ?>" />
+                        <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($single_shortcode); ?>">
+                            <?php _e('Copy', 'firstshorts'); ?>
+                        </button>
+                    </div>
+                </div>
+            </div>
         <?php endif; ?>
     </div>
 
     <style>
+        .firstshorts-shortcode-item.is-hidden {
+            display: none;
+        }
         .firstshorts-shortcode-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -808,6 +615,53 @@ function firstshorts_save_video_meta($post_id) {
         );
     }
 
+    // Bulk create videos from media library selection
+    if (isset($_POST['firstshorts_bulk_video_ids'])) {
+        $raw_ids = sanitize_text_field(wp_unslash($_POST['firstshorts_bulk_video_ids']));
+        $ids = array_filter(array_map('absint', explode(',', $raw_ids)));
+        $existing_raw = get_post_meta($post_id, '_firstshorts_bulk_video_ids', true);
+        $existing_ids = array_filter(array_map('absint', explode(',', (string) $existing_raw)));
+        $new_ids = array_diff($ids, $existing_ids);
+
+        foreach ($new_ids as $attachment_id) {
+            $mime = get_post_mime_type($attachment_id);
+            if (!$mime || strpos($mime, 'video/') !== 0) {
+                continue;
+            }
+
+            $video_url = wp_get_attachment_url($attachment_id);
+            if (empty($video_url)) {
+                continue;
+            }
+
+            $attachment = get_post($attachment_id);
+            $title = $attachment ? $attachment->post_title : '';
+
+            $new_post_id = wp_insert_post(
+                array(
+                    'post_type' => 'firstshorts_video',
+                    'post_title' => $title ? $title : __('New Video', 'firstshorts'),
+                    'post_status' => 'draft',
+                    'post_content' => '',
+                ),
+                true
+            );
+
+            if (is_wp_error($new_post_id)) {
+                continue;
+            }
+
+            update_post_meta($new_post_id, '_firstshorts_video_url', esc_url_raw($video_url));
+            update_post_meta($new_post_id, '_firstshorts_saved_once', 1);
+        }
+
+        if (!empty($ids)) {
+            update_post_meta($post_id, '_firstshorts_bulk_video_ids', implode(',', $ids));
+        } else {
+            delete_post_meta($post_id, '_firstshorts_bulk_video_ids');
+        }
+    }
+
     if (isset($_POST['firstshorts_video_max_width'])) {
         $max_width = absint($_POST['firstshorts_video_max_width']);
         if ($max_width < 200) {
@@ -896,14 +750,37 @@ add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_scripts');
  * }
  */
 function firstshorts_get_display_options($post_id) {
+    $defaults = array(
+        'view_count' => true,
+        'likes' => true,
+        'save' => true,
+        'share' => true,
+        'buy_button' => true,
+        'max_width' => 500,
+    );
+
+    $view_count = get_post_meta($post_id, '_firstshorts_show_view_count', true);
+    $likes = get_post_meta($post_id, '_firstshorts_show_likes', true);
+    $save = get_post_meta($post_id, '_firstshorts_show_save', true);
+    $share = get_post_meta($post_id, '_firstshorts_show_share', true);
+    $buy_button = get_post_meta($post_id, '_firstshorts_show_buy_button', true);
+    $max_width = get_post_meta($post_id, '_firstshorts_video_max_width', true);
+
+    $view_count = $view_count === '' ? $defaults['view_count'] : (bool) $view_count;
+    $likes = $likes === '' ? $defaults['likes'] : (bool) $likes;
+    $save = $save === '' ? $defaults['save'] : (bool) $save;
+    $share = $share === '' ? $defaults['share'] : (bool) $share;
+    $buy_button = $buy_button === '' ? $defaults['buy_button'] : (bool) $buy_button;
+    $max_width = $max_width === '' ? $defaults['max_width'] : (int) $max_width;
+
     // Query database for each button setting and convert to boolean
     return array(
-        'view_count' => (bool) get_post_meta($post_id, '_firstshorts_show_view_count', true),
-        'likes' => (bool) get_post_meta($post_id, '_firstshorts_show_likes', true),
-        'save' => (bool) get_post_meta($post_id, '_firstshorts_show_save', true),
-        'share' => (bool) get_post_meta($post_id, '_firstshorts_show_share', true),
-        'buy_button' => (bool) get_post_meta($post_id, '_firstshorts_show_buy_button', true),
-        'max_width' => (int) get_post_meta($post_id, '_firstshorts_video_max_width', true),
+        'view_count' => $view_count,
+        'likes' => $likes,
+        'save' => $save,
+        'share' => $share,
+        'buy_button' => $buy_button,
+        'max_width' => $max_width,
     );
 }
 

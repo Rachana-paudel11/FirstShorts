@@ -1,28 +1,222 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+
+const VideoSliderCard = ({ video, index }) => {
+  const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [viewCount] = useState(0);
+  const defaultOptions = {
+    showViewCount: true,
+    showLikes: true,
+    showSave: true,
+    showShare: true,
+    showBuyButton: true
+  };
+  const hasCustomOptions = video.displayOptions && Object.keys(video.displayOptions).length > 0;
+  const displayOptions = hasCustomOptions
+    ? { ...defaultOptions, ...video.displayOptions }
+    : defaultOptions;
+
+  const toHandle = (title = '') => {
+    const handle = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '')
+      .slice(0, 16);
+    return handle || 'firstshorts';
+  };
+
+  const handleLike = () => {
+    setLiked(!liked);
+  };
+
+  const handleSave = () => {
+    setSaved(!saved);
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: video.title,
+        url: video.permalink
+      });
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(video.permalink);
+    }
+  };
+
+  const handleBuyNow = () => {
+    console.log('Buy now clicked');
+  };
+
+  const handleAddToCart = () => {
+    console.log('Add to cart clicked');
+  };
+
+  return (
+    <div className="firstshorts-slide-card">
+      <div className="firstshorts-slide-media">
+        <img
+          src={video.thumbnail}
+          alt={video.title}
+          className="firstshorts-slide-image"
+          loading={index > 0 ? 'lazy' : 'eager'}
+        />
+        <div className="firstshorts-play-overlay">
+          <a
+            href={video.permalink}
+            className="firstshorts-play-btn"
+            aria-label={`Play ${video.title}`}
+          >
+            ▶
+          </a>
+        </div>
+        <div className="firstshorts-slide-gradient" />
+        <div className="firstshorts-slide-meta">
+          {displayOptions.showBuyButton && (
+            <div className="firstshorts-slide-cta-row">
+              <button
+                className="firstshorts-btn firstshorts-btn-cta"
+                onClick={handleBuyNow}
+                type="button"
+                aria-label="Buy now"
+              >
+                <span className="firstshorts-btn-symbol">🛍</span>
+                <span className="firstshorts-btn-text">Buy Now</span>
+              </button>
+              <button
+                className="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"
+                onClick={handleAddToCart}
+                type="button"
+                aria-label="Add to cart"
+              >
+                <span className="firstshorts-btn-symbol">🛒</span>
+                <span className="firstshorts-btn-text">Add to Cart</span>
+              </button>
+            </div>
+          )}
+
+          <div className="firstshorts-slide-actions">
+            {displayOptions.showViewCount && (
+              <button
+                className="firstshorts-btn firstshorts-btn-overlay firstshorts-btn-view"
+                aria-label="View count"
+                type="button"
+              >
+                <span className="firstshorts-btn-symbol">◉</span>
+                <span className="firstshorts-btn-count">{viewCount}</span>
+              </button>
+            )}
+
+            {displayOptions.showLikes && (
+              <button
+                className={`firstshorts-btn firstshorts-btn-overlay firstshorts-btn-like ${liked ? 'active' : ''}`}
+                onClick={handleLike}
+                aria-pressed={liked}
+                type="button"
+              >
+                <span className="firstshorts-btn-symbol">{liked ? '♥' : '♡'}</span>
+              </button>
+            )}
+
+            {displayOptions.showSave && (
+              <button
+                className={`firstshorts-btn firstshorts-btn-overlay firstshorts-btn-save ${saved ? 'active' : ''}`}
+                onClick={handleSave}
+                aria-pressed={saved}
+                type="button"
+              >
+                <svg
+                  className="firstshorts-btn-icon-svg"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M7 3h10a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2Z" />
+                </svg>
+              </button>
+            )}
+
+            {displayOptions.showShare && (
+              <button
+                className="firstshorts-btn firstshorts-btn-overlay firstshorts-btn-share"
+                onClick={handleShare}
+                type="button"
+              >
+                <svg
+                  className="firstshorts-btn-icon-svg"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M5 12.5a7.5 7.5 0 0 1 7.5-7.5h1V3l5 4-5 4V8h-1a4.5 4.5 0 0 0 0 9H19v3h-6.5A7.5 7.5 0 0 1 5 12.5Z" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          <div className="firstshorts-slide-user">
+            <div className="firstshorts-avatar">
+              {video.title ? video.title[0].toUpperCase() : 'F'}
+            </div>
+            <span className="firstshorts-handle">@{toHandle(video.title)}</span>
+          </div>
+          <div className="firstshorts-slide-tags">#freelancer #work</div>
+          <div className="firstshorts-slide-caption">
+            {video.excerpt || video.title}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const VideoSlider = ({ videos = [], count = 5 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [slidesPerView, setSlidesPerView] = useState(4);
   const sliderRef = useRef(null);
 
   // Limit videos to count
   const displayVideos = videos.slice(0, count);
 
+  const maxIndex = Math.max(0, displayVideos.length - slidesPerView);
+
+  useEffect(() => {
+    const updateSlidesPerView = () => {
+      const width = window.innerWidth;
+      if (width >= 1200) {
+        setSlidesPerView(4);
+      } else if (width >= 900) {
+        setSlidesPerView(3);
+      } else if (width >= 640) {
+        setSlidesPerView(2);
+      } else {
+        setSlidesPerView(1);
+      }
+    };
+
+    updateSlidesPerView();
+    window.addEventListener('resize', updateSlidesPerView);
+    return () => window.removeEventListener('resize', updateSlidesPerView);
+  }, []);
+
+  useEffect(() => {
+    if (currentIndex > maxIndex) {
+      setCurrentIndex(maxIndex);
+    }
+  }, [currentIndex, maxIndex]);
+
   const nextSlide = () => {
-    setCurrentIndex((prev) => 
-      prev === displayVideos.length - 1 ? 0 : prev + 1
-    );
+    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => 
-      prev === 0 ? displayVideos.length - 1 : prev - 1
-    );
+    setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
   };
 
   const goToSlide = (index) => {
-    setCurrentIndex(index);
+    const clamped = Math.max(0, Math.min(index, maxIndex));
+    setCurrentIndex(clamped);
   };
 
   // Touch handlers for mobile swipe
@@ -52,8 +246,13 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
     return <p>No videos available.</p>;
   }
 
+  const dotsCount = maxIndex + 1;
+
   return (
-    <div className="firstshorts-slider-container">
+    <div
+      className="firstshorts-slider-container"
+      style={{ '--slides-per-view': slidesPerView }}
+    >
       <div
         className="firstshorts-slider-wrapper"
         role="region"
@@ -69,38 +268,13 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           style={{
-            transform: `translateX(-${currentIndex * 100}%)`,
+            transform: `translateX(-${currentIndex * (100 / slidesPerView)}%)`,
             transition: 'transform 0.3s ease-in-out'
           }}
         >
           {displayVideos.map((video, index) => (
             <div key={video.id} className="firstshorts-slide">
-              <div className="firstshorts-slide-thumbnail">
-                <img 
-                  src={video.thumbnail} 
-                  alt={video.title}
-                  className="firstshorts-slide-image"
-                  loading={index > 0 ? 'lazy' : 'eager'}
-                />
-                <div className="firstshorts-play-overlay">
-                  <a 
-                    href={video.permalink} 
-                    className="firstshorts-play-btn"
-                    aria-label={`Play ${video.title}`}
-                  >
-                    ▶
-                  </a>
-                </div>
-              </div>
-              
-              <div className="firstshorts-slide-info">
-                <h3 className="firstshorts-slide-title">
-                  <a href={video.permalink}>{video.title}</a>
-                </h3>
-                {video.excerpt && (
-                  <p className="firstshorts-slide-excerpt">{video.excerpt}</p>
-                )}
-              </div>
+              <VideoSliderCard video={video} index={index} />
             </div>
           ))}
         </div>
@@ -128,14 +302,14 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
 
       {displayVideos.length > 1 && (
         <div className="firstshorts-slider-counter" aria-live="polite">
-          {currentIndex + 1} / {displayVideos.length}
+          {currentIndex + 1} / {dotsCount}
         </div>
       )}
 
       {/* Dots Navigation */}
       {displayVideos.length > 1 && (
         <div className="firstshorts-slider-dots">
-          {displayVideos.map((_, index) => (
+          {Array.from({ length: dotsCount }).map((_, index) => (
             <button
               key={index}
               className={`firstshorts-slider-dot ${index === currentIndex ? 'active' : ''}`}

@@ -15,12 +15,14 @@ function firstshorts_enqueue_react_frontend() {
     $dist_url = plugin_dir_url(dirname(__FILE__)) . 'assets/dist/';
     
     // Check if React build exists
-    if (file_exists($dist_path . 'firstshorts-react.js')) {
+    $js_file = $dist_path . 'firstshorts-react.js';
+    if (file_exists($js_file)) {
+        $js_ver = (string) filemtime($js_file);
         wp_enqueue_script(
             'firstshorts-react',
             $dist_url . 'firstshorts-react.js',
             array(),
-            '1.0.0',
+            $js_ver,
             true
         );
         
@@ -28,11 +30,12 @@ function firstshorts_enqueue_react_frontend() {
         $css_files = glob($dist_path . 'assets/*.css');
         if (!empty($css_files)) {
             $css_file = basename($css_files[0]);
+            $css_ver = (string) filemtime($dist_path . 'assets/' . $css_file);
             wp_enqueue_style(
                 'firstshorts-react',
                 $dist_url . 'assets/' . $css_file,
                 array(),
-                '1.0.0'
+                $css_ver
             );
         }
     }
