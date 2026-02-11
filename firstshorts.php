@@ -26,8 +26,5 @@ require_once __DIR__ . '/includes/react-enqueue.php';
 // Register Custom Post Type
 add_action('init', 'firstshorts_register_video_cpt');
 
-// Register Custom Post Type
-add_action('init', 'firstshorts_register_video_cpt');
-
 register_activation_hook(__FILE__, 'firstshorts_activate');
 register_deactivation_hook(__FILE__, 'firstshorts_deactivate');

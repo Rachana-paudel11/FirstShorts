@@ -184,11 +184,6 @@ function firstshorts_remove_default_slug_metabox() {
 add_action('add_meta_boxes_firstshorts_video', 'firstshorts_remove_default_slug_metabox', 100);
 
 /**
- * Remove default slug metabox to avoid duplicate slug UI
- */
-
-
-/**
  * Move Featured Image (Short Thumbnail) metabox to main area
  */
 function firstshorts_move_thumbnail_metabox() {

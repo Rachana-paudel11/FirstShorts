@@ -76,27 +76,6 @@
     width: 100%;
 }
 
-#firstshorts_slug_box {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-    box-sizing: border-box;
-    padding: 14px 18px;
-    height: 100%;
-    margin: 0;
-}
-
-#firstshorts_slug_box .hndle {
-    padding: 14px 18px;
-    font-size: 14px;
-    font-weight: 600;
-    border-bottom: 1px solid #eef0f3;
-    background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
-    margin: -14px -18px 14px;
-}
-
-#firstshorts_slug_box .handlediv,
 #postimagediv .handlediv {
     display: none;
 }
