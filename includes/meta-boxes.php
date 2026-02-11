@@ -382,52 +382,33 @@ function firstshorts_render_video_details_metabox($post) {
 
     ?>
     <div class="firstshorts-metabox-content">
-        <p class="description" style="margin-bottom: 15px;">
-            <?php _e('Upload Short Video', 'firstshorts'); ?>
-        </p>
-        <p class="description" style="margin: 0 0 15px;">
-            <?php _e('Short videos work best under 20 seconds.', 'firstshorts'); ?>
-        </p>
-        
-        <div class="firstshorts-meta-field">
+        <div class="firstshorts-video-actions">
+            <button type="button"
+                    id="firstshorts_bulk_upload_btn"
+                    class="button button-secondary firstshorts-upload-btn">
+                <?php _e('Select Multiple Videos', 'firstshorts'); ?>
+            </button>
+        </div>
+
+        <div class="firstshorts-meta-field firstshorts-video-source-field">
             <label for="firstshorts_video_url">
                 <?php _e('Video Source', 'firstshorts'); ?>
             </label>
-            <div class="firstshorts-input-row">
-                <input type="url" 
-                       id="firstshorts_video_url" 
-                       name="firstshorts_video_url" 
-                       value="<?php echo esc_url($video_url); ?>"
-                       placeholder="https://example.com/video.mp4" />
-                
-                <button type="button" 
-                        id="firstshorts_upload_video_btn" 
-                        class="button button-secondary firstshorts-upload-btn">
-                    <?php _e('Upload Video', 'firstshorts'); ?>
-                </button>
-            </div>
-            
-            <p class="description"><?php _e('Upload or enter the URL of the video file (MP4, WebM, OGG)', 'firstshorts'); ?></p>
+            <input type="url" 
+                   id="firstshorts_video_url" 
+                   name="firstshorts_video_url" 
+                   value="<?php echo esc_url($video_url); ?>"
+                   placeholder="https://example.com/video.mp4" />
             <p class="firstshorts-inline-error" style="display: none; color: #b91c1c; margin: 6px 0 0;">
                 <?php _e('Video URL is required.', 'firstshorts'); ?>
             </p>
         </div>
 
-        <div class="firstshorts-meta-field">
-            <label for="firstshorts_bulk_upload_btn">
-                <?php _e('Bulk Create Shorts', 'firstshorts'); ?>
-            </label>
-            <div class="firstshorts-input-row">
-                <button type="button"
-                        id="firstshorts_bulk_upload_btn"
-                        class="button button-secondary firstshorts-upload-btn">
-                    <?php _e('Select Multiple Videos', 'firstshorts'); ?>
-                </button>
-                <input type="hidden"
-                       id="firstshorts_bulk_video_ids"
-                       name="firstshorts_bulk_video_ids"
-                       value="" />
-            </div>
+        <div class="firstshorts-meta-field firstshorts-bulk-block">
+            <input type="hidden"
+                   id="firstshorts_bulk_video_ids"
+                   name="firstshorts_bulk_video_ids"
+                   value="" />
             <div class="firstshorts-bulk-summary">
                 <span class="firstshorts-bulk-count">0 videos selected</span>
                 <span class="firstshorts-bulk-size">Total size: --</span>
@@ -445,12 +426,9 @@ function firstshorts_render_video_details_metabox($post) {
             </div>
             <div class="firstshorts-bulk-feedback" aria-live="polite"></div>
             <ul class="firstshorts-bulk-list" aria-label="Selected videos"></ul>
-            <p class="description">
-                <?php _e('Select multiple videos to create separate FirstShorts entries on save.', 'firstshorts'); ?>
-            </p>
         </div>
 
-        <div class="firstshorts-meta-field">
+        <div class="firstshorts-meta-field firstshorts-duration-field">
             <label for="firstshorts_video_duration">
                 <?php _e('Video Duration', 'firstshorts'); ?>
             </label>
@@ -461,7 +439,7 @@ function firstshorts_render_video_details_metabox($post) {
                    placeholder="300"
                      min="0"
                    style="width: 200px;" />
-                 <p class="description"><?php _e('Duration of the video in seconds (optional)', 'firstshorts'); ?></p>
+            <p class="description"><?php _e('Duration of the video in seconds (optional)', 'firstshorts'); ?></p>
         </div>
     </div>
     <?php

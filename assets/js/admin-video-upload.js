@@ -1,5 +1,4 @@
 jQuery(document).ready(function ($) {
-    var mediaFrame;
     var bulkFrame;
     var bulkItems = [];
 
@@ -197,18 +196,45 @@ jQuery(document).ready(function ($) {
             return;
         }
 
-        var mainWrapper = $('<div class="firstshorts-admin-main-box"></div>');
-        var splitWrapper = $('<div class="firstshorts-split-layout"></div>');
-        var tabsWrapper = $('<div class="firstshorts-tabs"></div>');
-        var tabsNav = $(
-            '<div class="firstshorts-tabs-nav">' +
-                '<button type="button" class="firstshorts-tab is-active" data-tab="details">Video Details</button>' +
-                '<button type="button" class="firstshorts-tab" data-tab="display">Display Options</button>' +
-            '</div>'
+        var mainWrapper = $('<div class="firstshorts-admin-main-box firstshorts-builder"></div>');
+        var builderLayout = $('<div class="firstshorts-builder-layout"></div>');
+        var leftPanel = $(
+            '<section class="firstshorts-panel firstshorts-panel-library">' +
+                '<div class="firstshorts-panel-header">' +
+                    '<h3>Video Library</h3>' +
+                    '<div class="firstshorts-panel-actions">' +
+                        '<div class="firstshorts-search">' +
+                            '<span class="firstshorts-search-icon">🔍</span>' +
+                            '<input type="search" placeholder="Search videos..." aria-label="Search videos" />' +
+                        '</div>' +
+                        '<button type="button" class="button firstshorts-filter-btn" aria-label="Filters">☰</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="firstshorts-panel-body"></div>' +
+            '</section>'
         );
-        var tabsBody = $('<div class="firstshorts-tabs-body"></div>');
-        var displayPanel = $('<div class="firstshorts-tab-panel" data-tab-panel="display"></div>');
-        var detailsPanel = $('<div class="firstshorts-tab-panel is-active" data-tab-panel="details"></div>');
+        var centerPanel = $(
+            '<section class="firstshorts-panel firstshorts-panel-preview">' +
+                '<div class="firstshorts-panel-header">' +
+                    '<h3>Slider Preview</h3>' +
+                    '<div class="firstshorts-panel-actions">' +
+                        '<button type="button" class="firstshorts-device-btn is-active">Desktop</button>' +
+                        '<button type="button" class="firstshorts-device-btn">Tablet</button>' +
+                        '<button type="button" class="firstshorts-device-btn">Mobile</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="firstshorts-panel-body"></div>' +
+            '</section>'
+        );
+        var rightPanel = $(
+            '<section class="firstshorts-panel firstshorts-panel-settings">' +
+                '<div class="firstshorts-panel-header">' +
+                    '<h3>Settings</h3>' +
+                    '<p>Adjust layout, CTA, and visibility.</p>' +
+                '</div>' +
+                '<div class="firstshorts-panel-body"></div>' +
+            '</section>'
+        );
         var actions = $(
             '<div class="firstshorts-main-actions">' +
                 '<span class="firstshorts-save-hint">Make changes to enable save</span>' +
@@ -217,24 +243,35 @@ jQuery(document).ready(function ($) {
         );
 
         displayBox.before(mainWrapper);
+        mainWrapper.append(builderLayout);
+        builderLayout.append(leftPanel, centerPanel, rightPanel);
+
+        leftPanel.find('.firstshorts-panel-body').append(detailsBox);
+        
+        // Move thumbnail box after upload actions
+        if (thumbnailBox.length) {
+            var uploadActions = $('.firstshorts-video-actions');
+            if (uploadActions.length) {
+                uploadActions.after(thumbnailBox);
+            } else {
+                leftPanel.find('.firstshorts-panel-body').append(thumbnailBox);
+            }
+        }
+
         if (shortcodeBox.length) {
-            mainWrapper.append(shortcodeBox);
+            centerPanel.find('.firstshorts-panel-body').append(shortcodeBox);
         }
-        mainWrapper.append(splitWrapper);
-        displayPanel.append(displayBox);
-        detailsPanel.append(detailsBox);
-        tabsBody.append(displayPanel).append(detailsPanel);
-        tabsWrapper.append(tabsNav).append(tabsBody);
-        splitWrapper.append(tabsWrapper);
         if (previewBox.length) {
-            splitWrapper.append(previewBox);
+            centerPanel.find('.firstshorts-panel-body').append(previewBox);
         }
-        mainWrapper.append(actions);
+
+        rightPanel.find('.firstshorts-panel-body').append(displayBox).append(actions);
 
         if (thumbnailBox.length) {
-            var metaRow = $('<div class="firstshorts-meta-row"></div>');
-            mainWrapper.after(metaRow);
-            metaRow.append(thumbnailBox);
+            var metaRow = $('.firstshorts-meta-row');
+            if (metaRow.length) {
+                metaRow.remove();
+            }
         }
 
         // Move editor below the meta row
@@ -367,16 +404,6 @@ jQuery(document).ready(function ($) {
         videoDurationField.on('input', updateSaveState);
         maxWidthField.on('input', updateSaveState);
 
-        tabsWrapper.on('click', '.firstshorts-tab', function () {
-            var target = $(this).data('tab');
-            tabsWrapper.find('.firstshorts-tab').removeClass('is-active');
-            $(this).addClass('is-active');
-            tabsWrapper.find('.firstshorts-tab-panel').removeClass('is-active');
-            tabsWrapper.find('.firstshorts-tab-panel').filter(function () {
-                return $(this).data('tab-panel') === target;
-            }).addClass('is-active');
-        });
-
         // Save Settings always keeps draft status
         mainWrapper.on('click', '.firstshorts-save-btn', function () {
             var hasVideo = videoUrlField.val().trim() !== '';
@@ -425,32 +452,6 @@ jQuery(document).ready(function ($) {
             }
         });
     }
-
-    // Video upload button
-    $(document).on('click', '#firstshorts_upload_video_btn', function (e) {
-        e.preventDefault();
-
-        if (mediaFrame) {
-            mediaFrame.open();
-            return;
-        }
-
-        mediaFrame = wp.media({
-            title: firstshortsAdmin.uploadTitle,
-            button: { text: firstshortsAdmin.uploadButton },
-            library: { type: firstshortsAdmin.allowedTypes || ['video'] },
-            multiple: false
-        });
-
-        mediaFrame.on('select', function () {
-            var attachment = mediaFrame.state().get('selection').first().toJSON();
-            if (attachment && attachment.url) {
-                $('#firstshorts_video_url').val(attachment.url).trigger('input');
-            }
-        });
-
-        mediaFrame.open();
-    });
 
     // Bulk upload button
     $(document).on('click', '#firstshorts_bulk_upload_btn', function (e) {
