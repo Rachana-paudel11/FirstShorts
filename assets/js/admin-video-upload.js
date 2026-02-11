@@ -516,6 +516,7 @@ jQuery(document).ready(function ($) {
 
     renderBulkList();
     initFirstshortsAdminLayout();
+    document.body.classList.remove('firstshorts-admin-loading');
 
     // Copy shortcode button
     $(document).on('click', '.firstshorts-copy-btn', function (e) {

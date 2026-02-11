@@ -25,6 +25,12 @@ function firstshorts_enqueue_react_frontend() {
             $js_ver,
             true
         );
+
+        wp_add_inline_script(
+            'firstshorts-react',
+            "window.addEventListener('pageshow',function(event){if(event.persisted){window.location.reload();}});",
+            'after'
+        );
         
         // Enqueue React CSS if exists (Vite outputs hashed CSS under assets/)
         $css_files = glob($dist_path . 'assets/*.css');

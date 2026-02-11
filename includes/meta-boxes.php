@@ -105,8 +105,39 @@ function firstshorts_enqueue_admin_styles($hook) {
         array(),
         $admin_css_ver
     );
+
+    wp_add_inline_style(
+        'firstshorts-admin-style',
+        'body.firstshorts-admin #poststuff { transition: opacity 120ms ease; }'
+        . 'body.firstshorts-admin-loading #poststuff { opacity: 0; pointer-events: none; }'
+    );
 }
 add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_styles');
+
+function firstshorts_admin_body_class($classes) {
+    global $post_type;
+    if ($post_type !== 'firstshorts_video') {
+        return $classes;
+    }
+
+    $classes .= ' firstshorts-admin firstshorts-admin-loading';
+    return $classes;
+}
+add_filter('admin_body_class', 'firstshorts_admin_body_class');
+
+function firstshorts_admin_loading_fallback() {
+    global $post_type;
+    if ($post_type !== 'firstshorts_video') {
+        return;
+    }
+
+    echo '<script>'
+        . 'window.addEventListener("load",function(){'
+        . 'document.body.classList.remove("firstshorts-admin-loading");'
+        . '});'
+        . '</script>';
+}
+add_action('admin_head', 'firstshorts_admin_loading_fallback');
 
 
 /**

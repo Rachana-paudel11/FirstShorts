@@ -8,6 +8,40 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+function firstshorts_mark_no_cache() {
+    if (!defined('DONOTCACHEPAGE')) {
+        define('DONOTCACHEPAGE', true);
+    }
+
+    if (function_exists('nocache_headers') && !headers_sent()) {
+        nocache_headers();
+    }
+}
+
+function firstshorts_maybe_disable_cache_on_shortcodes() {
+    if (is_admin()) {
+        return;
+    }
+
+    global $wp_query;
+    if (empty($wp_query) || empty($wp_query->posts)) {
+        return;
+    }
+
+    foreach ($wp_query->posts as $post) {
+        if (!$post || empty($post->post_content)) {
+            continue;
+        }
+
+        if (has_shortcode($post->post_content, 'firstshorts_video') ||
+            has_shortcode($post->post_content, 'firstshorts_video_slider')) {
+            firstshorts_mark_no_cache();
+            return;
+        }
+    }
+}
+add_action('template_redirect', 'firstshorts_maybe_disable_cache_on_shortcodes');
+
 /**
  * Shortcode: [firstshorts_video id="123"]
  * Displays a single video with buttons based on admin settings
@@ -17,6 +51,8 @@ if (!defined('ABSPATH')) {
  * [firstshorts_video id="123" autoplay="true"]
  */
 function firstshorts_video_shortcode($atts) {
+    firstshorts_mark_no_cache();
+
     // Extract shortcode attributes
     $atts = shortcode_atts(array(
         'id'       => 0,
@@ -78,6 +114,8 @@ add_shortcode('firstshorts_video', 'firstshorts_video_shortcode');
  * [firstshorts_video_slider count="10"]
  */
 function firstshorts_video_slider_shortcode($atts) {
+    firstshorts_mark_no_cache();
+
     // Extract shortcode attributes
     $atts = shortcode_atts(array(
         'count' => 5,
