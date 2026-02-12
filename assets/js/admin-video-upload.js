@@ -43,8 +43,8 @@ jQuery(document).ready(function ($) {
         var totalBytes = bulkItems.reduce(function (sum, item) {
             return sum + (item.bytes || 0);
         }, 0);
-        $('.firstshorts-bulk-count').text(count + (count === 1 ? ' video selected' : ' videos selected'));
-        $('.firstshorts-bulk-size').text('Total size: ' + formatBytes(totalBytes));
+        $('.firstshorts-bulk-count').text(count + (count === 1 ? ' video' : ' videos'));
+        $('.firstshorts-bulk-size').text(formatBytes(totalBytes));
     }
 
     function updateBulkActions() {
@@ -109,6 +109,7 @@ jQuery(document).ready(function ($) {
         updateBulkSummary();
         updateBulkActions();
         syncBulkHidden();
+        $(document).trigger('firstshorts:bulk-updated');
     }
 
     function addBulkItemsFromSelection(selection) {
@@ -202,13 +203,7 @@ jQuery(document).ready(function ($) {
             '<section class="firstshorts-panel firstshorts-panel-library">' +
                 '<div class="firstshorts-panel-header">' +
                     '<h3>Video Library</h3>' +
-                    '<div class="firstshorts-panel-actions">' +
-                        '<div class="firstshorts-search">' +
-                            '<span class="firstshorts-search-icon">🔍</span>' +
-                            '<input type="search" placeholder="Search videos..." aria-label="Search videos" />' +
-                        '</div>' +
-                        '<button type="button" class="button firstshorts-filter-btn" aria-label="Filters">☰</button>' +
-                    '</div>' +
+                    '<p>Choose videos from your media library.</p>' +
                 '</div>' +
                 '<div class="firstshorts-panel-body"></div>' +
             '</section>'
@@ -248,14 +243,9 @@ jQuery(document).ready(function ($) {
 
         leftPanel.find('.firstshorts-panel-body').append(detailsBox);
         
-        // Move thumbnail box after upload actions
+        // Move thumbnail box to the end of the left panel
         if (thumbnailBox.length) {
-            var uploadActions = $('.firstshorts-video-actions');
-            if (uploadActions.length) {
-                uploadActions.after(thumbnailBox);
-            } else {
-                leftPanel.find('.firstshorts-panel-body').append(thumbnailBox);
-            }
+            leftPanel.find('.firstshorts-panel-body').append(thumbnailBox);
         }
 
         if (shortcodeBox.length) {
@@ -299,6 +289,7 @@ jQuery(document).ready(function ($) {
         var initialVideoUrl = videoUrlField.val();
         var initialVideoDuration = videoDurationField.val();
         var initialMaxWidth = maxWidthField.val();
+        var initialBulkIdsSnapshot = initialBulkIds || '';
 
         function toggleVideoUrlError(show) {
             var error = videoUrlField.closest('.firstshorts-meta-field').find('.firstshorts-inline-error');
@@ -309,7 +300,9 @@ jQuery(document).ready(function ($) {
         }
 
         function updateSaveState() {
-            var hasVideo = videoUrlField.val().trim() !== '';
+            var hasVideoInput = videoUrlField.val().trim() !== '';
+            var hasBulkSelection = bulkItems.length > 0;
+            var hasVideo = hasVideoInput || hasBulkSelection;
             var hasDisplayChange = false;
             displayCheckboxes.each(function () {
                 if ((this.checked ? '1' : '0') !== initialDisplayState[this.id]) {
@@ -330,11 +323,13 @@ jQuery(document).ready(function ($) {
             if (maxWidthField.val() !== initialMaxWidth) {
                 hasVideoDetailsChange = true;
             }
+            var currentBulkIds = $('#firstshorts_bulk_video_ids').val() || '';
+            var hasBulkChange = currentBulkIds !== initialBulkIdsSnapshot;
 
             var hint = actions.find('.firstshorts-save-hint');
             if (!hasVideo) {
-                hint.text('Video URL is required');
-            } else if (!hasDisplayChange && !hasVideoDetailsChange) {
+                hint.text('Select at least one video or enter a URL');
+            } else if (!hasDisplayChange && !hasVideoDetailsChange && !hasBulkChange) {
                 hint.text('Change at least one setting');
             } else {
                 hint.text('Ready to save settings');
@@ -403,10 +398,13 @@ jQuery(document).ready(function ($) {
         displayCheckboxes.on('change', updateSaveState);
         videoDurationField.on('input', updateSaveState);
         maxWidthField.on('input', updateSaveState);
+        $(document).on('firstshorts:bulk-updated', updateSaveState);
 
         // Save Settings always keeps draft status
         mainWrapper.on('click', '.firstshorts-save-btn', function () {
-            var hasVideo = videoUrlField.val().trim() !== '';
+            var hasVideoInput = videoUrlField.val().trim() !== '';
+            var hasBulkSelection = bulkItems.length > 0;
+            var hasVideo = hasVideoInput || hasBulkSelection;
             var hasDisplayChange = false;
             displayCheckboxes.each(function () {
                 if ((this.checked ? '1' : '0') !== initialDisplayState[this.id]) {
@@ -427,6 +425,8 @@ jQuery(document).ready(function ($) {
             if (maxWidthField.val() !== initialMaxWidth) {
                 hasVideoDetailsChange = true;
             }
+            var currentBulkIds = $('#firstshorts_bulk_video_ids').val() || '';
+            var hasBulkChange = currentBulkIds !== initialBulkIdsSnapshot;
 
             if (!hasVideo) {
                 toggleVideoUrlError(true);
@@ -434,7 +434,7 @@ jQuery(document).ready(function ($) {
                 return;
             }
 
-            if (!hasDisplayChange && !hasVideoDetailsChange) {
+            if (!hasDisplayChange && !hasVideoDetailsChange && !hasBulkChange) {
                 showFirstshortsToast('Please change at least one setting before saving.');
                 return;
             }

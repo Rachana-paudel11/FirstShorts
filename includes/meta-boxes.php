@@ -1,4 +1,78 @@
 <?php
+add_action('wp_ajax_firstshorts_get_video_details', 'firstshorts_ajax_get_video_details');
+
+function firstshorts_ajax_get_video_details() {
+    // 1. Security: Check permissions AND verify a nonce
+    // We expect 'nonce' to be passed in the request, generated with action 'firstshorts_video_nonce'
+    if (!isset($_REQUEST['nonce']) || !wp_verify_nonce($_REQUEST['nonce'], 'firstshorts_video_nonce')) {
+        // If nonce is missing or invalid, we deny. 
+        // Note: Existing JS must provide this nonce for this to work.
+        wp_send_json_error(['message' => 'Invalid nonce'], 403);
+    }
+
+    if (!current_user_can('edit_posts')) {
+        wp_send_json_error(['message' => 'Unauthorized'], 403);
+    }
+
+    // 2. Validate Input
+    $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
+    if (!$id) {
+        wp_send_json_error(['message' => 'Invalid ID'], 400);
+    }
+
+    $post = get_post($id);
+    // Fix: Allow details for 'attachment' (Media Library) OR 'firstshorts_video'
+    if (!$post || ($post->post_type !== 'firstshorts_video' && $post->post_type !== 'attachment')) {
+        wp_send_json_error(['message' => 'Video/Attachment not found'], 404);
+    }
+
+    // 3. Fetch Data
+    $label        = get_the_title($id);
+    $filename     = '';
+    $icon         = '';
+    $bytes        = 0;
+    $sizeLabel    = '0 B';
+
+    // Handle Attachment (Media Library Item)
+    if ($post->post_type === 'attachment') {
+        $file_path = get_attached_file($id);
+        $filename  = basename($file_path);
+        // Use WordPress native function for mime type icon
+        $icon      = wp_mime_type_icon($id); 
+        
+        if ($file_path && file_exists($file_path)) {
+            $bytes     = filesize($file_path);
+            $sizeLabel = size_format($bytes, 2);
+        }
+    } 
+    // Handle Custom Post Type
+    else {
+        // Try to retrieve manually saved meta (if any exists in future)
+        $filename      = get_post_meta($id, '_firstshorts_video_filename', true);
+        $icon          = get_post_meta($id, '_firstshorts_video_icon', true);
+        $attachment_id = get_post_meta($id, '_firstshorts_video_attachment_id', true);
+
+        if ($attachment_id) {
+            $file_path = get_attached_file($attachment_id);
+            if ($file_path && file_exists($file_path)) {
+                $bytes     = filesize($file_path);
+                $sizeLabel = size_format($bytes, 2);
+            }
+        }
+    }
+
+    // 4. Return Response
+    wp_send_json_success([
+        'id'        => $id,
+        'label'     => $label,
+        'filename'  => $filename,
+        'icon'      => $icon,
+        'typeLabel' => 'VIDEO',
+        'bytes'     => $bytes,
+        'sizeLabel' => $sizeLabel,
+    ]);
+}
+
 /**
  * Meta Boxes: FirstShorts Video
  * Handles custom meta fields for video CPT
@@ -379,6 +453,7 @@ function firstshorts_render_video_details_metabox($post) {
     // Retrieve saved values from database, default to empty string if not found
     $video_url = get_post_meta($post->ID, '_firstshorts_video_url', true);
     $video_duration = get_post_meta($post->ID, '_firstshorts_video_duration', true);
+    $bulk_video_ids = get_post_meta($post->ID, '_firstshorts_bulk_video_ids', true);
 
     ?>
     <div class="firstshorts-metabox-content">
@@ -392,7 +467,7 @@ function firstshorts_render_video_details_metabox($post) {
 
         <div class="firstshorts-meta-field firstshorts-video-source-field">
             <label for="firstshorts_video_url">
-                <?php _e('Video Source', 'firstshorts'); ?>
+                <?php _e('Video URL (optional)', 'firstshorts'); ?>
             </label>
             <input type="url" 
                    id="firstshorts_video_url" 
@@ -408,10 +483,16 @@ function firstshorts_render_video_details_metabox($post) {
             <input type="hidden"
                    id="firstshorts_bulk_video_ids"
                    name="firstshorts_bulk_video_ids"
-                   value="" />
+                   value="<?php echo esc_attr($bulk_video_ids); ?>" />
             <div class="firstshorts-bulk-summary">
-                <span class="firstshorts-bulk-count">0 videos selected</span>
-                <span class="firstshorts-bulk-size">Total size: --</span>
+                <div class="firstshorts-bulk-stat">
+                    <span class="firstshorts-bulk-label"><?php _e('Selected', 'firstshorts'); ?></span>
+                    <span class="firstshorts-bulk-count">0 videos</span>
+                </div>
+                <div class="firstshorts-bulk-stat">
+                    <span class="firstshorts-bulk-label"><?php _e('Total size', 'firstshorts'); ?></span>
+                    <span class="firstshorts-bulk-size">--</span>
+                </div>
             </div>
             <div class="firstshorts-bulk-actions">
                 <button type="button" class="button firstshorts-bulk-select-all" disabled>
@@ -449,14 +530,35 @@ function firstshorts_render_video_details_metabox($post) {
  * Render Preview Meta Box
  */
 function firstshorts_render_preview_metabox($post) {
-    $video_url = get_post_meta($post->ID, '_firstshorts_video_url', true);
+    $max_width = get_post_meta($post->ID, '_firstshorts_video_max_width', true) ?: 500;
     ?>
-    <div class="firstshorts-preview-body">
-        <p class="firstshorts-preview-empty" <?php echo empty($video_url) ? '' : 'style="display:none;"'; ?>>
-            <?php _e('Add a video URL to see a preview.', 'firstshorts'); ?>
-        </p>
-        <video class="firstshorts-preview-video" controls preload="metadata" <?php echo empty($video_url) ? 'style="display:none;"' : ''; ?>
-               src="<?php echo esc_url($video_url); ?>"></video>
+    <div class="firstshorts-admin-preview-wrapper" style="max-width: <?php echo absint($max_width); ?>px;">
+        <div class="firstshorts-preview-body">
+            <p class="firstshorts-preview-empty" id="firstshorts-preview-empty">
+                <?php _e('Select a video to see a preview.', 'firstshorts'); ?>
+            </p>
+            
+            <div class="firstshorts-preview-player" id="firstshorts-preview-player" style="display: none;">
+                <!-- Video Container with 9:16 aspect ratio -->
+                <div class="firstshorts-preview-video-container">
+                    <video class="firstshorts-preview-video" id="firstshorts-preview-video" preload="metadata"></video>
+                    
+                    <!-- Overlay buttons will go here -->
+                    <div class="firstshorts-preview-overlay" id="firstshorts-preview-overlay">
+                        <!-- Buy buttons (top) -->
+                        <div class="firstshorts-preview-cta-row" id="firstshorts-preview-cta-row" style="display: none;">
+                            <button class="firstshorts-preview-btn firstshorts-preview-btn-cta" type="button">🛍 Buy Now</button>
+                            <button class="firstshorts-preview-btn firstshorts-preview-btn-cta firstshorts-preview-btn-cta-secondary" type="button">🛒 Add to Cart</button>
+                        </div>
+                        
+                        <!-- Action buttons (side) -->
+                        <div class="firstshorts-preview-actions" id="firstshorts-preview-actions">
+                            <!-- Dynamically populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <?php
 }
@@ -475,39 +577,35 @@ function firstshorts_render_preview_metabox($post) {
  */
 function firstshorts_render_shortcodes_metabox($post) {
     $video_id = intval($post->ID);
-    $display_type = get_post_meta($post->ID, '_firstshorts_display_type', true);
+    // Removed display_type logic (dead code)
     $post_status = get_post_status($post);
     $saved_once = get_post_meta($post->ID, '_firstshorts_saved_once', true);
-    $single_shortcode = '[firstshorts_video id="' . $video_id . '"]';
-    $slider_shortcode = '[firstshorts_video_slider count="5"]';
+    // Get selected video IDs for this post
+    // Use bulk video IDs for slider shortcode
+    $bulk_ids = get_post_meta($post->ID, '_firstshorts_bulk_video_ids', true);
+    $ids_array = array_filter(array_map('absint', explode(',', $bulk_ids)));
+    $slider_shortcode = '[firstshorts_video_slider';
+    if (!empty($ids_array)) {
+        $slider_shortcode .= ' ids="' . esc_attr(implode(',', $ids_array)) . '"';
+        $slider_shortcode .= ' count="' . count($ids_array) . '"';
+    } else {
+        $slider_shortcode .= ' count="5"';
+    }
+    $slider_shortcode .= ']';
 
     ?>
     <div class="firstshorts-shortcode-box">
         <?php if ($post_status === 'auto-draft' || empty($video_id) || empty($saved_once)) : ?>
-            <p style="color: #b45309; margin: 0 0 10px;">
+            <p style="color: #\5309; margin: 0 0 10px;">
                 <?php _e('Save settings to generate a shortcode.', 'firstshorts'); ?>
             </p>
         <?php else : ?>
-            <?php if (empty($display_type)) : ?>
-                <p style="color: #b45309; margin: 0 0 10px;">
-                    <?php _e('Select a display type to show the matching shortcode.', 'firstshorts'); ?>
-                </p>
-            <?php endif; ?>
-            <div class="firstshorts-shortcode-grid" data-display-type="<?php echo esc_attr($display_type); ?>">
+            <div class="firstshorts-shortcode-grid">
                 <div class="firstshorts-shortcode-item" data-shortcode-type="slider">
                     <label class="firstshorts-shortcode-label"><?php _e('Video Slider', 'firstshorts'); ?></label>
                     <div class="firstshorts-shortcode-row">
                         <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($slider_shortcode); ?>" />
                         <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($slider_shortcode); ?>">
-                            <?php _e('Copy', 'firstshorts'); ?>
-                        </button>
-                    </div>
-                </div>
-                <div class="firstshorts-shortcode-item" data-shortcode-type="single">
-                    <label class="firstshorts-shortcode-label"><?php _e('Single Video', 'firstshorts'); ?></label>
-                    <div class="firstshorts-shortcode-row">
-                        <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($single_shortcode); ?>" />
-                        <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($single_shortcode); ?>">
                             <?php _e('Copy', 'firstshorts'); ?>
                         </button>
                     </div>
@@ -681,45 +779,10 @@ function firstshorts_save_video_meta($post_id) {
 
 
     // Bulk create videos from media library selection
+    // Bulk creation now handled by AJAX, so only store bulk_video_ids here
     if (isset($_POST['firstshorts_bulk_video_ids'])) {
         $raw_ids = sanitize_text_field(wp_unslash($_POST['firstshorts_bulk_video_ids']));
         $ids = array_filter(array_map('absint', explode(',', $raw_ids)));
-        $existing_raw = get_post_meta($post_id, '_firstshorts_bulk_video_ids', true);
-        $existing_ids = array_filter(array_map('absint', explode(',', (string) $existing_raw)));
-        $new_ids = array_diff($ids, $existing_ids);
-
-        foreach ($new_ids as $attachment_id) {
-            $mime = get_post_mime_type($attachment_id);
-            if (!$mime || strpos($mime, 'video/') !== 0) {
-                continue;
-            }
-
-            $video_url = wp_get_attachment_url($attachment_id);
-            if (empty($video_url)) {
-                continue;
-            }
-
-            $attachment = get_post($attachment_id);
-            $title = $attachment ? $attachment->post_title : '';
-
-            $new_post_id = wp_insert_post(
-                array(
-                    'post_type' => 'firstshorts_video',
-                    'post_title' => $title ? $title : __('New Video', 'firstshorts'),
-                    'post_status' => 'draft',
-                    'post_content' => '',
-                ),
-                true
-            );
-
-            if (is_wp_error($new_post_id)) {
-                continue;
-            }
-
-            update_post_meta($new_post_id, '_firstshorts_video_url', esc_url_raw($video_url));
-            update_post_meta($new_post_id, '_firstshorts_saved_once', 1);
-        }
-
         if (!empty($ids)) {
             update_post_meta($post_id, '_firstshorts_bulk_video_ids', implode(',', $ids));
         } else {
@@ -741,14 +804,7 @@ function firstshorts_save_video_meta($post_id) {
         );
     }
     
-    // Save Display Type
-    if (isset($_POST['firstshorts_display_type'])) {
-        update_post_meta(
-            $post_id,
-            '_firstshorts_display_type',
-            sanitize_text_field($_POST['firstshorts_display_type'])
-        );
-    }
+    // Removed display_type save logic (dead code)
 
     // Mark that settings have been saved at least once
     update_post_meta($post_id, '_firstshorts_saved_once', 1);
@@ -774,11 +830,13 @@ function firstshorts_enqueue_admin_scripts($hook) {
     wp_enqueue_media();
 
     // Enqueue custom admin script
+    $admin_js_path = plugin_dir_path(dirname(__FILE__)) . 'assets/js/admin-video-upload.js';
+    $admin_js_ver = file_exists($admin_js_path) ? filemtime($admin_js_path) : '1.0.0';
     wp_enqueue_script(
         'firstshorts-admin',
         plugin_dir_url(__FILE__) . '../assets/js/admin-video-upload.js',
         array('jquery'),
-        '1.0.0',
+        $admin_js_ver,
         true
     );
 
@@ -880,7 +938,6 @@ function firstshorts_get_video_details($post_id) {
     // Retrieve video metadata from database
     return array(
         'url' => get_post_meta($post_id, '_firstshorts_video_url', true),        // Full URL to video file
-        'source' => get_post_meta($post_id, '_firstshorts_video_source', true),  // Video source type
         'duration' => get_post_meta($post_id, '_firstshorts_video_duration', true), // Duration in seconds
     );
 }

@@ -151,6 +151,7 @@ body.firstshorts-admin #wpbody-content {
     font-size: 14px;
     font-weight: 700;
     color: #0f172a;
+    white-space: nowrap;
 }
 
 .firstshorts-panel-header p {
@@ -261,11 +262,6 @@ body.firstshorts-admin #wpbody-content {
     display: none !important;
 }
 
-.firstshorts-builder-layout .firstshorts-video-source-field,
-.firstshorts-builder-layout .firstshorts-duration-field {
-    display: none !important;
-}
-
 .firstshorts-bulk-block .firstshorts-bulk-summary,
 .firstshorts-bulk-block .firstshorts-bulk-actions {
     margin-top: 10px;
@@ -280,6 +276,13 @@ body.firstshorts-admin #wpbody-content {
 
 .firstshorts-panel .hndle,
 .firstshorts-panel .handlediv {
+    display: none;
+}
+
+body.firstshorts-admin .postbox .handlediv,
+body.firstshorts-admin .postbox .hndle .toggle-indicator,
+body.firstshorts-admin .postbox .handle-order-higher,
+body.firstshorts-admin .postbox .handle-order-lower {
     display: none;
 }
 
@@ -432,6 +435,122 @@ body.firstshorts-admin #wpbody-content {
     color: #6b7280;
     font-size: 13px;
     margin: 0;
+}
+
+.firstshorts-admin-preview-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    margin: 0 auto;
+}
+
+.firstshorts-preview-player {
+    width: 100%;
+    height: auto;
+}
+
+.firstshorts-preview-video-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0b0b0b;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.firstshorts-preview-video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.firstshorts-preview-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.firstshorts-preview-cta-row {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    pointer-events: auto;
+}
+
+.firstshorts-preview-actions {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+.firstshorts-preview-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: #111827;
+    transition: all 0.2s ease;
+}
+
+.firstshorts-preview-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.05);
+}
+
+.firstshorts-preview-btn-cta {
+    padding: 10px 16px;
+    font-size: 13px;
+}
+
+.firstshorts-preview-btn-cta-secondary {
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+}
+
+.firstshorts-preview-btn-cta-secondary:hover {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.firstshorts-preview-btn-overlay {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px 10px;
+    font-size: 14px;
+}
+
+.firstshorts-preview-btn-like.active,
+.firstshorts-preview-btn-save.active {
+    color: #ef4444;
+}
+
+.firstshorts-btn-symbol {
+    display: inline-block;
+    font-size: 1.2em;
+}
+
+.firstshorts-btn-count {
+    display: inline-block;
+    font-weight: 600;
+    font-size: 0.9em;
 }
 
 .firstshorts-preview-video {
@@ -626,18 +745,47 @@ body.firstshorts-admin #wpbody-content {
 
 /* Bulk upload UI */
 .firstshorts-bulk-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin: 10px 0 12px;
+    padding: 10px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(15, 23, 42, 0.02));
+    border: 1px solid #e7e9f3;
+}
+
+.firstshorts-bulk-stat {
     display: flex;
-    gap: 12px;
-    margin: 10px 0 6px;
-    font-size: 12px;
-    color: #4b5563;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #eef0f5;
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+}
+
+.firstshorts-bulk-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.firstshorts-bulk-count,
+.firstshorts-bulk-size {
+    font-size: 14px;
+    color: #0f172a;
+    font-weight: 700;
 }
 
 .firstshorts-bulk-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .firstshorts-bulk-feedback {
@@ -670,7 +818,7 @@ body.firstshorts-admin #wpbody-content {
 
 .firstshorts-bulk-item {
     display: grid;
-    grid-template-columns: 18px 44px 1fr auto;
+    grid-template-columns: 18px 44px minmax(0, 1fr) auto;
     gap: 12px;
     align-items: center;
     padding: 10px 12px;
@@ -712,23 +860,44 @@ body.firstshorts-admin #wpbody-content {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
 }
 
 .firstshorts-bulk-title {
     font-weight: 600;
     font-size: 13px;
     color: #111827;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .firstshorts-bulk-details {
     font-size: 12px;
     color: #6b7280;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .firstshorts-bulk-remove {
     color: #b91c1c;
     text-decoration: none;
     font-weight: 600;
+    white-space: nowrap;
+}
+
+@media screen and (max-width: 520px) {
+    .firstshorts-bulk-item {
+        grid-template-columns: 18px 44px 1fr;
+        grid-template-rows: auto auto;
+        row-gap: 8px;
+    }
+
+    .firstshorts-bulk-remove {
+        grid-column: 1 / -1;
+        justify-self: start;
+    }
 }
 
 #postimagediv img {
