@@ -591,12 +591,14 @@ body.firstshorts-admin .postbox .handle-order-lower {
     justify-content: center;
     align-items: center;
     padding: 20px;
-    margin: 0;
+    margin: 0 auto;
     min-height: 400px;
     background: #ffffff;
     border: 1px solid #eef0f5;
     border-top: none;
     border-radius: 0 0 12px 12px;
+    transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
 }
 
 .firstshorts-preview-body {

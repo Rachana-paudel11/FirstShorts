@@ -9,7 +9,10 @@ const VideoSliderCard = ({ video, index }) => {
     showLikes: true,
     showSave: true,
     showShare: true,
-    showBuyButton: true
+    showBuyButton: true,
+    ctaText: 'Buy Now',
+    ctaStyle: 'primary',
+    maxWidth: 500
   };
   const hasCustomOptions = video.displayOptions && Object.keys(video.displayOptions).length > 0;
   const displayOptions = hasCustomOptions
@@ -69,13 +72,13 @@ const VideoSliderCard = ({ video, index }) => {
           {displayOptions.showBuyButton && (
             <div className="firstshorts-slide-cta-row" style={{ justifyContent: 'center' }}>
               <button
-                className="firstshorts-btn firstshorts-btn-cta"
+                className={`firstshorts-btn firstshorts-btn-cta ${displayOptions.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : ''}`}
                 onClick={handleBuyNow}
                 type="button"
-                aria-label="Buy now"
+                aria-label={displayOptions.ctaText || 'Buy now'}
               >
                 <span className="firstshorts-btn-symbol">🛍</span>
-                <span className="firstshorts-btn-text">Buy Now</span>
+                <span className="firstshorts-btn-text">{displayOptions.ctaText || 'Buy Now'}</span>
               </button>
               <button
                 className="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"
@@ -107,22 +110,37 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
   const maxIndex = Math.max(0, displayVideos.length - slidesPerView);
 
   useEffect(() => {
-    const updateSlidesPerView = () => {
-      const width = window.innerWidth;
-      if (width >= 1200) {
+    const container = sliderRef.current;
+    if (!container) return;
+
+    const updateSlidesPerView = (width) => {
+      if (width >= 1100) {
         setSlidesPerView(4);
-      } else if (width >= 900) {
+      } else if (width >= 800) {
         setSlidesPerView(3);
-      } else if (width >= 640) {
+      } else if (width >= 550) {
         setSlidesPerView(2);
       } else {
         setSlidesPerView(1);
       }
     };
 
-    updateSlidesPerView();
-    window.addEventListener('resize', updateSlidesPerView);
-    return () => window.removeEventListener('resize', updateSlidesPerView);
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        if (entry.contentRect) {
+          updateSlidesPerView(entry.contentRect.width);
+        }
+      }
+    });
+
+    resizeObserver.observe(container);
+
+    // Initial check
+    setTimeout(() => {
+      if (container) updateSlidesPerView(container.offsetWidth);
+    }, 100);
+
+    return () => resizeObserver.disconnect();
   }, []);
 
   useEffect(() => {
@@ -173,10 +191,21 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
 
   const dotsCount = maxIndex + 1;
 
+  const globalOptions = displayVideos[0]?.displayOptions || {};
+  const containerMaxWidth = Number(globalOptions.maxWidth) || 1200; // Sliders can be wider than single videos
+  const clampedMaxWidth = Math.max(200, containerMaxWidth);
+
   return (
     <div
       className="firstshorts-slider-container"
-      style={{ '--slides-per-view': slidesPerView, background: 'transparent', boxShadow: 'none', padding: '10px 0' }}
+      style={{
+        '--slides-per-view': slidesPerView,
+        background: 'transparent',
+        boxShadow: 'none',
+        padding: '10px 0',
+        maxWidth: `${clampedMaxWidth}px`,
+        margin: '0 auto'
+      }}
     >
       <style>{`.firstshorts-slider-container::before { display: none !important; }`}</style>
       <div

@@ -99,13 +99,13 @@ const VideoPlayer = ({
           {displayOptions.showBuyButton && (
             <div className="firstshorts-video-cta-row">
               <button
-                className="firstshorts-btn firstshorts-btn-cta"
+                className={`firstshorts-btn firstshorts-btn-cta ${displayOptions.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : ''}`}
                 onClick={handleBuyNow}
                 type="button"
-                aria-label="Buy now"
+                aria-label={displayOptions.ctaText || 'Buy now'}
               >
                 <span className="firstshorts-btn-symbol">🛍</span>
-                <span className="firstshorts-btn-text">Buy Now</span>
+                <span className="firstshorts-btn-text">{displayOptions.ctaText || 'Buy Now'}</span>
               </button>
               <button
                 className="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"

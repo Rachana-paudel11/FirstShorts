@@ -259,6 +259,13 @@ jQuery(document).ready(function ($) {
         var container = previewContentBox.find('.firstshorts-preview-video-container');
         var previewEmpty = previewContentBox.find('.firstshorts-preview-empty');
 
+        // Apply Card Width if not in special device mode
+        var activeDevice = $('.firstshorts-device-btn.is-active').text().trim().toLowerCase();
+        if (activeDevice === 'desktop') {
+            var manualWidth = $('#firstshorts_video_max_width').val() || 500;
+            previewContentBox.css('max-width', manualWidth + 'px');
+        }
+
         // Fallback if structure is different
         if (!container.length) container = $('.firstshorts-preview-video-container');
         if (!previewEmpty.length) previewEmpty = $('.firstshorts-preview-empty');
@@ -310,6 +317,9 @@ jQuery(document).ready(function ($) {
 
         sliderWrapper.empty();
 
+        var showBuy = $('#firstshorts_show_buy_button').is(':checked');
+        var ctaText = $('#firstshorts_cta_text').val() || 'Buy Now';
+
         videoUrls.forEach(function (url) {
             var slide = $('<div class="firstshorts-preview-slide"></div>');
             slide.css({
@@ -317,7 +327,8 @@ jQuery(document).ready(function ($) {
                 scrollSnapAlign: 'start',
                 height: '100%',
                 position: 'relative',
-                backgroundColor: '#000'
+                backgroundColor: '#000',
+                overflow: 'hidden'
             });
             var video = $('<video playsinline loop muted></video>');
             video.attr('src', url);
@@ -326,6 +337,29 @@ jQuery(document).ready(function ($) {
                 if (this.paused) this.play(); else this.pause();
             });
             slide.append(video);
+
+            if (showBuy) {
+                var ctaRow = $('<div class="firstshorts-video-cta-row"></div>');
+                ctaRow.css({
+                    position: 'absolute',
+                    bottom: '20px',
+                    left: '0',
+                    right: '0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '0 16px',
+                    zIndex: '10'
+                });
+
+                var buyBtn = $('<button type="button" class="firstshorts-btn firstshorts-btn-cta"></button>');
+                buyBtn.html('<span class="firstshorts-btn-symbol">🛍</span> <span class="firstshorts-btn-text">' + ctaText + '</span>');
+                buyBtn.css({ width: '100%', pointerEvents: 'none' });
+
+                ctaRow.append(buyBtn);
+                slide.append(ctaRow);
+            }
+
             sliderWrapper.append(slide);
             // Ensure video loads
             video[0].load();
@@ -488,6 +522,15 @@ jQuery(document).ready(function ($) {
             updateSaveState();
             updatePreview();
         });
+        $(document).on('change', '#firstshorts_show_buy_button', function () {
+            updatePreview();
+        });
+        $(document).on('input', '#firstshorts_cta_text', function () {
+            updatePreview();
+        });
+        $(document).on('input change', '#firstshorts_video_max_width', function () {
+            updatePreview();
+        });
         $(document).on('change', '#firstshorts_display_type', function () {
             updateSaveState();
             updateShortcodePreview();
@@ -497,6 +540,30 @@ jQuery(document).ready(function ($) {
             updateSaveState();
             updatePreview();
             updateShortcodePreview();
+        });
+
+        // Device Toggle Buttons
+        $(document).on('click', '.firstshorts-device-btn', function (e) {
+            e.preventDefault();
+            var btn = $(this);
+            var mode = btn.text().trim().toLowerCase();
+            var previewArea = $('.firstshorts-preview-content-area');
+
+            // Toggle active state
+            btn.siblings().removeClass('is-active');
+            btn.addClass('is-active');
+
+            // Apply size
+            if (mode === 'desktop') {
+                previewArea.css({ 'max-width': '100%', 'margin': '0 auto' });
+            } else if (mode === 'tablet') {
+                previewArea.css({ 'max-width': '768px', 'margin': '0 auto' });
+            } else if (mode === 'mobile') {
+                previewArea.css({ 'max-width': '375px', 'margin': '0 auto' });
+            }
+
+            // Trigger window resize so React components can update if needed
+            window.dispatchEvent(new Event('resize'));
         });
 
         // Save Button

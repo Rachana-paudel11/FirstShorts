@@ -904,6 +904,8 @@ function firstshorts_get_display_options($post_id) {
         'save' => true,
         'share' => true,
         'buy_button' => true,
+        'cta_text' => 'Buy Now',
+        'cta_style' => 'primary',
         'max_width' => 500,
     );
 
@@ -914,11 +916,16 @@ function firstshorts_get_display_options($post_id) {
     $buy_button = get_post_meta($post_id, '_firstshorts_show_buy_button', true);
     $max_width = get_post_meta($post_id, '_firstshorts_video_max_width', true);
 
+    $cta_text = get_post_meta($post_id, '_firstshorts_cta_text', true);
+    $cta_style = get_post_meta($post_id, '_firstshorts_cta_style', true);
+
     $view_count = $view_count === '' ? $defaults['view_count'] : (bool) $view_count;
     $likes = $likes === '' ? $defaults['likes'] : (bool) $likes;
     $save = $save === '' ? $defaults['save'] : (bool) $save;
     $share = $share === '' ? $defaults['share'] : (bool) $share;
     $buy_button = $buy_button === '' ? $defaults['buy_button'] : (bool) $buy_button;
+    $cta_text = $cta_text === '' ? $defaults['cta_text'] : $cta_text;
+    $cta_style = $cta_style === '' ? $defaults['cta_style'] : $cta_style;
     $max_width = $max_width === '' ? $defaults['max_width'] : (int) $max_width;
 
     // Query database for each button setting and convert to boolean
@@ -928,6 +935,8 @@ function firstshorts_get_display_options($post_id) {
         'save' => $save,
         'share' => $share,
         'buy_button' => $buy_button,
+        'cta_text' => $cta_text,
+        'cta_style' => $cta_style,
         'max_width' => $max_width,
     );
 }
