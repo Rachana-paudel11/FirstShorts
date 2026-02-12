@@ -1,13 +1,13 @@
 import React, { useState, useRef } from 'react';
 
-const VideoPlayer = ({ 
-  videoId, 
-  videoUrl, 
-  thumbnailUrl, 
-  title, 
+const VideoPlayer = ({
+  videoId,
+  videoUrl,
+  thumbnailUrl,
+  title,
   description,
   displayOptions = {},
-  autoplay = false 
+  autoplay = false
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -73,10 +73,10 @@ const VideoPlayer = ({
   const clampedMaxWidth = Math.min(500, Math.max(200, maxWidth));
 
   return (
-    <div className="firstshorts-video-container" style={{ maxWidth: `${clampedMaxWidth}px` }}>
+    <div className="firstshorts-video-container" style={{ maxWidth: `${clampedMaxWidth}px`, padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
       {/* Video Player */}
-      <div className="firstshorts-video-player-wrapper">
-        <video 
+      <div className="firstshorts-video-player-wrapper" style={{ boxShadow: 'none' }}>
+        <video
           ref={videoRef}
           className="firstshorts-video-player"
           poster={thumbnailUrl}
@@ -118,92 +118,7 @@ const VideoPlayer = ({
               </button>
             </div>
           )}
-
-          <div className="firstshorts-video-actions">
-            {displayOptions.showViewCount && (
-              <button
-                className="firstshorts-btn firstshorts-btn-overlay firstshorts-btn-view"
-                aria-label="View count"
-                type="button"
-              >
-                <span className="firstshorts-btn-symbol">◉</span>
-                <span className="firstshorts-btn-count">{viewCount}</span>
-              </button>
-            )}
-
-            {displayOptions.showLikes && (
-              <button 
-                className={`firstshorts-btn firstshorts-btn-overlay firstshorts-btn-like ${liked ? 'active' : ''}`}
-                onClick={handleLike}
-                aria-pressed={liked}
-                type="button"
-              >
-                <span className="firstshorts-btn-symbol">{liked ? '♥' : '♡'}</span>
-              </button>
-            )}
-
-            {displayOptions.showSave && (
-              <button 
-                className={`firstshorts-btn firstshorts-btn-overlay firstshorts-btn-save ${saved ? 'active' : ''}`}
-                onClick={handleSave}
-                aria-pressed={saved}
-                type="button"
-              >
-                <svg
-                  className="firstshorts-btn-icon-svg"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path d="M7 3h10a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2Z" />
-                </svg>
-              </button>
-            )}
-
-            {displayOptions.showShare && (
-              <button 
-                className="firstshorts-btn firstshorts-btn-overlay firstshorts-btn-share"
-                onClick={handleShare}
-                type="button"
-              >
-                <svg
-                  className="firstshorts-btn-icon-svg"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path d="M5 12.5a7.5 7.5 0 0 1 7.5-7.5h1V3l5 4-5 4V8h-1a4.5 4.5 0 0 0 0 9H19v3h-6.5A7.5 7.5 0 0 1 5 12.5Z" />
-                </svg>
-              </button>
-            )}
-          </div>
         </div>
-      </div>
-
-      {/* Video Info */}
-      <div className="firstshorts-video-info">
-        <h2 className="firstshorts-video-title">{title}</h2>
-        
-        {description && (
-          <div 
-            className="firstshorts-video-description"
-            dangerouslySetInnerHTML={{ __html: description }}
-          />
-        )}
-
-        {toast && (
-          <div className="firstshorts-toast" role="status" aria-live="polite">
-            {toast}
-            <button
-              className="firstshorts-toast-close"
-              type="button"
-              onClick={() => setToast('')}
-              aria-label="Dismiss"
-            >
-              ×
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -598,15 +598,14 @@ function firstshorts_render_shortcodes_metabox($post) {
     $slider_shortcode .= ']';
 
     ?>
-    <div class="firstshorts-shortcode-box">
-        <?php if ($post_status === 'auto-draft' || empty($video_id) || empty($saved_once)) : ?>
-            <p style="color: #\5309; margin: 0 0 10px;">
-                <?php _e('Save settings to generate a shortcode.', 'firstshorts'); ?>
+    <div class="firstshorts-shortcode-box firstshorts-shortcode-decongested">
+        <?php if ($post_status === 'auto-draft' || (empty($saved_once) && empty($bulk_ids) && empty($video_url))) : ?>
+            <p style="color: #64748b; margin: 0 0 10px;">
+                <?php _e('Add a video and save to generate a shortcode.', 'firstshorts'); ?>
             </p>
         <?php else : ?>
             <div class="firstshorts-shortcode-grid">
                 <div class="firstshorts-shortcode-item" data-shortcode-type="slider">
-                    <label class="firstshorts-shortcode-label"><?php _e('Video Slider', 'firstshorts'); ?></label>
                     <div class="firstshorts-shortcode-row">
                         <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($slider_shortcode); ?>" />
                         <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($slider_shortcode); ?>">
@@ -623,9 +622,8 @@ function firstshorts_render_shortcodes_metabox($post) {
             display: none;
         }
         .firstshorts-shortcode-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            display: block;
+            width: 100%;
         }
         
         .firstshorts-shortcode-item {
@@ -640,23 +638,44 @@ function firstshorts_render_shortcodes_metabox($post) {
             color: #1e1e1e;
         }
         
+        .firstshorts-shortcode-decongested {
+            padding: 10px 5px;
+        }
+
         .firstshorts-shortcode-row {
             display: flex;
-            gap: 6px;
+            gap: 12px;
             align-items: center;
         }
         
         .firstshorts-shortcode-input {
             flex: 1;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: 12px;
-            padding: 6px 8px;
+            font-size: 14px;
+            padding: 12px 16px;
+            font-weight: 600;
+            height: 46px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+        
+        .firstshorts-shortcode-input:focus {
+            background-color: #ffffff;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            outline: none;
         }
         
         .firstshorts-copy-btn {
-            padding: 4px 10px;
-            min-width: auto;
-            height: 30px;
+            padding: 0 24px;
+            min-width: 100px;
+            height: 46px;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
         }
         
         @media screen and (max-width: 782px) {

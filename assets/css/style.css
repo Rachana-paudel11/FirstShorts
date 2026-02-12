@@ -257,33 +257,104 @@ body.firstshorts-admin #wpbody-content {
     margin-bottom: 14px;
 }
 
-.firstshorts-panel-preview .firstshorts-shortcode-box {
+/* Unified Card Style */
+.firstshorts-card {
     border: 1px solid #eef0f5;
-    border-radius: 14px;
-    padding: 0;
-    background: #fbfcff;
+    border-radius: 12px;
+    background: #ffffff;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
 }
 
-.firstshorts-panel-preview .firstshorts-shortcode-box::before {
-    content: "Shortcode";
-    display: block;
-    font-weight: 700;
-    color: #0f172a;
-    padding: 10px 12px;
+.firstshorts-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
     background: #f7f8fd;
     border-bottom: 1px solid #eef0f5;
-    font-size: 12px;
-    letter-spacing: 0.02em;
+    gap: 10px;
+}
+
+.firstshorts-card-header h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.firstshorts-card-body {
+    padding: 20px;
+    background: #ffffff;
+    flex: 1;
+}
+
+.firstshorts-preview-divider {
+    height: 1px;
+    background: #eef0f5;
+    margin: 20px 0;
+}
+
+/* Specific body adjustments */
+.firstshorts-shortcode-section {
+    padding: 0;
+}
+
+.firstshorts-preview-content-area {
+    padding: 0;
+    /* Let inner wrapper handle padding or stay center */
+}
+
+/* Remove legacy shortcode header */
+.firstshorts-panel-preview .firstshorts-shortcode-box::before {
+    display: none !important;
+}
+
+.firstshorts-panel-preview .firstshorts-shortcode-box {
+    border: none !important;
+    background: transparent !important;
 }
 
 .firstshorts-panel-preview .firstshorts-shortcode-box>* {
-    padding: 12px;
+    padding: 0 !important;
 }
 
-.firstshorts-panel-preview .firstshorts-shortcode-box>p {
-    margin: 0;
+/* Thumbnail Section */
+.firstshorts-thumbnail-section {
+    margin-top: 16px;
+    border: 1px solid #eef0f5;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #ffffff;
 }
+
+.firstshorts-thumbnail-header {
+    padding: 10px 12px;
+    background: #f7f8fd;
+    border-bottom: 1px solid #eef0f5;
+    font-weight: 700;
+    font-size: 12px;
+    color: #0f172a;
+    letter-spacing: 0.02em;
+}
+
+.firstshorts-thumbnail-body {
+    padding: 12px;
+    min-height: 80px;
+    max-height: 200px;
+    overflow: hidden;
+}
+
+.firstshorts-thumbnail-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
 
 /* Video Upload Actions */
 .firstshorts-video-actions {
@@ -510,14 +581,31 @@ body.firstshorts-admin .postbox .handle-order-lower {
     color: #6b7280;
     font-size: 13px;
     margin: 0;
+    white-space: nowrap;
 }
 
-.firstshorts-admin-preview-wrapper {
+.firstshorts-preview-content-area {
     width: 100%;
     display: flex;
+    flex-direction: column;
     justify-content: center;
-    padding: 0;
-    margin: 0 auto;
+    align-items: center;
+    padding: 20px;
+    margin: 0;
+    min-height: 400px;
+    background: #ffffff;
+    border: 1px solid #eef0f5;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+}
+
+.firstshorts-preview-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 240px;
+    background: radial-gradient(circle at top, rgba(99, 102, 241, 0.08), transparent 65%);
 }
 
 .firstshorts-preview-player {
@@ -528,7 +616,8 @@ body.firstshorts-admin .postbox .handle-order-lower {
 .firstshorts-preview-video-container {
     position: relative;
     width: 100%;
-    aspect-ratio: 9 / 16;
+    height: 560px;
+    /* Fixed height for 9:16 approx 315px width */
     border-radius: 12px;
     overflow: hidden;
     background: #0b0b0b;

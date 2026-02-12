@@ -52,27 +52,22 @@ const VideoSliderCard = ({ video, index }) => {
   };
 
   return (
-    <div className="firstshorts-slide-card">
-      <div className="firstshorts-slide-media">
-        <img
-          src={video.thumbnail}
-          alt={video.title}
+    <div className="firstshorts-slide-card" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+      <div className="firstshorts-slide-media" style={{ boxShadow: 'none', background: 'transparent' }}>
+        <video
+          src={video.videoUrl}
+          poster={video.thumbnail}
           className="firstshorts-slide-image"
-          loading={index > 0 ? 'lazy' : 'eager'}
+          loop
+          muted
+          playsInline
+          autoPlay
+          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
         />
-        <div className="firstshorts-play-overlay">
-          <a
-            href={video.permalink}
-            className="firstshorts-play-btn"
-            aria-label={`Play ${video.title}`}
-          >
-            ▶
-          </a>
-        </div>
-        <div className="firstshorts-slide-gradient" />
-        <div className="firstshorts-slide-meta">
+        <div className="firstshorts-slide-gradient" style={{ display: 'none' }} />
+        <div className="firstshorts-slide-meta" style={{ bottom: '10px' }}>
           {displayOptions.showBuyButton && (
-            <div className="firstshorts-slide-cta-row">
+            <div className="firstshorts-slide-cta-row" style={{ justifyContent: 'center' }}>
               <button
                 className="firstshorts-btn firstshorts-btn-cta"
                 onClick={handleBuyNow}
@@ -93,76 +88,6 @@ const VideoSliderCard = ({ video, index }) => {
               </button>
             </div>
           )}
-
-          <div className="firstshorts-slide-actions">
-            {displayOptions.showViewCount && (
-              <button
-                className="firstshorts-btn firstshorts-btn-overlay firstshorts-btn-view"
-                aria-label="View count"
-                type="button"
-              >
-                <span className="firstshorts-btn-symbol">◉</span>
-                <span className="firstshorts-btn-count">{viewCount}</span>
-              </button>
-            )}
-
-            {displayOptions.showLikes && (
-              <button
-                className={`firstshorts-btn firstshorts-btn-overlay firstshorts-btn-like ${liked ? 'active' : ''}`}
-                onClick={handleLike}
-                aria-pressed={liked}
-                type="button"
-              >
-                <span className="firstshorts-btn-symbol">{liked ? '♥' : '♡'}</span>
-              </button>
-            )}
-
-            {displayOptions.showSave && (
-              <button
-                className={`firstshorts-btn firstshorts-btn-overlay firstshorts-btn-save ${saved ? 'active' : ''}`}
-                onClick={handleSave}
-                aria-pressed={saved}
-                type="button"
-              >
-                <svg
-                  className="firstshorts-btn-icon-svg"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path d="M7 3h10a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2Z" />
-                </svg>
-              </button>
-            )}
-
-            {displayOptions.showShare && (
-              <button
-                className="firstshorts-btn firstshorts-btn-overlay firstshorts-btn-share"
-                onClick={handleShare}
-                type="button"
-              >
-                <svg
-                  className="firstshorts-btn-icon-svg"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path d="M5 12.5a7.5 7.5 0 0 1 7.5-7.5h1V3l5 4-5 4V8h-1a4.5 4.5 0 0 0 0 9H19v3h-6.5A7.5 7.5 0 0 1 5 12.5Z" />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          <div className="firstshorts-slide-user">
-            <div className="firstshorts-avatar">
-              {video.title ? video.title[0].toUpperCase() : 'F'}
-            </div>
-            <span className="firstshorts-handle">@{toHandle(video.title)}</span>
-          </div>
-          <div className="firstshorts-slide-tags">#freelancer #work</div>
-          <div className="firstshorts-slide-caption">
-            {video.excerpt || video.title}
-          </div>
         </div>
       </div>
     </div>
@@ -251,17 +176,19 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
   return (
     <div
       className="firstshorts-slider-container"
-      style={{ '--slides-per-view': slidesPerView }}
+      style={{ '--slides-per-view': slidesPerView, background: 'transparent', boxShadow: 'none', padding: '10px 0' }}
     >
+      <style>{`.firstshorts-slider-container::before { display: none !important; }`}</style>
       <div
         className="firstshorts-slider-wrapper"
+        style={{ background: 'transparent', border: 'none', backdropFilter: 'none' }}
         role="region"
         aria-roledescription="carousel"
         aria-label="Video slider"
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
-        <div 
+        <div
           className="firstshorts-slider"
           ref={sliderRef}
           onTouchStart={handleTouchStart}
@@ -282,14 +209,14 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
         {/* Navigation Arrows */}
         {displayVideos.length > 1 && (
           <>
-            <button 
+            <button
               className="firstshorts-slider-btn firstshorts-slider-prev"
               onClick={prevSlide}
               aria-label="Previous video"
             >
               ‹
             </button>
-            <button 
+            <button
               className="firstshorts-slider-btn firstshorts-slider-next"
               onClick={nextSlide}
               aria-label="Next video"

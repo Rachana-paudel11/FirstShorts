@@ -32,9 +32,9 @@ jQuery(document).ready(function ($) {
     }
 
     function syncBulkHidden() {
-        var ids = bulkItems.map(function (item) {
-            return item.id;
-        });
+        var ids = bulkItems
+            .filter(function (item) { return item.selected; })
+            .map(function (item) { return item.id; });
         $('#firstshorts_bulk_video_ids').val(ids.join(','));
     }
 
@@ -178,7 +178,7 @@ jQuery(document).ready(function ($) {
                     bytes: 0,
                     sizeLabel: '--',
                     typeLabel: 'VIDEO',
-                    selected: false
+                    selected: true
                 };
             });
 
@@ -227,18 +227,32 @@ jQuery(document).ready(function ($) {
     }
 
     function updateShortcodePreview() {
-        var type = $('#firstshorts_display_type').val();
         var grid = $('.firstshorts-shortcode-grid');
         if (!grid.length) return;
-        grid.attr('data-display-type', type || '');
-        grid.find('.firstshorts-shortcode-item').addClass('is-hidden');
-        if (type) {
-            grid.find('.firstshorts-shortcode-item[data-shortcode-type="' + type + '"]').removeClass('is-hidden');
+
+        var ids = bulkItems
+            .filter(function (item) { return item.selected; })
+            .map(function (item) { return item.id; });
+        var shortcode = '[firstshorts_video_slider';
+        if (ids.length) {
+            shortcode += ' ids="' + ids.join(',') + '" count="' + ids.length + '"';
+        } else {
+            shortcode += ' count="0"';
         }
+        shortcode += ']';
+
+        var input = grid.find('.firstshorts-shortcode-input');
+        var copyBtn = grid.find('.firstshorts-copy-btn');
+
+        if (input.length) input.val(shortcode);
+        if (copyBtn.length) copyBtn.attr('data-copy', shortcode);
+
+        // Always show the slider item since we removed the type toggle
+        grid.find('.firstshorts-shortcode-item').removeClass('is-hidden');
     }
 
     function updatePreview() {
-        var previewContentBox = $('.firstshorts-admin-preview-wrapper');
+        var previewContentBox = $('.firstshorts-preview-content-area');
         // If wrapper not found (maybe legacy), try the container directly
         if (!previewContentBox.length) previewContentBox = $('.firstshorts-preview-video-container').parent();
 
@@ -257,7 +271,7 @@ jQuery(document).ready(function ($) {
             videoUrls.push(manualUrl);
         } else {
             bulkItems.forEach(function (item) {
-                if (item.url) videoUrls.push(item.url);
+                if (item.selected && item.url) videoUrls.push(item.url);
             });
         }
 
@@ -269,6 +283,8 @@ jQuery(document).ready(function ($) {
 
         if (previewEmpty.length) previewEmpty.hide();
         container.show();
+        // Also show the parent wrapper if it was hidden by PHP
+        $('#firstshorts-preview-player').show();
 
         var sliderProps = {
             display: 'flex',
@@ -311,6 +327,8 @@ jQuery(document).ready(function ($) {
             });
             slide.append(video);
             sliderWrapper.append(slide);
+            // Ensure video loads
+            video[0].load();
         });
     }
 
@@ -367,18 +385,27 @@ jQuery(document).ready(function ($) {
 
         var centerPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-preview">' +
-            '<div class="firstshorts-panel-header">' +
-            '<div class="firstshorts-panel-header-content">' +
-            '<h3>Preview & Shortcode</h3>' +
-            '<p>Preview your video slider and copy shortcode</p>' +
+            '<div class="firstshorts-panel-body">' +
+            // Shortcode Metabox
+            '<div class="firstshorts-card firstshorts-shortcode-card">' +
+            '<div class="firstshorts-card-header">' +
+            '<h3>Shortcode</h3>' +
             '</div>' +
+            '<div class="firstshorts-card-body firstshorts-shortcode-section"></div>' +
+            '</div>' +
+            // Preview Metabox
+            '<div class="firstshorts-card firstshorts-preview-card">' +
+            '<div class="firstshorts-card-header">' +
+            '<h3>Live Preview</h3>' +
             '<div class="firstshorts-panel-actions">' +
             '<button type="button" class="firstshorts-device-btn is-active">Desktop</button>' +
             '<button type="button" class="firstshorts-device-btn">Tablet</button>' +
             '<button type="button" class="firstshorts-device-btn">Mobile</button>' +
             '</div>' +
             '</div>' +
-            '<div class="firstshorts-panel-body firstshorts-admin-preview-wrapper"></div>' +
+            '<div class="firstshorts-card-body firstshorts-preview-content-area"></div>' +
+            '</div>' +
+            '</div>' +
             '</section>'
         );
 
@@ -418,24 +445,22 @@ jQuery(document).ready(function ($) {
         }
         detailsBox.hide();
 
-        if (thumbnailBox.length) {
-            var thumbContent = thumbnailBox.find('.inside').children();
-            if (thumbContent.length) {
-                var thumbWrapper = $('<div class="firstshorts-thumbnail-wrapper"><h3>Thumbnail</h3></div>');
-                thumbWrapper.append(thumbContent);
-                leftPanel.find('.firstshorts-panel-body').append(thumbWrapper);
-            }
-            thumbnailBox.hide();
-        }
+        // Thumbnail is handled by WordPress usually, user asked to remove it if redundant
+        thumbnailBox.hide();
 
-        // Center Content
+        // Center Content - Shortcode at top, Preview at bottom
         if (shortcodeBox.length) {
-            centerPanel.find('.firstshorts-panel-body').append(shortcodeBox.find('.inside').children());
+            centerPanel.find('.firstshorts-shortcode-section').append(shortcodeBox.find('.inside').children());
             shortcodeBox.hide();
         }
 
         if (previewBox.length) {
-            centerPanel.find('.firstshorts-panel-body').append(previewBox.find('.inside').children());
+            var rawPreview = previewBox.find('.inside').children();
+            // If the first child is the wrapper from PHP, move its children instead
+            if (rawPreview.length === 1 && rawPreview.hasClass('firstshorts-admin-preview-wrapper')) {
+                rawPreview = rawPreview.children();
+            }
+            centerPanel.find('.firstshorts-preview-content-area').append(rawPreview);
             previewBox.hide();
         }
 
@@ -471,6 +496,7 @@ jQuery(document).ready(function ($) {
         $(document).on('firstshorts:bulk-updated', function () {
             updateSaveState();
             updatePreview();
+            updateShortcodePreview();
         });
 
         // Save Button
@@ -564,8 +590,8 @@ jQuery(document).ready(function ($) {
     });
 
     // Initialize
-    renderBulkList();
     initFirstshortsAdminLayout();
+    renderBulkList();
     document.body.classList.remove('firstshorts-admin-loading');
 
     // Copy shortcode button

@@ -105,6 +105,7 @@ function firstshorts_video_slider_shortcode($atts)
             'title' => get_the_title(),
             'excerpt' => wp_trim_words(get_the_excerpt(), 15),
             'thumbnail' => get_the_post_thumbnail_url(get_the_ID(), 'large'),
+            'videoUrl' => wp_get_attachment_url(get_the_ID()),
             'permalink' => get_permalink(),
             'displayOptions' => array(
                 'showViewCount' => (bool) $display_options['view_count'],
