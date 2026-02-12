@@ -609,7 +609,15 @@ jQuery(document).ready(function ($) {
         mainWrapper.on('click', '.firstshorts-save-btn', function () {
             // Validation
             var videoUrlField = $('#firstshorts_video_url');
+            var titleField = $('#title');
             var hasVideo = videoUrlField.val() || bulkItems.length > 0;
+            var hasTitle = titleField.val() && titleField.val().trim() !== '';
+
+            if (!hasTitle) {
+                alert('Please enter a title for your Short before saving.');
+                titleField.trigger('focus');
+                return;
+            }
 
             if (!hasVideo) {
                 toggleVideoUrlError(true);

@@ -1018,3 +1018,36 @@ function firstshorts_get_video_details($post_id) {
         'duration' => get_post_meta($post_id, '_firstshorts_video_duration', true), // Duration in seconds
     );
 }
+
+/**
+ * Add custom columns to the Shorts list view
+ */
+function firstshorts_video_columns($columns) {
+    $new_columns = array();
+    $new_columns['cb'] = $columns['cb'];
+    $new_columns['title'] = $columns['title'];
+    $new_columns['shortcode'] = __('Shortcode', 'firstshorts');
+    $new_columns['date'] = $columns['date'];
+    return $new_columns;
+}
+add_filter('manage_firstshorts_video_posts_columns', 'firstshorts_video_columns');
+
+/**
+ * Handle custom column content
+ */
+function firstshorts_video_custom_column_content($column, $post_id) {
+    if ($column === 'shortcode') {
+        // Get video IDs saved for this short
+        $video_ids = get_post_meta($post_id, '_firstshorts_bulk_items_ids', true);
+        $shortcode = '[firstshorts_video_slider';
+        
+        if ($video_ids) {
+            $shortcode .= ' ids="' . esc_attr($video_ids) . '"';
+        }
+        $shortcode .= ' post_id="' . $post_id . '" count="5"]';
+        
+        echo '<code>' . esc_html($shortcode) . '</code>';
+    }
+}
+add_action('manage_firstshorts_video_posts_custom_column', 'firstshorts_video_custom_column_content', 10, 2);
+
