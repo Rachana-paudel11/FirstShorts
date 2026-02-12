@@ -4,7 +4,7 @@ jQuery(document).ready(function ($) {
 
     function formatBytes(bytes) {
         if (!bytes || bytes <= 0) {
-            return '--';
+            return ' --';
         }
         var units = ['B', 'KB', 'MB', 'GB'];
         var index = 0;
@@ -72,6 +72,7 @@ jQuery(document).ready(function ($) {
 
         bulkItems.forEach(function (item) {
             var row = $('<li class="firstshorts-bulk-item"></li>');
+            if (item.selected) row.addClass('is-selected');
             var checkbox = $('<input type="checkbox" class="firstshorts-bulk-select" />');
             checkbox.prop('checked', !!item.selected);
             checkbox.data('id', item.id);
@@ -140,7 +141,7 @@ jQuery(document).ready(function ($) {
                 bytes: data.filesizeInBytes || 0,
                 sizeLabel: data.filesizeHumanReadable || '',
                 typeLabel: data.subtype ? data.subtype.toUpperCase() : 'VIDEO',
-                selected: false
+                selected: true
             });
             added += 1;
         });
@@ -204,10 +205,8 @@ jQuery(document).ready(function ($) {
                                 item.sizeLabel = response.data.sizeLabel;
                                 // Re-render to show updated details
                                 renderBulkList();
-                                // Update preview if this is the first item
-                                if (bulkItems.indexOf(item) === 0) {
-                                    updatePreview();
-                                }
+                                // Refresh preview for every item as it loads
+                                updatePreview();
                             }
                         }
                     }
@@ -233,11 +232,17 @@ jQuery(document).ready(function ($) {
         var ids = bulkItems
             .filter(function (item) { return item.selected; })
             .map(function (item) { return item.id; });
+
         var shortcode = '[firstshorts_video_slider';
+        var postId = (typeof firstshortsAdmin !== 'undefined' && firstshortsAdmin.postId) ? firstshortsAdmin.postId : 0;
+
         if (ids.length) {
-            shortcode += ' ids="' + ids.join(',') + '" count="' + ids.length + '"';
+            shortcode += ' ids="' + ids.join(',') + '"';
+            if (postId) shortcode += ' post_id="' + postId + '"';
+            shortcode += ' count="' + ids.length + '"';
         } else {
-            shortcode += ' count="0"';
+            if (postId) shortcode += ' post_id="' + postId + '"';
+            shortcode += ' count="5"';
         }
         shortcode += ']';
 
@@ -263,7 +268,12 @@ jQuery(document).ready(function ($) {
         var activeDevice = $('.firstshorts-device-btn.is-active').text().trim().toLowerCase();
         if (activeDevice === 'desktop') {
             var manualWidth = $('#firstshorts_video_max_width').val() || 500;
-            previewContentBox.css('max-width', manualWidth + 'px');
+            var manualHeight = $('#firstshorts_video_max_height').val() || 600;
+            previewContentBox.css({
+                'max-width': manualWidth + 'px',
+                'height': 'auto' // Area grows with content, but inner container handles the height
+            });
+            container.css('height', manualHeight + 'px');
         }
 
         // Fallback if structure is different
@@ -340,24 +350,47 @@ jQuery(document).ready(function ($) {
 
             if (showBuy) {
                 var ctaRow = $('<div class="firstshorts-video-cta-row"></div>');
-                ctaRow.css({
-                    position: 'absolute',
-                    bottom: '20px',
-                    left: '0',
-                    right: '0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    padding: '0 16px',
-                    zIndex: '10'
-                });
+                // Use the slide-meta container logic from frontend for consistency
+                var metaContainer = $('<div class="firstshorts-slide-meta"></div>');
+                metaContainer.css('pointer-events', 'auto');
 
                 var buyBtn = $('<button type="button" class="firstshorts-btn firstshorts-btn-cta"></button>');
-                buyBtn.html('<span class="firstshorts-btn-symbol">🛍</span> <span class="firstshorts-btn-text">' + ctaText + '</span>');
-                buyBtn.css({ width: '100%', pointerEvents: 'none' });
+                buyBtn.html('<span class="firstshorts-btn-symbol"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg></span> <span class="firstshorts-btn-text">' + ctaText + '</span>');
 
-                ctaRow.append(buyBtn);
-                slide.append(ctaRow);
+                var cartBtn = $('<button type="button" class="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"></button>');
+                cartBtn.html('<span class="firstshorts-btn-symbol"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M20 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span> <span class="firstshorts-btn-text">Add to Cart</span>');
+
+                ctaRow.append(buyBtn, cartBtn);
+                metaContainer.append(ctaRow);
+                slide.append(metaContainer);
+            }
+
+            var showLikes = $('#firstshorts_show_likes').is(':checked');
+            var showSave = $('#firstshorts_show_save').is(':checked');
+            var showShare = $('#firstshorts_show_share').is(':checked');
+            var showViews = $('#firstshorts_show_view_count').is(':checked');
+
+            if (showLikes || showSave || showShare || showViews) {
+                var actionRow = $('<div class="firstshorts-preview-actions"></div>');
+                actionRow.css('pointer-events', 'auto');
+
+                if (showViews) {
+                    var viewBtn = $('<div class="firstshorts-preview-btn firstshorts-preview-btn-overlay firstshorts-preview-btn-stat"><span class="firstshorts-btn-symbol"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></span><span class="firstshorts-btn-count">0</span></div>');
+                    actionRow.append(viewBtn);
+                }
+                if (showLikes) {
+                    var likeBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay"><span class="firstshorts-btn-symbol"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></span><span class="firstshorts-btn-count">0</span></button>');
+                    actionRow.append(likeBtn);
+                }
+                if (showSave) {
+                    var saveBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay"><span class="firstshorts-btn-symbol"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></span></button>');
+                    actionRow.append(saveBtn);
+                }
+                if (showShare) {
+                    var shareBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay"><span class="firstshorts-btn-symbol"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span></button>');
+                    actionRow.append(shareBtn);
+                }
+                slide.append(actionRow);
             }
 
             sliderWrapper.append(slide);
@@ -531,9 +564,15 @@ jQuery(document).ready(function ($) {
         $(document).on('input change', '#firstshorts_video_max_width', function () {
             updatePreview();
         });
+        $(document).on('input change', '#firstshorts_video_max_height', function () {
+            updatePreview();
+        });
         $(document).on('change', '#firstshorts_display_type', function () {
             updateSaveState();
             updateShortcodePreview();
+        });
+        $(document).on('change', '#firstshorts_show_likes, #firstshorts_show_save, #firstshorts_show_share, #firstshorts_show_view_count', function () {
+            updatePreview();
         });
         $(document).on('change input', '.firstshorts-panel-settings input, .firstshorts-panel-settings select', updateSaveState);
         $(document).on('firstshorts:bulk-updated', function () {
@@ -578,16 +617,20 @@ jQuery(document).ready(function ($) {
                 return;
             }
 
+            $(this).prop('disabled', true).text('Saving...');
             $(window).off('beforeunload');
             if (window.onbeforeunload) window.onbeforeunload = null;
-            $('#post_status').val('draft');
-            $('#original_post_status').val('draft');
 
-            var saveBtn = $('#save-post');
-            if (saveBtn.length) {
-                saveBtn.trigger('click');
+            // Find best button to trigger (Publish or Update)
+            var publishBtn = $('#publish');
+            var saveDraftBtn = $('#save-post');
+
+            if (publishBtn.length) {
+                publishBtn.trigger('click');
+            } else if (saveDraftBtn.length) {
+                saveDraftBtn.trigger('click');
             } else {
-                $('#post').trigger('submit');
+                $('#post').submit();
             }
         });
     }
@@ -614,6 +657,11 @@ jQuery(document).ready(function ($) {
             var selection = bulkFrame.state().get('selection');
             addBulkItemsFromSelection(selection);
             renderBulkList();
+            // syncBulkHidden is called inside renderBulkList, but let's be explicit
+            syncBulkHidden();
+            updateSaveState();
+            updatePreview();
+            updateShortcodePreview();
         });
 
         bulkFrame.open();
@@ -626,6 +674,7 @@ jQuery(document).ready(function ($) {
             item.selected = $(this).is(':checked');
         }
         updateBulkActions();
+        $(document).trigger('firstshorts:bulk-updated');
     });
 
     $(document).on('click', '.firstshorts-bulk-select-all', function (e) {

@@ -63,6 +63,7 @@ function firstshorts_video_slider_shortcode($atts)
     $atts = shortcode_atts(array(
         'count' => 5,
         'ids' => '',
+        'post_id' => 0,
     ), $atts);
 
     // Query videos
@@ -97,15 +98,24 @@ function firstshorts_video_slider_shortcode($atts)
 
     // Build video list for React
     $video_list = array();
+    $global_post_id = !empty($atts['post_id']) ? intval($atts['post_id']) : 0;
+
+    // Fetch global options once if post_id is provided
+    $global_options = $global_post_id ? firstshorts_get_display_options($global_post_id) : null;
+
     while ($videos->have_posts()):
         $videos->the_post();
-        $display_options = firstshorts_get_display_options(get_the_ID());
+        $current_video_id = get_the_ID();
+
+        // Use global options or fallback to current video's options
+        $display_options = $global_options ? $global_options : firstshorts_get_display_options($current_video_id);
+
         $video_list[] = array(
-            'id' => get_the_ID(),
+            'id' => $current_video_id,
             'title' => get_the_title(),
             'excerpt' => wp_trim_words(get_the_excerpt(), 15),
-            'thumbnail' => get_the_post_thumbnail_url(get_the_ID(), 'large'),
-            'videoUrl' => wp_get_attachment_url(get_the_ID()),
+            'thumbnail' => get_the_post_thumbnail_url($current_video_id, 'large'),
+            'videoUrl' => wp_get_attachment_url($current_video_id),
             'permalink' => get_permalink(),
             'displayOptions' => array(
                 'showViewCount' => (bool) $display_options['view_count'],
@@ -116,6 +126,7 @@ function firstshorts_video_slider_shortcode($atts)
                 'ctaText' => $display_options['cta_text'],
                 'ctaStyle' => $display_options['cta_style'],
                 'maxWidth' => (int) $display_options['max_width'],
+                'maxHeight' => (int) $display_options['max_height'],
             ),
         );
     endwhile;

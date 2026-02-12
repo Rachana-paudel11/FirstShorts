@@ -12,7 +12,8 @@ const VideoSliderCard = ({ video, index }) => {
     showBuyButton: true,
     ctaText: 'Buy Now',
     ctaStyle: 'primary',
-    maxWidth: 500
+    maxWidth: 500,
+    maxHeight: 600
   };
   const hasCustomOptions = video.displayOptions && Object.keys(video.displayOptions).length > 0;
   const displayOptions = hasCustomOptions
@@ -54,9 +55,15 @@ const VideoSliderCard = ({ video, index }) => {
     console.log('Add to cart clicked');
   };
 
+  const maxWidth = Number(displayOptions.maxWidth) || 500;
+  const maxHeight = Number(displayOptions.maxHeight) || 600;
+  const clampedMaxWidth = Math.min(500, Math.max(200, maxWidth));
+  const clampedMaxHeight = Math.min(1000, Math.max(300, maxHeight));
+
   return (
-    <div className="firstshorts-slide-card" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
-      <div className="firstshorts-slide-media" style={{ boxShadow: 'none', background: 'transparent' }}>
+    <div className="firstshorts-video-container" style={{ maxWidth: `${clampedMaxWidth}px`, padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
+      {/* Video Player */}
+      <div className="firstshorts-video-player-wrapper" style={{ boxShadow: 'none', background: 'transparent', height: `${clampedMaxHeight}px` }}>
         <video
           src={video.videoUrl}
           poster={video.thumbnail}
@@ -67,30 +74,82 @@ const VideoSliderCard = ({ video, index }) => {
           autoPlay
           style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
         />
-        <div className="firstshorts-slide-gradient" style={{ display: 'none' }} />
-        <div className="firstshorts-slide-meta" style={{ bottom: '10px' }}>
-          {displayOptions.showBuyButton && (
-            <div className="firstshorts-slide-cta-row" style={{ justifyContent: 'center' }}>
-              <button
-                className={`firstshorts-btn firstshorts-btn-cta ${displayOptions.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : ''}`}
-                onClick={handleBuyNow}
-                type="button"
-                aria-label={displayOptions.ctaText || 'Buy now'}
-              >
-                <span className="firstshorts-btn-symbol">🛍</span>
-                <span className="firstshorts-btn-text">{displayOptions.ctaText || 'Buy Now'}</span>
-              </button>
-              <button
-                className="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"
-                onClick={handleAddToCart}
-                type="button"
-                aria-label="Add to cart"
-              >
-                <span className="firstshorts-btn-symbol">🛒</span>
-                <span className="firstshorts-btn-text">Add to Cart</span>
-              </button>
+        <div className="firstshorts-preview-overlay" style={{ pointerEvents: 'none' }}>
+          {(displayOptions.showViewCount || displayOptions.showLikes || displayOptions.showSave || displayOptions.showShare) && (
+            <div className="firstshorts-preview-actions" style={{ pointerEvents: 'auto' }}>
+              {displayOptions.showViewCount && (
+                <div className="firstshorts-preview-btn firstshorts-preview-btn-overlay firstshorts-preview-btn-stat">
+                  <span className="firstshorts-btn-symbol">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </span>
+                  <span className="firstshorts-btn-count">{viewCount}</span>
+                </div>
+              )}
+              {displayOptions.showLikes && (
+                <button
+                  type="button"
+                  className={`firstshorts-preview-btn firstshorts-preview-btn-overlay ${liked ? 'active' : ''}`}
+                  onClick={handleLike}
+                >
+                  <span className="firstshorts-btn-symbol">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                  </span>
+                  <span className="firstshorts-btn-count">0</span>
+                </button>
+              )}
+              {displayOptions.showSave && (
+                <button
+                  type="button"
+                  className={`firstshorts-preview-btn firstshorts-preview-btn-overlay ${saved ? 'active' : ''}`}
+                  onClick={handleSave}
+                >
+                  <span className="firstshorts-btn-symbol">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                  </span>
+                </button>
+              )}
+              {displayOptions.showShare && (
+                <button
+                  type="button"
+                  className="firstshorts-preview-btn firstshorts-preview-btn-overlay"
+                  onClick={handleShare}
+                >
+                  <span className="firstshorts-btn-symbol">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                  </span>
+                </button>
+              )}
             </div>
           )}
+
+          <div className="firstshorts-slide-meta" style={{ pointerEvents: 'auto' }}>
+            {displayOptions.showBuyButton && (
+              <div className="firstshorts-slide-cta-row">
+                <button
+                  className={`firstshorts-btn firstshorts-btn-cta ${displayOptions.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : ''}`}
+                  onClick={handleBuyNow}
+                  type="button"
+                  aria-label={displayOptions.ctaText || 'Buy now'}
+                >
+                  <span className="firstshorts-btn-symbol">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                  </span>
+                  <span className="firstshorts-btn-text">{displayOptions.ctaText || 'Buy Now'}</span>
+                </button>
+                <button
+                  className="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"
+                  onClick={handleAddToCart}
+                  type="button"
+                  aria-label="Add to cart"
+                >
+                  <span className="firstshorts-btn-symbol">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M20 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                  </span>
+                  <span className="firstshorts-btn-text">Add to Cart</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

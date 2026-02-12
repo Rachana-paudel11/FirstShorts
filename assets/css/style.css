@@ -146,7 +146,7 @@ body.firstshorts-admin #wpbody-content {
     padding: 14px;
     display: flex;
     flex-direction: column;
-    min-height: 100%;
+    min-height: 750px;
 }
 
 .firstshorts-panel-header {
@@ -170,6 +170,44 @@ body.firstshorts-admin #wpbody-content {
     font-size: 14px;
     font-weight: 700;
     color: #0f172a;
+}
+
+/* Color Coded Headers (Emerald Green Theme) */
+.firstshorts-panel-library .firstshorts-panel-header h3,
+.firstshorts-panel-settings .firstshorts-panel-header h3,
+.firstshorts-shortcode-card .firstshorts-card-header h3,
+.firstshorts-preview-card .firstshorts-card-header h3 {
+    color: #059669;
+    /* Emerald Green */
+}
+
+.firstshorts-panel-library .firstshorts-panel-header,
+.firstshorts-panel-settings .firstshorts-panel-header,
+.firstshorts-shortcode-card .firstshorts-card-header,
+.firstshorts-preview-card .firstshorts-card-header {
+    background: #f0fdf4;
+    /* Subtle Emerald Tint */
+    border-bottom: 2px solid #dcfce7;
+}
+
+.firstshorts-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #059669;
+    /* Emerald Green */
+}
+
+.firstshorts-section {
+    padding: 14px 16px;
+    background: #f0fdf4;
+    /* Section tint */
+    border: 1px solid #dcfce7;
+    border-radius: 12px;
+    margin-bottom: 20px;
 }
 
 .firstshorts-panel-header-content p {
@@ -703,20 +741,97 @@ body.firstshorts-admin .postbox .handle-order-lower {
     font-size: 14px;
 }
 
-.firstshorts-preview-btn-like.active,
-.firstshorts-preview-btn-save.active {
-    color: #ef4444;
+.firstshorts-btn-symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.firstshorts-btn-symbol {
-    display: inline-block;
-    font-size: 1.2em;
+.firstshorts-btn-symbol svg {
+    display: block;
+}
+
+.firstshorts-preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.firstshorts-preview-actions {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 15;
+}
+
+
+.firstshorts-preview-btn-overlay {
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    width: 44px;
+    height: 44px;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.firstshorts-preview-btn-overlay:hover {
+    background: transparent !important;
+    transform: scale(1.1);
+}
+
+.firstshorts-preview-btn-overlay.active {
+    color: #ef4444 !important;
+}
+
+.firstshorts-slide-meta {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 10;
+}
+
+.firstshorts-slide-cta-row,
+.firstshorts-video-cta-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+}
+
+
+.firstshorts-preview-btn-overlay.firstshorts-preview-btn-stat {
+    cursor: default !important;
+}
+
+.firstshorts-preview-btn-overlay.firstshorts-preview-btn-stat:hover {
+    transform: none !important;
 }
 
 .firstshorts-btn-count {
-    display: inline-block;
-    font-weight: 600;
-    font-size: 0.9em;
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 2px;
 }
 
 .firstshorts-preview-video {
@@ -840,18 +955,9 @@ body.firstshorts-admin .postbox .handle-order-lower {
     background: #fdfdff;
 }
 
-.firstshorts-section-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 6px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
+/* Consistently color coded section titles */
 .firstshorts-section-title--accent {
-    color: #0f766e;
+    color: #059669;
 }
 
 /* Checkbox group styling */
@@ -989,6 +1095,12 @@ body.firstshorts-admin .postbox .handle-order-lower {
     align-items: center;
     padding: 10px 12px;
     border-bottom: 1px solid #eef0f3;
+    transition: background 0.2s ease;
+}
+
+.firstshorts-bulk-item.is-selected {
+    background: #f0fdf4;
+    /* Tint for selected videos */
 }
 
 .firstshorts-bulk-item:last-child {

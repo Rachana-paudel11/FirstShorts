@@ -311,10 +311,14 @@ function firstshorts_render_display_options_metabox($post) {
     $show_share = get_post_meta($post->ID, '_firstshorts_show_share', true);
     $show_buy_button = get_post_meta($post->ID, '_firstshorts_show_buy_button', true);
     $max_width = get_post_meta($post->ID, '_firstshorts_video_max_width', true);
+    $max_height = get_post_meta($post->ID, '_firstshorts_video_max_height', true);
     $cta_text = get_post_meta($post->ID, '_firstshorts_cta_text', true);
     $cta_style = get_post_meta($post->ID, '_firstshorts_cta_style', true);
     if (empty($max_width)) {
         $max_width = 500;
+    }
+    if (empty($max_height)) {
+        $max_height = 600;
     }
     if (empty($cta_text)) {
         $cta_text = __('Buy Now', 'firstshorts');
@@ -430,6 +434,21 @@ function firstshorts_render_display_options_metabox($post) {
                    step="10"
                    style="width: 200px;" />
             <p class="description"><?php _e('Recommended: 280–360px', 'firstshorts'); ?></p>
+        </div>
+
+        <div class="firstshorts-meta-field">
+            <label for="firstshorts_video_max_height">
+                <?php _e('Card Height (px)', 'firstshorts'); ?>
+            </label>
+            <input type="number"
+                   id="firstshorts_video_max_height"
+                   name="firstshorts_video_max_height"
+                   value="<?php echo esc_attr($max_height); ?>"
+                   min="300"
+                   max="1000"
+                   step="10"
+                   style="width: 200px;" />
+            <p class="description"><?php _e('Recommended: 500–700px', 'firstshorts'); ?></p>
         </div>
     <?php
 }
@@ -591,12 +610,13 @@ function firstshorts_render_shortcodes_metabox($post) {
     $slider_shortcode = '[firstshorts_video_slider';
     if (!empty($ids_array)) {
         $slider_shortcode .= ' ids="' . esc_attr(implode(',', $ids_array)) . '"';
+        $slider_shortcode .= ' post_id="' . $post->ID . '"';
         $slider_shortcode .= ' count="' . count($ids_array) . '"';
     } else {
         $slider_shortcode .= ' count="5"';
     }
     $slider_shortcode .= ']';
-
+    $video_url = get_post_meta($post->ID, '_firstshorts_video_url', true);
     ?>
     <div class="firstshorts-shortcode-box firstshorts-shortcode-decongested">
         <?php if ($post_status === 'auto-draft' || (empty($saved_once) && empty($bulk_ids) && empty($video_url))) : ?>
@@ -813,6 +833,9 @@ function firstshorts_save_video_meta($post_id) {
         }
     }
 
+    // Mark as saved once to enable shortcodes
+    update_post_meta($post_id, '_firstshorts_saved_once', '1');
+
     if (isset($_POST['firstshorts_video_max_width'])) {
         $max_width = absint($_POST['firstshorts_video_max_width']);
         if ($max_width < 200) {
@@ -824,6 +847,20 @@ function firstshorts_save_video_meta($post_id) {
             $post_id,
             '_firstshorts_video_max_width',
             $max_width
+        );
+    }
+
+    if (isset($_POST['firstshorts_video_max_height'])) {
+        $max_height = absint($_POST['firstshorts_video_max_height']);
+        if ($max_height < 300) {
+            $max_height = 300;
+        } elseif ($max_height > 1000) {
+            $max_height = 1000;
+        }
+        update_post_meta(
+            $post_id,
+            '_firstshorts_video_max_height',
+            $max_height
         );
     }
     
@@ -864,12 +901,14 @@ function firstshorts_enqueue_admin_scripts($hook) {
     );
 
     // Pass data to JavaScript
+    global $post;
     wp_localize_script('firstshorts-admin', 'firstshortsAdmin', array(
         'uploadTitle' => __('Select Video', 'firstshorts'),
         'uploadButton' => __('Use this video', 'firstshorts'),
         'allowedTypes' => array('video/mp4', 'video/webm', 'video/ogg'),
         'nonce'        => wp_create_nonce('firstshorts_video_nonce'),
         'ajaxUrl'      => admin_url('admin-ajax.php'),
+        'postId'       => $post->ID,
     ));
 }
 add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_scripts');
@@ -907,6 +946,7 @@ function firstshorts_get_display_options($post_id) {
         'cta_text' => 'Buy Now',
         'cta_style' => 'primary',
         'max_width' => 500,
+        'max_height' => 600,
     );
 
     $view_count = get_post_meta($post_id, '_firstshorts_show_view_count', true);
@@ -915,6 +955,7 @@ function firstshorts_get_display_options($post_id) {
     $share = get_post_meta($post_id, '_firstshorts_show_share', true);
     $buy_button = get_post_meta($post_id, '_firstshorts_show_buy_button', true);
     $max_width = get_post_meta($post_id, '_firstshorts_video_max_width', true);
+    $max_height = get_post_meta($post_id, '_firstshorts_video_max_height', true);
 
     $cta_text = get_post_meta($post_id, '_firstshorts_cta_text', true);
     $cta_style = get_post_meta($post_id, '_firstshorts_cta_style', true);
@@ -927,6 +968,7 @@ function firstshorts_get_display_options($post_id) {
     $cta_text = $cta_text === '' ? $defaults['cta_text'] : $cta_text;
     $cta_style = $cta_style === '' ? $defaults['cta_style'] : $cta_style;
     $max_width = $max_width === '' ? $defaults['max_width'] : (int) $max_width;
+    $max_height = $max_height === '' ? $defaults['max_height'] : (int) $max_height;
 
     // Query database for each button setting and convert to boolean
     return array(
@@ -938,6 +980,7 @@ function firstshorts_get_display_options($post_id) {
         'cta_text' => $cta_text,
         'cta_style' => $cta_style,
         'max_width' => $max_width,
+        'max_height' => $max_height,
     );
 }
 
