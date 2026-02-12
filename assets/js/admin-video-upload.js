@@ -135,6 +135,7 @@ jQuery(document).ready(function ($) {
                 id: data.id,
                 label: data.title || data.filename || ('Video ' + data.id),
                 filename: data.filename || '',
+                url: data.url || '', // proper video URL
                 icon: data.icon || '',
                 bytes: data.filesizeInBytes || 0,
                 sizeLabel: data.filesizeHumanReadable || '',
@@ -170,23 +171,173 @@ jQuery(document).ready(function ($) {
             bulkItems = initIds.map(function (id) {
                 return {
                     id: id,
-                    label: 'Video ID ' + id,
-                    filename: '',
+                    label: 'Video ID ' + id, // Placeholder until fetched
+                    filename: 'Loading...',
+                    url: '',
                     icon: '',
                     bytes: 0,
-                    sizeLabel: '',
+                    sizeLabel: '--',
                     typeLabel: 'VIDEO',
                     selected: false
                 };
             });
-            setBulkFeedback('Loaded previous selections. Save to refresh details.', 'warning');
+
+            // Fetch actual details for each video
+            initIds.forEach(function (id) {
+                $.ajax({
+                    url: firstshortsAdmin.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'firstshorts_get_video_details',
+                        id: id,
+                        nonce: firstshortsAdmin.nonce
+                    },
+                    success: function (response) {
+                        if (response.success && response.data) {
+                            var item = bulkItems.find(function (i) { return i.id === response.data.id; });
+                            if (item) {
+                                item.label = response.data.label || item.label;
+                                item.filename = response.data.filename;
+                                item.url = response.data.url;
+                                item.icon = response.data.icon;
+                                item.bytes = response.data.bytes;
+                                item.sizeLabel = response.data.sizeLabel;
+                                // Re-render to show updated details
+                                renderBulkList();
+                                // Update preview if this is the first item
+                                if (bulkItems.indexOf(item) === 0) {
+                                    updatePreview();
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+
+            setBulkFeedback('Loaded ' + initIds.length + ' saved videos.', 'success');
         }
+    }
+    // --- Helper Functions (Hoisted) ---
+
+    function toggleVideoUrlError(show) {
+        var field = $('#firstshorts_video_url');
+        var error = field.closest('.firstshorts-meta-field').find('.firstshorts-inline-error');
+        if (!error.length) return;
+        error.toggle(!!show);
+    }
+
+    function updateShortcodePreview() {
+        var type = $('#firstshorts_display_type').val();
+        var grid = $('.firstshorts-shortcode-grid');
+        if (!grid.length) return;
+        grid.attr('data-display-type', type || '');
+        grid.find('.firstshorts-shortcode-item').addClass('is-hidden');
+        if (type) {
+            grid.find('.firstshorts-shortcode-item[data-shortcode-type="' + type + '"]').removeClass('is-hidden');
+        }
+    }
+
+    function updatePreview() {
+        var previewContentBox = $('.firstshorts-admin-preview-wrapper');
+        // If wrapper not found (maybe legacy), try the container directly
+        if (!previewContentBox.length) previewContentBox = $('.firstshorts-preview-video-container').parent();
+
+        var container = previewContentBox.find('.firstshorts-preview-video-container');
+        var previewEmpty = previewContentBox.find('.firstshorts-preview-empty');
+
+        // Fallback if structure is different
+        if (!container.length) container = $('.firstshorts-preview-video-container');
+        if (!previewEmpty.length) previewEmpty = $('.firstshorts-preview-empty');
+
+        if (!container.length) return;
+
+        var videoUrls = [];
+        var manualUrl = $('#firstshorts_video_url').val() ? $('#firstshorts_video_url').val().trim() : '';
+        if (manualUrl) {
+            videoUrls.push(manualUrl);
+        } else {
+            bulkItems.forEach(function (item) {
+                if (item.url) videoUrls.push(item.url);
+            });
+        }
+
+        if (videoUrls.length === 0) {
+            container.hide();
+            if (previewEmpty.length) previewEmpty.show();
+            return;
+        }
+
+        if (previewEmpty.length) previewEmpty.hide();
+        container.show();
+
+        var sliderProps = {
+            display: 'flex',
+            overflowX: 'auto',
+            scrollSnapType: 'x mandatory',
+            height: '100%',
+            width: '100%',
+            scrollbarWidth: 'none'
+        };
+
+        var sliderWrapper = container.find('.firstshorts-preview-slider');
+        if (!sliderWrapper.length) {
+            // Remove legacy video tag if present
+            container.find('.firstshorts-preview-video').remove();
+
+            sliderWrapper = $('<div class="firstshorts-preview-slider"></div>');
+            sliderWrapper.css(sliderProps);
+            var style = $('<style>.firstshorts-preview-slider::-webkit-scrollbar { display: none; }</style>');
+            container.append(style, sliderWrapper);
+            var overlay = container.find('.firstshorts-preview-overlay');
+            if (overlay.length) container.append(overlay);
+        }
+
+        sliderWrapper.empty();
+
+        videoUrls.forEach(function (url) {
+            var slide = $('<div class="firstshorts-preview-slide"></div>');
+            slide.css({
+                minWidth: '100%',
+                scrollSnapAlign: 'start',
+                height: '100%',
+                position: 'relative',
+                backgroundColor: '#000'
+            });
+            var video = $('<video playsinline loop muted></video>');
+            video.attr('src', url);
+            video.css({ width: '100%', height: '100%', objectFit: 'cover' });
+            video.on('click', function () {
+                if (this.paused) this.play(); else this.pause();
+            });
+            slide.append(video);
+            sliderWrapper.append(slide);
+        });
+    }
+
+    function updateSaveState() {
+        var videoUrlField = $('#firstshorts_video_url');
+        var hasVideoInput = videoUrlField.val() && videoUrlField.val().trim() !== '';
+        var hasBulkSelection = bulkItems.length > 0;
+        var hasVideo = hasVideoInput || hasBulkSelection;
+
+        // Visual feedback
+        var actions = $('.firstshorts-main-actions');
+        var hint = actions.find('.firstshorts-save-hint');
+
+        if (!hasVideo) {
+            hint.text('Select at least one video or enter a URL');
+        } else {
+            hint.text('Ready to save settings');
+        }
+        toggleVideoUrlError(!hasVideo);
     }
 
     function initFirstshortsAdminLayout() {
         if ($('.firstshorts-admin-main-box').length) {
             return;
         }
+
+        // Meta box shells
         var displayBox = $('#firstshorts_video_display_options');
         var detailsBox = $('#firstshorts_video_details');
         var thumbnailBox = $('#postimagediv');
@@ -197,236 +348,136 @@ jQuery(document).ready(function ($) {
             return;
         }
 
+        // Create Builder Layout
         var mainWrapper = $('<div class="firstshorts-admin-main-box firstshorts-builder"></div>');
         var builderLayout = $('<div class="firstshorts-builder-layout"></div>');
+
         var leftPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-library">' +
-                '<div class="firstshorts-panel-header">' +
-                    '<h3>Video Library</h3>' +
-                    '<p>Choose videos from your media library.</p>' +
-                '</div>' +
-                '<div class="firstshorts-panel-body"></div>' +
+            '<div class="firstshorts-panel-header">' +
+            '<div class="firstshorts-panel-header-content">' +
+            '<h3>Video Library</h3>' +
+            '<p>Choose videos from your media library</p>' +
+            '</div>' +
+            '<button type="button" id="firstshorts_bulk_upload_btn" class="button firstshorts-upload-btn">Add Video</button>' +
+            '</div>' +
+            '<div class="firstshorts-panel-body"></div>' +
             '</section>'
         );
+
         var centerPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-preview">' +
-                '<div class="firstshorts-panel-header">' +
-                    '<h3>Slider Preview</h3>' +
-                    '<div class="firstshorts-panel-actions">' +
-                        '<button type="button" class="firstshorts-device-btn is-active">Desktop</button>' +
-                        '<button type="button" class="firstshorts-device-btn">Tablet</button>' +
-                        '<button type="button" class="firstshorts-device-btn">Mobile</button>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="firstshorts-panel-body"></div>' +
+            '<div class="firstshorts-panel-header">' +
+            '<div class="firstshorts-panel-header-content">' +
+            '<h3>Preview & Shortcode</h3>' +
+            '<p>Preview your video slider and copy shortcode</p>' +
+            '</div>' +
+            '<div class="firstshorts-panel-actions">' +
+            '<button type="button" class="firstshorts-device-btn is-active">Desktop</button>' +
+            '<button type="button" class="firstshorts-device-btn">Tablet</button>' +
+            '<button type="button" class="firstshorts-device-btn">Mobile</button>' +
+            '</div>' +
+            '</div>' +
+            '<div class="firstshorts-panel-body firstshorts-admin-preview-wrapper"></div>' +
             '</section>'
         );
+
         var rightPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-settings">' +
-                '<div class="firstshorts-panel-header">' +
-                    '<h3>Settings</h3>' +
-                    '<p>Adjust layout, CTA, and visibility.</p>' +
-                '</div>' +
-                '<div class="firstshorts-panel-body"></div>' +
+            '<div class="firstshorts-panel-header">' +
+            '<div class="firstshorts-panel-header-content">' +
+            '<h3>Settings</h3>' +
+            '<p>Configure display options and appearance</p>' +
+            '</div>' +
+            '</div>' +
+            '<div class="firstshorts-panel-body"></div>' +
             '</section>'
         );
+
         var actions = $(
             '<div class="firstshorts-main-actions">' +
-                '<span class="firstshorts-save-hint">Make changes to enable save</span>' +
-                '<button type="button" class="button button-primary firstshorts-save-btn">Save Short</button>' +
+            '<span class="firstshorts-save-hint">Ready to save settings</span>' +
+            '<button type="button" class="button button-primary firstshorts-save-btn">Save Short</button>' +
             '</div>'
         );
 
-        displayBox.before(mainWrapper);
-        mainWrapper.append(builderLayout);
         builderLayout.append(leftPanel, centerPanel, rightPanel);
+        mainWrapper.append(builderLayout);
 
-        leftPanel.find('.firstshorts-panel-body').append(detailsBox);
-        
-        // Move thumbnail box to the end of the left panel
+        // Inject inside form
+        $('#titlediv').after(mainWrapper);
+
+        // --- Move CONTENT ---
+
+        // Left Content
+        var detailsContent = detailsBox.find('.inside').children();
+        if (detailsContent.length) {
+            leftPanel.find('.firstshorts-panel-body').append(detailsContent);
+            // Hide duplicate button inside content
+            leftPanel.find('#firstshorts_bulk_upload_btn').not('.firstshorts-upload-btn').closest('.firstshorts-video-actions').hide();
+        }
+        detailsBox.hide();
+
         if (thumbnailBox.length) {
-            leftPanel.find('.firstshorts-panel-body').append(thumbnailBox);
-        }
-
-        if (shortcodeBox.length) {
-            centerPanel.find('.firstshorts-panel-body').append(shortcodeBox);
-        }
-        if (previewBox.length) {
-            centerPanel.find('.firstshorts-panel-body').append(previewBox);
-        }
-
-        rightPanel.find('.firstshorts-panel-body').append(displayBox).append(actions);
-
-        if (thumbnailBox.length) {
-            var metaRow = $('.firstshorts-meta-row');
-            if (metaRow.length) {
-                metaRow.remove();
+            var thumbContent = thumbnailBox.find('.inside').children();
+            if (thumbContent.length) {
+                var thumbWrapper = $('<div class="firstshorts-thumbnail-wrapper"><h3>Thumbnail</h3></div>');
+                thumbWrapper.append(thumbContent);
+                leftPanel.find('.firstshorts-panel-body').append(thumbWrapper);
             }
+            thumbnailBox.hide();
         }
 
-        // Move editor below the meta row
+        // Center Content
+        if (shortcodeBox.length) {
+            centerPanel.find('.firstshorts-panel-body').append(shortcodeBox.find('.inside').children());
+            shortcodeBox.hide();
+        }
+
+        if (previewBox.length) {
+            centerPanel.find('.firstshorts-panel-body').append(previewBox.find('.inside').children());
+            previewBox.hide();
+        }
+
+        // Right Content
+        if (displayBox.length) {
+            rightPanel.find('.firstshorts-panel-body').append(displayBox.find('.inside').children());
+            rightPanel.find('.firstshorts-panel-body').append(actions);
+            displayBox.hide();
+        }
+
+        $('.firstshorts-meta-row').remove();
+
         var editorWrapper = $('#postdivrich');
         if (editorWrapper.length) {
-            var metaRowCheck = $('.firstshorts-meta-row');
-            if (metaRowCheck.length) {
-                metaRowCheck.after(editorWrapper);
-            } else {
-                mainWrapper.after(editorWrapper);
-            }
+            mainWrapper.after(editorWrapper);
         }
 
-        var saveBtn = $('#save-post');
-        var videoUrlField = $('#firstshorts_video_url');
-        var displayTypeField = $('#firstshorts_display_type');
-        var displayCheckboxes = displayBox.find('input[type="checkbox"]');
-        var videoDurationField = $('#firstshorts_video_duration');
-        var maxWidthField = $('#firstshorts_video_max_width');
-        var initialDisplayState = {};
-        displayCheckboxes.each(function () {
-            initialDisplayState[this.id] = this.checked ? '1' : '0';
-        });
-        var initialDisplayType = displayTypeField.val();
-        var initialVideoUrl = videoUrlField.val();
-        var initialVideoDuration = videoDurationField.val();
-        var initialMaxWidth = maxWidthField.val();
-        var initialBulkIdsSnapshot = initialBulkIds || '';
-
-        function toggleVideoUrlError(show) {
-            var error = videoUrlField.closest('.firstshorts-meta-field').find('.firstshorts-inline-error');
-            if (!error.length) {
-                return;
-            }
-            error.toggle(!!show);
-        }
-
-        function updateSaveState() {
-            var hasVideoInput = videoUrlField.val().trim() !== '';
-            var hasBulkSelection = bulkItems.length > 0;
-            var hasVideo = hasVideoInput || hasBulkSelection;
-            var hasDisplayChange = false;
-            displayCheckboxes.each(function () {
-                if ((this.checked ? '1' : '0') !== initialDisplayState[this.id]) {
-                    hasDisplayChange = true;
-                }
-            });
-            if (displayTypeField.val() !== initialDisplayType) {
-                hasDisplayChange = true;
-            }
-
-            var hasVideoDetailsChange = false;
-            if (videoUrlField.val() !== initialVideoUrl) {
-                hasVideoDetailsChange = true;
-            }
-            if (videoDurationField.val() !== initialVideoDuration) {
-                hasVideoDetailsChange = true;
-            }
-            if (maxWidthField.val() !== initialMaxWidth) {
-                hasVideoDetailsChange = true;
-            }
-            var currentBulkIds = $('#firstshorts_bulk_video_ids').val() || '';
-            var hasBulkChange = currentBulkIds !== initialBulkIdsSnapshot;
-
-            var hint = actions.find('.firstshorts-save-hint');
-            if (!hasVideo) {
-                hint.text('Select at least one video or enter a URL');
-            } else if (!hasDisplayChange && !hasVideoDetailsChange && !hasBulkChange) {
-                hint.text('Change at least one setting');
-            } else {
-                hint.text('Ready to save settings');
-            }
-            toggleVideoUrlError(!hasVideo);
-        }
-
-
-        function updateShortcodePreview() {
-            var type = displayTypeField.val();
-            var grid = $('.firstshorts-shortcode-grid');
-            if (!grid.length) {
-                return;
-            }
-            grid.attr('data-display-type', type || '');
-            grid.find('.firstshorts-shortcode-item').addClass('is-hidden');
-            if (type) {
-                grid
-                    .find('.firstshorts-shortcode-item[data-shortcode-type="' + type + '"]')
-                    .removeClass('is-hidden');
-            }
-        }
-
-        function updatePreview() {
-            if (!previewBox.length) {
-                return;
-            }
-            var previewVideo = previewBox.find('.firstshorts-preview-video');
-            var previewEmpty = previewBox.find('.firstshorts-preview-empty');
-            var url = videoUrlField.val().trim();
-            if (!url) {
-                previewVideo.attr('src', '').hide();
-                previewEmpty.show();
-                return;
-            }
-            previewVideo.attr('src', url).show();
-            previewEmpty.hide();
-        }
-
-        function showFirstshortsToast(message) {
-            var toast = $('#firstshorts-admin-toast');
-            if (!toast.length) {
-                toast = $('<div id="firstshorts-admin-toast" class="firstshorts-admin-toast"></div>');
-                $('body').append(toast);
-            }
-            toast.text(message).addClass('is-visible');
-            clearTimeout(toast.data('timeoutId'));
-            var timeoutId = setTimeout(function () {
-                toast.removeClass('is-visible');
-            }, 2200);
-            toast.data('timeoutId', timeoutId);
-        }
-
+        // --- Init Functionality ---
         updateSaveState();
         updatePreview();
         updateShortcodePreview();
 
-        videoUrlField.on('input', function () {
+        // Bind Events
+        $(document).on('input', '#firstshorts_video_url', function () {
             updateSaveState();
             updatePreview();
         });
-        displayTypeField.on('change', function () {
+        $(document).on('change', '#firstshorts_display_type', function () {
             updateSaveState();
             updateShortcodePreview();
         });
-        displayCheckboxes.on('change', updateSaveState);
-        videoDurationField.on('input', updateSaveState);
-        maxWidthField.on('input', updateSaveState);
-        $(document).on('firstshorts:bulk-updated', updateSaveState);
+        $(document).on('change input', '.firstshorts-panel-settings input, .firstshorts-panel-settings select', updateSaveState);
+        $(document).on('firstshorts:bulk-updated', function () {
+            updateSaveState();
+            updatePreview();
+        });
 
-        // Save Settings always keeps draft status
+        // Save Button
         mainWrapper.on('click', '.firstshorts-save-btn', function () {
-            var hasVideoInput = videoUrlField.val().trim() !== '';
-            var hasBulkSelection = bulkItems.length > 0;
-            var hasVideo = hasVideoInput || hasBulkSelection;
-            var hasDisplayChange = false;
-            displayCheckboxes.each(function () {
-                if ((this.checked ? '1' : '0') !== initialDisplayState[this.id]) {
-                    hasDisplayChange = true;
-                }
-            });
-            if (displayTypeField.val() !== initialDisplayType) {
-                hasDisplayChange = true;
-            }
-
-            var hasVideoDetailsChange = false;
-            if (videoUrlField.val() !== initialVideoUrl) {
-                hasVideoDetailsChange = true;
-            }
-            if (videoDurationField.val() !== initialVideoDuration) {
-                hasVideoDetailsChange = true;
-            }
-            if (maxWidthField.val() !== initialMaxWidth) {
-                hasVideoDetailsChange = true;
-            }
-            var currentBulkIds = $('#firstshorts_bulk_video_ids').val() || '';
-            var hasBulkChange = currentBulkIds !== initialBulkIdsSnapshot;
+            // Validation
+            var videoUrlField = $('#firstshorts_video_url');
+            var hasVideo = videoUrlField.val() || bulkItems.length > 0;
 
             if (!hasVideo) {
                 toggleVideoUrlError(true);
@@ -434,17 +485,12 @@ jQuery(document).ready(function ($) {
                 return;
             }
 
-            if (!hasDisplayChange && !hasVideoDetailsChange && !hasBulkChange) {
-                showFirstshortsToast('Please change at least one setting before saving.');
-                return;
-            }
-
             $(window).off('beforeunload');
-            if (window.onbeforeunload) {
-                window.onbeforeunload = null;
-            }
+            if (window.onbeforeunload) window.onbeforeunload = null;
             $('#post_status').val('draft');
             $('#original_post_status').val('draft');
+
+            var saveBtn = $('#save-post');
             if (saveBtn.length) {
                 saveBtn.trigger('click');
             } else {
@@ -452,6 +498,8 @@ jQuery(document).ready(function ($) {
             }
         });
     }
+
+    // --- Global Event Listeners ---
 
     // Bulk upload button
     $(document).on('click', '#firstshorts_bulk_upload_btn', function (e) {
@@ -515,6 +563,7 @@ jQuery(document).ready(function ($) {
         setBulkFeedback('Video removed.', 'success');
     });
 
+    // Initialize
     renderBulkList();
     initFirstshortsAdminLayout();
     document.body.classList.remove('firstshorts-admin-loading');

@@ -30,6 +30,7 @@ function firstshorts_ajax_get_video_details() {
     $label        = get_the_title($id);
     $filename     = '';
     $icon         = '';
+    $url          = '';
     $bytes        = 0;
     $sizeLabel    = '0 B';
 
@@ -39,6 +40,7 @@ function firstshorts_ajax_get_video_details() {
         $filename  = basename($file_path);
         // Use WordPress native function for mime type icon
         $icon      = wp_mime_type_icon($id); 
+        $url       = wp_get_attachment_url($id);
         
         if ($file_path && file_exists($file_path)) {
             $bytes     = filesize($file_path);
@@ -54,6 +56,7 @@ function firstshorts_ajax_get_video_details() {
 
         if ($attachment_id) {
             $file_path = get_attached_file($attachment_id);
+            $url       = wp_get_attachment_url($attachment_id);
             if ($file_path && file_exists($file_path)) {
                 $bytes     = filesize($file_path);
                 $sizeLabel = size_format($bytes, 2);
@@ -66,6 +69,7 @@ function firstshorts_ajax_get_video_details() {
         'id'        => $id,
         'label'     => $label,
         'filename'  => $filename,
+        'url'       => $url,
         'icon'      => $icon,
         'typeLabel' => 'VIDEO',
         'bytes'     => $bytes,
@@ -845,6 +849,8 @@ function firstshorts_enqueue_admin_scripts($hook) {
         'uploadTitle' => __('Select Video', 'firstshorts'),
         'uploadButton' => __('Use this video', 'firstshorts'),
         'allowedTypes' => array('video/mp4', 'video/webm', 'video/ogg'),
+        'nonce'        => wp_create_nonce('firstshorts_video_nonce'),
+        'ajaxUrl'      => admin_url('admin-ajax.php'),
     ));
 }
 add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_scripts');

@@ -47,7 +47,8 @@ body.firstshorts-admin #wpbody-content {
 }
 
 .firstshorts-shortcode-after-title h2 {
-    display: none; /* Hide heading since context is clear */
+    display: none;
+    /* Hide heading since context is clear */
 }
 
 /* Split-screen container for meta boxes */
@@ -89,7 +90,7 @@ body.firstshorts-admin #wpbody-content {
     margin-bottom: 22px;
 }
 
-.firstshorts-meta-row > .postbox {
+.firstshorts-meta-row>.postbox {
     margin: 0;
     width: 100%;
 }
@@ -125,6 +126,18 @@ body.firstshorts-admin #wpbody-content {
     align-items: stretch;
 }
 
+@media screen and (max-width: 1440px) {
+    .firstshorts-builder-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media screen and (min-width: 1441px) and (max-width: 1680px) {
+    .firstshorts-builder-layout {
+        grid-template-columns: minmax(240px, 1fr) minmax(0, 1.5fr) minmax(240px, 1fr);
+    }
+}
+
 .firstshorts-panel {
     background: #ffffff;
     border: 1px solid #e7e9f3;
@@ -137,33 +150,40 @@ body.firstshorts-admin #wpbody-content {
 }
 
 .firstshorts-panel-header {
-    padding: 10px 10px 12px;
+    padding: 14px 16px;
     border-bottom: 1px solid #eef0f5;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
-.firstshorts-panel-header h3 {
+.firstshorts-panel-header-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.firstshorts-panel-header-content h3 {
     margin: 0 0 4px;
     font-size: 14px;
     font-weight: 700;
     color: #0f172a;
-    white-space: nowrap;
 }
 
-.firstshorts-panel-header p {
+.firstshorts-panel-header-content p {
     margin: 0;
-    font-size: 12px;
+    font-size: 11.5px;
     color: #6b7280;
+    line-height: 1.4;
 }
 
 .firstshorts-panel-actions {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .firstshorts-search {
@@ -221,6 +241,10 @@ body.firstshorts-admin #wpbody-content {
     flex: 1;
 }
 
+.firstshorts-panel-preview .firstshorts-panel-body {
+    overflow: visible;
+}
+
 .firstshorts-panel-library .firstshorts-meta-field label,
 .firstshorts-panel-settings .firstshorts-meta-field label {
     font-size: 12px;
@@ -236,8 +260,29 @@ body.firstshorts-admin #wpbody-content {
 .firstshorts-panel-preview .firstshorts-shortcode-box {
     border: 1px solid #eef0f5;
     border-radius: 14px;
-    padding: 12px;
+    padding: 0;
     background: #fbfcff;
+    overflow: hidden;
+}
+
+.firstshorts-panel-preview .firstshorts-shortcode-box::before {
+    content: "Shortcode";
+    display: block;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 10px 12px;
+    background: #f7f8fd;
+    border-bottom: 1px solid #eef0f5;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+}
+
+.firstshorts-panel-preview .firstshorts-shortcode-box>* {
+    padding: 12px;
+}
+
+.firstshorts-panel-preview .firstshorts-shortcode-box>p {
+    margin: 0;
 }
 
 /* Video Upload Actions */
@@ -256,9 +301,39 @@ body.firstshorts-admin #wpbody-content {
     font-size: 13px;
 }
 
+/* Upload button in panel header */
+.firstshorts-panel-header .firstshorts-upload-btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 12px;
+    white-space: nowrap;
+    border-color: #d1d5db;
+    background: #f9fafb;
+    flex-shrink: 0;
+}
+
+.firstshorts-panel-header .firstshorts-upload-btn:hover {
+    background: #ffffff;
+    border-color: #cbd5f5;
+}
+
+@media screen and (max-width: 1600px) {
+    .firstshorts-panel-header .firstshorts-upload-btn {
+        font-size: 11px;
+        padding: 7px 12px;
+    }
+}
+
 /* Hide Manual URL and Duration Fields */
 .firstshorts-video-source-field,
 .firstshorts-duration-field {
+    display: none !important;
+}
+
+/* Hide the old "Select Multiple Videos" button inside the moved content */
+.firstshorts-panel-library .firstshorts-video-actions,
+.firstshorts-panel-library #firstshorts_bulk_upload_btn:not(.firstshorts-upload-btn) {
     display: none !important;
 }
 
@@ -921,6 +996,7 @@ body.firstshorts-admin .postbox .handle-order-lower {
     #firstshorts_video_preview {
         width: 100% !important;
     }
+
     .firstshorts-main-actions {
         justify-content: stretch;
     }

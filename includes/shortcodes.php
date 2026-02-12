@@ -8,7 +8,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-function firstshorts_mark_no_cache() {
+function firstshorts_mark_no_cache()
+{
     if (!defined('DONOTCACHEPAGE')) {
         define('DONOTCACHEPAGE', true);
     }
@@ -18,7 +19,8 @@ function firstshorts_mark_no_cache() {
     }
 }
 
-function firstshorts_maybe_disable_cache_on_shortcodes() {
+function firstshorts_maybe_disable_cache_on_shortcodes()
+{
     if (is_admin()) {
         return;
     }
@@ -33,8 +35,10 @@ function firstshorts_maybe_disable_cache_on_shortcodes() {
             continue;
         }
 
-        if (has_shortcode($post->post_content, 'firstshorts_video') ||
-            has_shortcode($post->post_content, 'firstshorts_video_slider')) {
+        if (
+            has_shortcode($post->post_content, 'firstshorts_video') ||
+            has_shortcode($post->post_content, 'firstshorts_video_slider')
+        ) {
             firstshorts_mark_no_cache();
             return;
         }
@@ -51,22 +55,36 @@ add_action('template_redirect', 'firstshorts_maybe_disable_cache_on_shortcodes')
  * [firstshorts_video_slider]
  * [firstshorts_video_slider count="10"]
  */
-function firstshorts_video_slider_shortcode($atts) {
+function firstshorts_video_slider_shortcode($atts)
+{
     firstshorts_mark_no_cache();
 
     // Extract shortcode attributes
     $atts = shortcode_atts(array(
         'count' => 5,
+        'ids' => '',
     ), $atts);
 
     // Query videos
     $args = array(
-        'post_type'      => 'firstshorts_video',
+        'post_type' => 'attachment', // Fix: Query attachments directly
+        'post_status' => 'inherit',    // Attachments have 'inherit' status
+        'post_mime_type' => 'video',      // Ensure we only get videos
         'posts_per_page' => intval($atts['count']),
-        'orderby'        => 'date',
-        'order'          => 'DESC',
-        'post_status'    => array('publish', 'draft'),
+        'orderby' => 'date',
+        'order' => 'DESC',
     );
+
+    // If specific IDs are provided, prioritize them
+    if (!empty($atts['ids'])) {
+        $ids_array = array_map('absint', explode(',', $atts['ids']));
+        if (!empty($ids_array)) {
+            $args['post__in'] = $ids_array;
+            $args['orderby'] = 'post__in'; // Preserve order
+            // Ensure we get all selected videos regardless of count limit if specified
+            $args['posts_per_page'] = -1;
+        }
+    }
 
     $videos = new WP_Query($args);
 
