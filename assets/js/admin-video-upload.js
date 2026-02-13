@@ -32,10 +32,18 @@ jQuery(document).ready(function ($) {
     }
 
     function syncBulkHidden() {
-        var ids = bulkItems
-            .filter(function (item) { return item.selected; })
-            .map(function (item) { return item.id; });
+        var selectedItems = bulkItems.filter(function (item) { return item.selected; });
+        var ids = selectedItems.map(function (item) { return item.id; });
         $('#firstshorts_bulk_video_ids').val(ids.join(','));
+
+        // Save metadata (like description) per video
+        var bulkData = {};
+        selectedItems.forEach(function (item) {
+            bulkData[item.id] = {
+                description: item.description || ''
+            };
+        });
+        $('#firstshorts_bulk_video_data').val(JSON.stringify(bulkData));
     }
 
     function updateBulkSummary() {
@@ -103,7 +111,17 @@ jQuery(document).ready(function ($) {
             var removeBtn = $('<button type="button" class="button-link firstshorts-bulk-remove">Remove</button>');
             removeBtn.data('id', item.id);
 
-            row.append(checkbox, preview, meta, removeBtn);
+            // Add description field
+            var descWrapper = $('<div class="firstshorts-bulk-desc-row"></div>');
+            var descInput = $('<textarea class="firstshorts-bulk-desc-input" placeholder="Add specific description for this video..."></textarea>');
+            descInput.val(item.description || '');
+            descInput.on('input', function () {
+                item.description = $(this).val();
+                syncBulkHidden();
+            });
+            descWrapper.append(descInput);
+
+            row.append(checkbox, preview, meta, removeBtn, descWrapper);
             list.append(row);
         });
 
@@ -168,7 +186,14 @@ jQuery(document).ready(function ($) {
         }).filter(function (id) {
             return id;
         });
+
         if (initIds.length) {
+            var bulkDataRaw = $('#firstshorts_bulk_video_data').val();
+            var bulkData = {};
+            try {
+                if (bulkDataRaw) bulkData = JSON.parse(bulkDataRaw);
+            } catch (e) { console.error('Failed to parse bulk data', e); }
+
             bulkItems = initIds.map(function (id) {
                 return {
                     id: id,
@@ -179,7 +204,8 @@ jQuery(document).ready(function ($) {
                     bytes: 0,
                     sizeLabel: '--',
                     typeLabel: 'VIDEO',
-                    selected: true
+                    selected: true,
+                    description: (bulkData[id] && bulkData[id].description) ? bulkData[id].description : ''
                 };
             });
 

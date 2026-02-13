@@ -315,6 +315,7 @@ function firstshorts_render_display_options_metabox($post) {
     $cta_text = get_post_meta($post->ID, '_firstshorts_cta_text', true);
     $cta_link = get_post_meta($post->ID, '_firstshorts_cta_link', true);
     $cta_style = get_post_meta($post->ID, '_firstshorts_cta_style', true);
+    $product_description = get_post_meta($post->ID, '_firstshorts_product_description', true);
     if (empty($max_width)) {
         $max_width = 500;
     }
@@ -432,6 +433,18 @@ function firstshorts_render_display_options_metabox($post) {
                 </select>
             </div>
 
+            <div class="firstshorts-meta-field">
+                <label for="firstshorts_product_description">
+                    <?php _e('Short Description', 'firstshorts'); ?>
+                </label>
+                <textarea id="firstshorts_product_description" 
+                          name="firstshorts_product_description" 
+                          rows="4" 
+                          style="width: 100%; border-radius: 10px; border-color: #d1d5db; padding: 10px;"
+                          placeholder="<?php _e('Enter a brief description of the product featured in this Short...', 'firstshorts'); ?>"><?php echo esc_textarea($product_description); ?></textarea>
+                <p class="description"><?php _e('A short description that can be displayed alongside the video.', 'firstshorts'); ?></p>
+            </div>
+
         </div>
 
         <div class="firstshorts-meta-field">
@@ -520,6 +533,10 @@ function firstshorts_render_video_details_metabox($post) {
                    id="firstshorts_bulk_video_ids"
                    name="firstshorts_bulk_video_ids"
                    value="<?php echo esc_attr($bulk_video_ids); ?>" />
+            <input type="hidden"
+                   id="firstshorts_bulk_video_data"
+                   name="firstshorts_bulk_video_data"
+                   value="<?php echo esc_attr(get_post_meta($post->ID, '_firstshorts_bulk_video_data', true)); ?>" />
             <div class="firstshorts-bulk-summary">
                 <div class="firstshorts-bulk-stat">
                     <span class="firstshorts-bulk-label"><?php _e('Selected', 'firstshorts'); ?></span>
@@ -841,6 +858,14 @@ function firstshorts_save_video_meta($post_id) {
         );
     }
 
+    if (isset($_POST['firstshorts_product_description'])) {
+        update_post_meta(
+            $post_id,
+            '_firstshorts_product_description',
+            sanitize_textarea_field($_POST['firstshorts_product_description'])
+        );
+    }
+
 
     // Bulk create videos from media library selection
     // Bulk creation now handled by AJAX, so only store bulk_video_ids here
@@ -852,6 +877,14 @@ function firstshorts_save_video_meta($post_id) {
         } else {
             delete_post_meta($post_id, '_firstshorts_bulk_video_ids');
         }
+    }
+
+    if (isset($_POST['firstshorts_bulk_video_data'])) {
+        update_post_meta(
+            $post_id,
+            '_firstshorts_bulk_video_data',
+            wp_unslash($_POST['firstshorts_bulk_video_data']) // JSON string
+        );
     }
 
     // Mark as saved once to enable shortcodes
@@ -991,6 +1024,7 @@ function firstshorts_get_display_options($post_id) {
     $cta_text = $cta_text === '' ? $defaults['cta_text'] : $cta_text;
     $cta_link = $cta_link === '' ? $defaults['cta_link'] : $cta_link;
     $cta_style = $cta_style === '' ? $defaults['cta_style'] : $cta_style;
+    $product_description = get_post_meta($post_id, '_firstshorts_product_description', true);
     $max_width = $max_width === '' ? $defaults['max_width'] : (int) $max_width;
     $max_height = $max_height === '' ? $defaults['max_height'] : (int) $max_height;
 
@@ -1004,6 +1038,7 @@ function firstshorts_get_display_options($post_id) {
         'cta_text' => $cta_text,
         'cta_link' => $cta_link,
         'cta_style' => $cta_style,
+        'product_description' => $product_description,
         'max_width' => $max_width,
         'max_height' => $max_height,
     );
