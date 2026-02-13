@@ -124,6 +124,7 @@ function firstshorts_video_slider_shortcode($atts)
                 'showShare' => (bool) $display_options['share'],
                 'showBuyButton' => (bool) $display_options['buy_button'],
                 'ctaText' => $display_options['cta_text'],
+                'ctaLink' => $display_options['cta_link'],
                 'ctaStyle' => $display_options['cta_style'],
                 'maxWidth' => (int) $display_options['max_width'],
                 'maxHeight' => (int) $display_options['max_height'],

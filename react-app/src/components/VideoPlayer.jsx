@@ -11,6 +11,7 @@ const VideoPlayer = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const [saved, setSaved] = useState(false);
   const [viewCount, setViewCount] = useState(0);
   const [toast, setToast] = useState('');
@@ -36,8 +37,8 @@ const VideoPlayer = ({
 
   const handleLike = () => {
     setLiked(!liked);
+    setLikeCount(prev => liked ? prev - 1 : prev + 1);
     showToast(!liked ? 'Liked' : 'Like removed');
-    // TODO: Send to WordPress API to save like
   };
 
   const handleSave = () => {
@@ -59,9 +60,16 @@ const VideoPlayer = ({
     }
   };
 
-  const handleBuyNow = () => {
-    // TODO: Integrate with WooCommerce
-    console.log('Add to cart functionality');
+  const handleBuyNow = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (displayOptions.ctaLink) {
+      window.location.href = displayOptions.ctaLink;
+    } else {
+      console.log('No CTA Link provided');
+    }
   };
 
   const handleAddToCart = () => {
@@ -111,11 +119,12 @@ const VideoPlayer = ({
                   type="button"
                   className={`firstshorts-preview-btn firstshorts-preview-btn-overlay ${liked ? 'active' : ''}`}
                   onClick={handleLike}
+                  aria-label={liked ? 'Unlike' : 'Like'}
                 >
                   <span className="firstshorts-btn-symbol">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                   </span>
-                  <span className="firstshorts-btn-count">0</span>
+                  <span className="firstshorts-btn-count">{likeCount}</span>
                 </button>
               )}
               {displayOptions.showSave && (
@@ -145,17 +154,33 @@ const VideoPlayer = ({
 
           {displayOptions.showBuyButton && (
             <div className="firstshorts-video-cta-row" style={{ pointerEvents: 'auto' }}>
-              <button
-                className={`firstshorts-btn firstshorts-btn-cta ${displayOptions.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : ''}`}
-                onClick={handleBuyNow}
-                type="button"
-                aria-label={displayOptions.ctaText || 'Buy now'}
-              >
-                <span className="firstshorts-btn-symbol">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                </span>
-                <span className="firstshorts-btn-text">{displayOptions.ctaText || 'Buy Now'}</span>
-              </button>
+              {displayOptions.ctaLink ? (
+                <a
+                  className={`firstshorts-btn firstshorts-btn-cta ${displayOptions.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : ''}`}
+                  href={displayOptions.ctaLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={displayOptions.ctaText || 'Buy now'}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <span className="firstshorts-btn-symbol">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                  </span>
+                  <span className="firstshorts-btn-text">{displayOptions.ctaText || 'Buy Now'}</span>
+                </a>
+              ) : (
+                <button
+                  className={`firstshorts-btn firstshorts-btn-cta ${displayOptions.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : ''}`}
+                  onClick={handleBuyNow}
+                  type="button"
+                  aria-label={displayOptions.ctaText || 'Buy now'}
+                >
+                  <span className="firstshorts-btn-symbol">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                  </span>
+                  <span className="firstshorts-btn-text">{displayOptions.ctaText || 'Buy Now'}</span>
+                </button>
+              )}
               <button
                 className="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"
                 onClick={handleAddToCart}

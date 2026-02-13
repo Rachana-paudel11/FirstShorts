@@ -313,6 +313,7 @@ function firstshorts_render_display_options_metabox($post) {
     $max_width = get_post_meta($post->ID, '_firstshorts_video_max_width', true);
     $max_height = get_post_meta($post->ID, '_firstshorts_video_max_height', true);
     $cta_text = get_post_meta($post->ID, '_firstshorts_cta_text', true);
+    $cta_link = get_post_meta($post->ID, '_firstshorts_cta_link', true);
     $cta_style = get_post_meta($post->ID, '_firstshorts_cta_style', true);
     if (empty($max_width)) {
         $max_width = 500;
@@ -403,6 +404,18 @@ function firstshorts_render_display_options_metabox($post) {
                        name="firstshorts_cta_text"
                        value="<?php echo esc_attr($cta_text); ?>"
                        placeholder="Buy Now" />
+            </div>
+
+            <div class="firstshorts-meta-field">
+                <label for="firstshorts_cta_link">
+                    <?php _e('CTA Link', 'firstshorts'); ?>
+                </label>
+                <input type="url"
+                       id="firstshorts_cta_link"
+                       name="firstshorts_cta_link"
+                       value="<?php echo esc_url($cta_link); ?>"
+                       placeholder="https://example.com/product" />
+                <p class="description"><?php _e('The URL to redirect users when the CTA button is clicked.', 'firstshorts'); ?></p>
             </div>
 
             <div class="firstshorts-meta-field">
@@ -812,6 +825,14 @@ function firstshorts_save_video_meta($post_id) {
         );
     }
 
+    if (isset($_POST['firstshorts_cta_link'])) {
+        update_post_meta(
+            $post_id,
+            '_firstshorts_cta_link',
+            esc_url_raw($_POST['firstshorts_cta_link'])
+        );
+    }
+
     if (isset($_POST['firstshorts_cta_style'])) {
         update_post_meta(
             $post_id,
@@ -944,6 +965,7 @@ function firstshorts_get_display_options($post_id) {
         'share' => true,
         'buy_button' => true,
         'cta_text' => 'Buy Now',
+        'cta_link' => '',
         'cta_style' => 'primary',
         'max_width' => 500,
         'max_height' => 600,
@@ -958,6 +980,7 @@ function firstshorts_get_display_options($post_id) {
     $max_height = get_post_meta($post_id, '_firstshorts_video_max_height', true);
 
     $cta_text = get_post_meta($post_id, '_firstshorts_cta_text', true);
+    $cta_link = get_post_meta($post_id, '_firstshorts_cta_link', true);
     $cta_style = get_post_meta($post_id, '_firstshorts_cta_style', true);
 
     $view_count = $view_count === '' ? $defaults['view_count'] : (bool) $view_count;
@@ -966,6 +989,7 @@ function firstshorts_get_display_options($post_id) {
     $share = $share === '' ? $defaults['share'] : (bool) $share;
     $buy_button = $buy_button === '' ? $defaults['buy_button'] : (bool) $buy_button;
     $cta_text = $cta_text === '' ? $defaults['cta_text'] : $cta_text;
+    $cta_link = $cta_link === '' ? $defaults['cta_link'] : $cta_link;
     $cta_style = $cta_style === '' ? $defaults['cta_style'] : $cta_style;
     $max_width = $max_width === '' ? $defaults['max_width'] : (int) $max_width;
     $max_height = $max_height === '' ? $defaults['max_height'] : (int) $max_height;
@@ -978,6 +1002,7 @@ function firstshorts_get_display_options($post_id) {
         'share' => $share,
         'buy_button' => $buy_button,
         'cta_text' => $cta_text,
+        'cta_link' => $cta_link,
         'cta_style' => $cta_style,
         'max_width' => $max_width,
         'max_height' => $max_height,

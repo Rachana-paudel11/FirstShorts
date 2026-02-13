@@ -329,6 +329,7 @@ jQuery(document).ready(function ($) {
 
         var showBuy = $('#firstshorts_show_buy_button').is(':checked');
         var ctaText = $('#firstshorts_cta_text').val() || 'Buy Now';
+        var ctaLink = $('#firstshorts_cta_link').val() || '';
 
         videoUrls.forEach(function (url) {
             var slide = $('<div class="firstshorts-preview-slide"></div>');
@@ -356,6 +357,15 @@ jQuery(document).ready(function ($) {
 
                 var buyBtn = $('<button type="button" class="firstshorts-btn firstshorts-btn-cta"></button>');
                 buyBtn.html('<span class="firstshorts-btn-symbol"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg></span> <span class="firstshorts-btn-text">' + ctaText + '</span>');
+                buyBtn.on('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (ctaLink) {
+                        window.open(ctaLink, '_blank');
+                    } else {
+                        alert('No CTA Link set yet.');
+                    }
+                });
 
                 var cartBtn = $('<button type="button" class="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"></button>');
                 cartBtn.html('<span class="firstshorts-btn-symbol"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M20 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span> <span class="firstshorts-btn-text">Add to Cart</span>');
@@ -559,6 +569,9 @@ jQuery(document).ready(function ($) {
             updatePreview();
         });
         $(document).on('input', '#firstshorts_cta_text', function () {
+            updatePreview();
+        });
+        $(document).on('input', '#firstshorts_cta_link', function () {
             updatePreview();
         });
         $(document).on('input change', '#firstshorts_video_max_width', function () {
