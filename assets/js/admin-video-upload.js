@@ -627,8 +627,32 @@ jQuery(document).ready(function ($) {
             var hasTitle = titleField.val() && titleField.val().trim() !== '';
 
             if (!hasTitle) {
-                alert('Please enter a title for your Short before saving.');
+                // Highlight the title field instead of showing an alert
+                var titleWrap = $('#titlewrap');
+                titleField.addClass('firstshorts-title-error');
+                titleWrap.addClass('firstshorts-title-error-wrap');
+
+                // Add or update the hint message below the title field
+                var hintId = 'firstshorts-title-hint';
+                var existingHint = $('#' + hintId);
+                if (!existingHint.length) {
+                    var hint = $('<p id="' + hintId + '" class="firstshorts-title-hint">Please add a title for your Short</p>');
+                    titleWrap.after(hint);
+                } else {
+                    existingHint.show();
+                }
+
+                // Scroll to and focus the title field
+                $('html, body').animate({ scrollTop: titleField.offset().top - 80 }, 300);
                 titleField.trigger('focus');
+
+                // Remove error state when user starts typing
+                titleField.off('input.firstshortsTitle').on('input.firstshortsTitle', function () {
+                    titleField.removeClass('firstshorts-title-error');
+                    titleWrap.removeClass('firstshorts-title-error-wrap');
+                    $('#' + hintId).hide();
+                });
+
                 return;
             }
 
