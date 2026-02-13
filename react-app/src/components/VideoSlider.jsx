@@ -135,6 +135,22 @@ const VideoSliderCard = ({ video, index }) => {
           )}
 
           <div className="firstshorts-slide-meta" style={{ pointerEvents: 'auto' }}>
+            {video.description && (
+              <div className="firstshorts-video-description" style={{
+                color: '#fff',
+                fontSize: '13px',
+                marginBottom: '10px',
+                padding: '0 5px',
+                textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                display: '-webkit-box',
+                WebkitLineClamp: '2',
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                lineHeight: '1.4'
+              }}>
+                {video.description}
+              </div>
+            )}
             {displayOptions.showBuyButton && (
               <div className="firstshorts-slide-cta-row">
                 {displayOptions.ctaLink ? (

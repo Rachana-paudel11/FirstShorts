@@ -308,17 +308,27 @@ jQuery(document).ready(function ($) {
 
         if (!container.length) return;
 
-        var videoUrls = [];
+        var previewItems = [];
         var manualUrl = $('#firstshorts_video_url').val() ? $('#firstshorts_video_url').val().trim() : '';
         if (manualUrl) {
-            videoUrls.push(manualUrl);
+            previewItems.push({
+                url: manualUrl,
+                description: '', // Global preview doesn't have per-video desc for manual URL
+                ctaStyle: $('#firstshorts_cta_style').val() || 'primary'
+            });
         } else {
             bulkItems.forEach(function (item) {
-                if (item.selected && item.url) videoUrls.push(item.url);
+                if (item.selected && item.url) {
+                    previewItems.push({
+                        url: item.url,
+                        description: item.description || '',
+                        ctaStyle: $('#firstshorts_cta_style').val() || 'primary' // Fallback to global style
+                    });
+                }
             });
         }
 
-        if (videoUrls.length === 0) {
+        if (previewItems.length === 0) {
             container.hide();
             if (previewEmpty.length) previewEmpty.show();
             return;
@@ -357,7 +367,7 @@ jQuery(document).ready(function ($) {
         var ctaText = $('#firstshorts_cta_text').val() || 'Buy Now';
         var ctaLink = $('#firstshorts_cta_link').val() || '';
 
-        videoUrls.forEach(function (url) {
+        previewItems.forEach(function (item) {
             var slide = $('<div class="firstshorts-preview-slide"></div>');
             slide.css({
                 minWidth: '100%',
@@ -368,20 +378,40 @@ jQuery(document).ready(function ($) {
                 overflow: 'hidden'
             });
             var video = $('<video playsinline loop muted></video>');
-            video.attr('src', url);
+            video.attr('src', item.url);
             video.css({ width: '100%', height: '100%', objectFit: 'cover' });
             video.on('click', function () {
                 if (this.paused) this.play(); else this.pause();
             });
             slide.append(video);
 
+            var metaContainer = $('<div class="firstshorts-slide-meta"></div>');
+            metaContainer.css('pointer-events', 'auto');
+
+            // Add description if exists
+            if (item.description) {
+                var descDiv = $('<div class="firstshorts-video-description"></div>');
+                descDiv.text(item.description);
+                descDiv.css({
+                    color: '#fff',
+                    fontSize: '13px',
+                    marginBottom: '10px',
+                    padding: '0 5px',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                    display: '-webkit-box',
+                    '-webkit-line-clamp': '2',
+                    '-webkit-box-orient': 'vertical',
+                    overflow: 'hidden',
+                    lineHeight: '1.4'
+                });
+                metaContainer.append(descDiv);
+            }
+
             if (showBuy) {
                 var ctaRow = $('<div class="firstshorts-video-cta-row"></div>');
-                // Use the slide-meta container logic from frontend for consistency
-                var metaContainer = $('<div class="firstshorts-slide-meta"></div>');
-                metaContainer.css('pointer-events', 'auto');
+                var ctaClass = item.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : '';
 
-                var buyBtn = $('<button type="button" class="firstshorts-btn firstshorts-btn-cta"></button>');
+                var buyBtn = $('<button type="button" class="firstshorts-btn firstshorts-btn-cta ' + ctaClass + '"></button>');
                 buyBtn.html('<span class="firstshorts-btn-symbol"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg></span> <span class="firstshorts-btn-text">' + ctaText + '</span>');
                 buyBtn.on('click', function (e) {
                     e.preventDefault();
@@ -398,8 +428,8 @@ jQuery(document).ready(function ($) {
 
                 ctaRow.append(buyBtn, cartBtn);
                 metaContainer.append(ctaRow);
-                slide.append(metaContainer);
             }
+            slide.append(metaContainer);
 
             var showLikes = $('#firstshorts_show_likes').is(':checked');
             var showSave = $('#firstshorts_show_save').is(':checked');

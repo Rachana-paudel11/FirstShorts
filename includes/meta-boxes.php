@@ -433,17 +433,6 @@ function firstshorts_render_display_options_metabox($post) {
                 </select>
             </div>
 
-            <div class="firstshorts-meta-field">
-                <label for="firstshorts_product_description">
-                    <?php _e('Short Description', 'firstshorts'); ?>
-                </label>
-                <textarea id="firstshorts_product_description" 
-                          name="firstshorts_product_description" 
-                          rows="4" 
-                          style="width: 100%; border-radius: 10px; border-color: #d1d5db; padding: 10px;"
-                          placeholder="<?php _e('Enter a brief description of the product featured in this Short...', 'firstshorts'); ?>"><?php echo esc_textarea($product_description); ?></textarea>
-                <p class="description"><?php _e('A short description that can be displayed alongside the video.', 'firstshorts'); ?></p>
-            </div>
 
         </div>
 
@@ -858,13 +847,6 @@ function firstshorts_save_video_meta($post_id) {
         );
     }
 
-    if (isset($_POST['firstshorts_product_description'])) {
-        update_post_meta(
-            $post_id,
-            '_firstshorts_product_description',
-            sanitize_textarea_field($_POST['firstshorts_product_description'])
-        );
-    }
 
 
     // Bulk create videos from media library selection

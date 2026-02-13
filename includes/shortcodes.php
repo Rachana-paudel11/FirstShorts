@@ -100,8 +100,15 @@ function firstshorts_video_slider_shortcode($atts)
     $video_list = array();
     $global_post_id = !empty($atts['post_id']) ? intval($atts['post_id']) : 0;
 
-    // Fetch global options once if post_id is provided
+    // Fetch global options and bulk video data once if post_id is provided
     $global_options = $global_post_id ? firstshorts_get_display_options($global_post_id) : null;
+    $bulk_data = array();
+    if ($global_post_id) {
+        $raw_bulk_data = get_post_meta($global_post_id, '_firstshorts_bulk_video_data', true);
+        if ($raw_bulk_data) {
+            $bulk_data = json_decode($raw_bulk_data, true);
+        }
+    }
 
     while ($videos->have_posts()):
         $videos->the_post();
@@ -110,9 +117,16 @@ function firstshorts_video_slider_shortcode($atts)
         // Use global options or fallback to current video's options
         $display_options = $global_options ? $global_options : firstshorts_get_display_options($current_video_id);
 
+        // Get description from bulk data if available
+        $description = '';
+        if (isset($bulk_data[$current_video_id]['description'])) {
+            $description = $bulk_data[$current_video_id]['description'];
+        }
+
         $video_list[] = array(
             'id' => $current_video_id,
             'title' => get_the_title(),
+            'description' => $description,
             'excerpt' => wp_trim_words(get_the_excerpt(), 15),
             'thumbnail' => get_the_post_thumbnail_url($current_video_id, 'large'),
             'videoUrl' => wp_get_attachment_url($current_video_id),
