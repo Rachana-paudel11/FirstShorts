@@ -545,10 +545,6 @@ function firstshorts_render_video_details_metabox($post)
                         <span class="firstshorts-bulk-label"><?php _e('Selected', 'firstshorts'); ?></span>
                         <span class="firstshorts-bulk-count">0 videos</span>
                     </div>
-                    <div class="firstshorts-bulk-stat">
-                        <span class="firstshorts-bulk-label"><?php _e('Total size', 'firstshorts'); ?></span>
-                        <span class="firstshorts-bulk-size">--</span>
-                    </div>
                 </div>
                 <div class="firstshorts-bulk-actions">
                     <button type="button" class="button firstshorts-bulk-select-all" disabled>
@@ -1104,7 +1100,7 @@ function firstshorts_video_custom_column_content($column, $post_id)
 {
     if ($column === 'shortcode') {
         // Get video IDs saved for this short
-        $video_ids = get_post_meta($post_id, '_firstshorts_bulk_items_ids', true);
+        $video_ids = get_post_meta($post_id, '_firstshorts_bulk_video_ids', true);
         $shortcode = '[firstshorts_video_slider';
 
         if ($video_ids) {

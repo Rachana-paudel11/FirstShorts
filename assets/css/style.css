@@ -167,7 +167,7 @@ body.firstshorts-admin #wpbody-content {
 
 .firstshorts-panel-header-content h3 {
     margin: 0 0 4px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     color: #0f172a;
 }
@@ -177,35 +177,33 @@ body.firstshorts-admin #wpbody-content {
 .firstshorts-panel-settings .firstshorts-panel-header h3,
 .firstshorts-shortcode-card .firstshorts-card-header h3,
 .firstshorts-preview-card .firstshorts-card-header h3 {
-    color: #059669;
-    /* Emerald Green */
+    color: #000000;
+    /* Black */
 }
 
 .firstshorts-panel-library .firstshorts-panel-header,
 .firstshorts-panel-settings .firstshorts-panel-header,
 .firstshorts-shortcode-card .firstshorts-card-header,
 .firstshorts-preview-card .firstshorts-card-header {
-    background: #f0fdf4;
-    /* Subtle Emerald Tint */
-    border-bottom: 2px solid #dcfce7;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(15, 23, 42, 0.02));
+    border-bottom: 2px solid #e7e9f3;
 }
 
 .firstshorts-section-title {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 6px;
-    color: #059669;
-    /* Emerald Green */
+    color: #000000;
+    /* Black */
 }
 
 .firstshorts-section {
     padding: 14px 16px;
-    background: #f0fdf4;
-    /* Section tint */
-    border: 1px solid #dcfce7;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(15, 23, 42, 0.01));
+    border: 1px solid #e7e9f3;
     border-radius: 12px;
     margin-bottom: 20px;
 }
@@ -318,7 +316,7 @@ body.firstshorts-admin #wpbody-content {
 
 .firstshorts-card-header h3 {
     margin: 0;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     color: #0f172a;
     text-transform: none;
@@ -858,6 +856,26 @@ body.firstshorts-admin .postbox .handle-order-lower {
     font-size: 12px;
 }
 
+.firstshorts-top-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+    padding: 0 4px;
+}
+
+.firstshorts-save-btn-top {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.firstshorts-save-btn-top:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #ffffff;
+}
+
 .firstshorts-save-btn:disabled {
     background: #e5e7eb;
     border-color: #e5e7eb;
@@ -957,7 +975,7 @@ body.firstshorts-admin .postbox .handle-order-lower {
 
 /* Consistently color coded section titles */
 .firstshorts-section-title--accent {
-    color: #059669;
+    color: #000000;
 }
 
 /* Checkbox group styling */
@@ -1099,7 +1117,7 @@ body.firstshorts-admin .postbox .handle-order-lower {
 }
 
 .firstshorts-bulk-item.is-selected {
-    background: #f0fdf4;
+    background: #eff6ff;
     /* Tint for selected videos */
 }
 
