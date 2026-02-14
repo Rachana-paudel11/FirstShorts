@@ -48,6 +48,37 @@ function firstshorts_register_video_cpt()
 }
 
 /**
+ * Add shortcode column to FirstShorts list
+ */
+add_filter('manage_firstshorts_video_posts_columns', 'firstshorts_add_custom_columns');
+function firstshorts_add_custom_columns($columns)
+{
+    $new_columns = array();
+    foreach ($columns as $key => $value) {
+        if ($key === 'title') {
+            $new_columns[$key] = $value;
+            $new_columns['shortcode'] = __('Shortcode', 'firstshorts');
+        } else {
+            $new_columns[$key] = $value;
+        }
+    }
+    return $new_columns;
+}
+
+/**
+ * Populate shortcode column
+ */
+add_action('manage_firstshorts_video_posts_custom_column', 'firstshorts_fill_custom_columns', 10, 2);
+function firstshorts_fill_custom_columns($column, $post_id)
+{
+    if ($column === 'shortcode') {
+        $shortcode = '[fs_slider post_id="' . intval($post_id) . '"]';
+        echo '<code style="background:#f0f0f1; padding:3px 6px; border-radius:4px; font-size:11px; border:1px solid #dcdcde;">' . esc_html($shortcode) . '</code>';
+        echo '<button type="button" class="button button-small firstshorts-copy-btn" data-copy="' . esc_attr($shortcode) . '" style="margin-left:8px; height:24px; line-height:22px; padding:0 8px; font-size:11px; vertical-align:middle;">' . __('Copy', 'firstshorts') . '</button>';
+    }
+}
+
+/**
  * Remove "Add Media" button from the FirstShorts editor screen
  */
 add_action('admin_head', 'firstshorts_remove_add_media_button');

@@ -396,7 +396,7 @@ function firstshorts_render_display_options_metabox($post)
                     <?php _e('Product Action', 'firstshorts'); ?>
                 </div>
                 <p class="description">
-                    <?php _e('This button lets viewers buy the product directly.', 'firstshorts'); ?>
+                    <?php _e('Configure the Call to Action (CTA) button to guide viewers to your product page or custom link.', 'firstshorts'); ?>
                 </p>
                 <div class="firstshorts-checkbox-group">
                     <label class="firstshorts-checkbox-row">
@@ -638,7 +638,7 @@ function firstshorts_render_shortcodes_metabox($post)
     // Use bulk video IDs for slider shortcode
     $bulk_ids = get_post_meta($post->ID, '_firstshorts_bulk_video_ids', true);
     $ids_array = array_filter(array_map('absint', explode(',', $bulk_ids)));
-    $slider_shortcode = '[firstshorts_video_slider';
+    $slider_shortcode = '[fs_slider';
     if (!empty($ids_array)) {
         $slider_shortcode .= ' ids="' . esc_attr(implode(',', $ids_array)) . '"';
         $slider_shortcode .= ' post_id="' . $post->ID . '"';
@@ -655,13 +655,16 @@ function firstshorts_render_shortcodes_metabox($post)
                     <label class="firstshorts-shortcode-label"><?php _e('Shortcode', 'firstshorts'); ?></label>
                     <div class="firstshorts-shortcode-row">
                         <?php 
-                        $display_value = $slider_shortcode;
-                        if ($post_status === 'auto-draft' || (empty($saved_once) && empty($bulk_ids) && empty($video_url))) {
-                            $display_value = __('Add a video and save to generate code', 'firstshorts');
-                        }
+                        $is_saved = !empty($saved_once) && $post_status !== 'auto-draft';
+                        $display_value = $is_saved ? $slider_shortcode : '';
+                        $placeholder = $is_saved ? '' : __('Save Short to generate code', 'firstshorts');
                         ?>
-                        <input type="text" class="firstshorts-shortcode-input" readonly value="<?php echo esc_attr($display_value); ?>" />
-                        <button type="button" class="button firstshorts-copy-btn" data-copy="<?php echo esc_attr($display_value); ?>">
+                        <input type="text" class="firstshorts-shortcode-input" readonly 
+                               value="<?php echo esc_attr($display_value); ?>" 
+                               placeholder="<?php echo esc_attr($placeholder); ?>" />
+                        <button type="button" class="button firstshorts-copy-btn" 
+                                data-copy="<?php echo esc_attr($display_value); ?>" 
+                                <?php disabled(!$is_saved); ?>>
                             <?php _e('Copy', 'firstshorts'); ?>
                         </button>
                     </div>

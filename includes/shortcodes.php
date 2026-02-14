@@ -37,7 +37,8 @@ function firstshorts_maybe_disable_cache_on_shortcodes()
 
         if (
             has_shortcode($post->post_content, 'firstshorts_video') ||
-            has_shortcode($post->post_content, 'firstshorts_video_slider')
+            has_shortcode($post->post_content, 'firstshorts_video_slider') ||
+            has_shortcode($post->post_content, 'fs_slider')
         ) {
             firstshorts_mark_no_cache();
             return;
@@ -48,12 +49,12 @@ add_action('template_redirect', 'firstshorts_maybe_disable_cache_on_shortcodes')
 
 
 /**
- * Shortcode: [firstshorts_video_slider]
+ * Shortcode: [fs_slider]
  * Displays multiple videos in slider format
  * 
  * Usage:
- * [firstshorts_video_slider]
- * [firstshorts_video_slider count="10"]
+ * [fs_slider]
+ * [fs_slider count="10"]
  */
 function firstshorts_video_slider_shortcode($atts)
 {
@@ -158,3 +159,4 @@ function firstshorts_video_slider_shortcode($atts)
     );
 }
 add_shortcode('firstshorts_video_slider', 'firstshorts_video_slider_shortcode');
+add_shortcode('fs_slider', 'firstshorts_video_slider_shortcode');

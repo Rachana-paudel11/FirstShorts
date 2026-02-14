@@ -869,41 +869,88 @@ body.firstshorts-admin .postbox .handle-order-lower {
     flex: 1;
 }
 
+/* Shortcode in Top Actions */
 .firstshorts-top-shortcode .firstshorts-shortcode-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 0;
+    /* Ensure no gap */
 }
 
 .firstshorts-top-shortcode .firstshorts-shortcode-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #2563eb;
+    font-size: 13px;
+    color: #1e293b;
     font-weight: 700;
-    background: rgba(37, 99, 235, 0.08);
-    padding: 4px 10px;
-    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 0 14px;
+    border-radius: 8px 0 0 8px;
+    /* Left curved */
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    height: 40px;
+    box-sizing: border-box;
+    margin-right: -1px;
+    /* Overlap with input */
+    position: relative;
+    z-index: 1;
 }
 
 .firstshorts-top-shortcode .firstshorts-shortcode-row {
     display: flex;
-    flex: 1;
-    max-width: 500px;
+    align-items: center;
+    margin: 0;
+    padding: 0;
 }
 
 .firstshorts-top-shortcode .firstshorts-shortcode-input {
-    height: 40px;
     background: #ffffff;
-    flex: 1;
-    border-radius: 10px 0 0 10px;
-    border-right: none;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    padding: 0 12px;
+    height: 40px;
+    width: 250px;
+    /* Reduced width as requested */
+    border-radius: 0;
+    /* Square for connection */
+    box-sizing: border-box;
+    outline: none;
+    transition: all 0.2s ease;
+    margin: 0;
+    margin-right: -1px;
+    /* Overlap with button */
+    position: relative;
+    z-index: 2;
+    /* Bring borders to top */
 }
 
 .firstshorts-top-shortcode .firstshorts-copy-btn {
     height: 40px;
-    border-radius: 0 10px 10px 0 !important;
+    border-radius: 0 8px 8px 0 !important;
+    /* Right curved */
+    border: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    font-size: 13px !important;
+    padding: 0 16px !important;
+    margin: 0 !important;
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+}
+
+.firstshorts-top-shortcode .firstshorts-copy-btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    z-index: 3;
+    /* Hover on top */
+}
+
+.firstshorts-copy-btn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .firstshorts-save-btn-top {

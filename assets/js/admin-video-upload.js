@@ -248,7 +248,7 @@ jQuery(document).ready(function ($) {
             .filter(function (item) { return item.selected; })
             .map(function (item) { return item.id; });
 
-        var shortcode = '[firstshorts_video_slider';
+        var shortcode = '[fs_slider';
         var postId = (typeof firstshortsAdmin !== 'undefined' && firstshortsAdmin.postId) ? firstshortsAdmin.postId : 0;
 
         if (ids.length) {
@@ -599,7 +599,7 @@ jQuery(document).ready(function ($) {
         // --- Init Functionality ---
         updateSaveState();
         updatePreview();
-        updateShortcodePreview();
+        // updateShortcodePreview(); // Removed to prevent overwriting PHP state on load
 
         // Bind Events
         $(document).on('input', '#firstshorts_video_url', function () {
@@ -623,7 +623,6 @@ jQuery(document).ready(function ($) {
         });
         $(document).on('change', '#firstshorts_display_type', function () {
             updateSaveState();
-            updateShortcodePreview();
         });
         $(document).on('change', '#firstshorts_show_likes, #firstshorts_show_save, #firstshorts_show_share, #firstshorts_show_view_count', function () {
             updatePreview();
@@ -746,7 +745,6 @@ jQuery(document).ready(function ($) {
             syncBulkHidden();
             updateSaveState();
             updatePreview();
-            updateShortcodePreview();
         });
 
         bulkFrame.open();
