@@ -504,13 +504,6 @@ jQuery(document).ready(function ($) {
         var centerPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-preview">' +
             '<div class="firstshorts-panel-body">' +
-            // Shortcode Metabox
-            '<div class="firstshorts-card firstshorts-shortcode-card">' +
-            '<div class="firstshorts-card-header">' +
-            '<h3>Shortcode</h3>' +
-            '</div>' +
-            '<div class="firstshorts-card-body firstshorts-shortcode-section"></div>' +
-            '</div>' +
             // Preview Metabox
             '<div class="firstshorts-card firstshorts-preview-card">' +
             '<div class="firstshorts-card-header">' +
@@ -541,6 +534,7 @@ jQuery(document).ready(function ($) {
 
         var topActions = $(
             '<div class="firstshorts-top-actions">' +
+            '<div class="firstshorts-top-shortcode firstshorts-shortcode-section"></div>' +
             '<button type="button" class="button button-primary firstshorts-save-btn firstshorts-save-btn-top">Save Short</button>' +
             '</div>'
         );
@@ -572,9 +566,9 @@ jQuery(document).ready(function ($) {
         // Thumbnail is handled by WordPress usually, user asked to remove it if redundant
         thumbnailBox.hide();
 
-        // Center Content - Shortcode at top, Preview at bottom
+        // Center Content - Preview (Shortcode moved to top)
         if (shortcodeBox.length) {
-            centerPanel.find('.firstshorts-shortcode-section').append(shortcodeBox.find('.inside').children());
+            mainWrapper.find('.firstshorts-shortcode-section').append(shortcodeBox.find('.inside').children());
             shortcodeBox.hide();
         }
 

@@ -858,9 +858,52 @@ body.firstshorts-admin .postbox .handle-order-lower {
 
 .firstshorts-top-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
     padding: 0 4px;
+    gap: 20px;
+}
+
+.firstshorts-top-shortcode {
+    flex: 1;
+}
+
+.firstshorts-top-shortcode .firstshorts-shortcode-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.firstshorts-top-shortcode .firstshorts-shortcode-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #2563eb;
+    font-weight: 700;
+    background: rgba(37, 99, 235, 0.08);
+    padding: 4px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
+.firstshorts-top-shortcode .firstshorts-shortcode-row {
+    display: flex;
+    flex: 1;
+    max-width: 500px;
+}
+
+.firstshorts-top-shortcode .firstshorts-shortcode-input {
+    height: 40px;
+    background: #ffffff;
+    flex: 1;
+    border-radius: 10px 0 0 10px;
+    border-right: none;
+}
+
+.firstshorts-top-shortcode .firstshorts-copy-btn {
+    height: 40px;
+    border-radius: 0 10px 10px 0 !important;
 }
 
 .firstshorts-save-btn-top {
@@ -868,6 +911,7 @@ body.firstshorts-admin .postbox .handle-order-lower {
     border-color: #2563eb;
     color: #ffffff;
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    white-space: nowrap;
 }
 
 .firstshorts-save-btn-top:hover {
