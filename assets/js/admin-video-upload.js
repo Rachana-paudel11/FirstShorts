@@ -140,7 +140,7 @@ jQuery(document).ready(function ($) {
                 url: data.url || '', // proper video URL
                 icon: data.icon || '',
                 bytes: data.filesizeInBytes || 0,
-                sizeLabel: data.filesizeHumanReadable || '',
+                sizeLabel: data.filesizeHumanReadable || formatBytes(data.filesizeInBytes),
                 typeLabel: data.subtype ? data.subtype.toUpperCase() : 'VIDEO',
                 selected: true
             });
@@ -251,13 +251,18 @@ jQuery(document).ready(function ($) {
         var shortcode = '[fs_slider';
         var postId = (typeof firstshortsAdmin !== 'undefined' && firstshortsAdmin.postId) ? firstshortsAdmin.postId : 0;
 
-        if (ids.length) {
-            shortcode += ' ids="' + ids.join(',') + '"';
-            if (postId) shortcode += ' post_id="' + postId + '"';
-            shortcode += ' count="' + ids.length + '"';
+        if (postId) {
+            shortcode += ' id="' + postId + '"';
         } else {
-            if (postId) shortcode += ' post_id="' + postId + '"';
-            shortcode += ' count="5"';
+            // Fallback for new posts where ID might not be stable or known yet, though typically it is.
+            // If we really need ids for unsaved posts, we can keep using ids, but the user requested short code.
+            // But usually WP creates auto-draft ID.
+            if (ids.length) {
+                shortcode += ' ids="' + ids.join(',') + '"';
+                shortcode += ' count="' + ids.length + '"';
+            } else {
+                shortcode += ' count="5"';
+            }
         }
         shortcode += ']';
 
@@ -283,7 +288,7 @@ jQuery(document).ready(function ($) {
         var activeDevice = $('.firstshorts-device-btn.is-active').text().trim().toLowerCase();
         if (activeDevice === 'desktop') {
             var manualWidth = $('#firstshorts_video_max_width').val() || 500;
-            var manualHeight = $('#firstshorts_video_max_height').val() || 600;
+            var manualHeight = $('#firstshorts_video_max_height').val() || 620;
             previewContentBox.css({
                 'max-width': manualWidth + 'px',
                 'height': 'auto' // Area grows with content, but inner container handles the height
@@ -455,7 +460,7 @@ jQuery(document).ready(function ($) {
         var hasVideo = hasVideoInput || hasBulkSelection;
 
         // Visual feedback
-        var actions = $('.firstshorts-main-actions');
+        var actions = $('.firstshorts-save-wrapper');
         var hint = actions.find('.firstshorts-save-hint');
 
         if (!hasVideo) {
@@ -502,6 +507,18 @@ jQuery(document).ready(function ($) {
         );
 
         var centerPanel = $(
+            '<section class="firstshorts-panel firstshorts-panel-settings">' +
+            '<div class="firstshorts-panel-header">' +
+            '<div class="firstshorts-panel-header-content">' +
+            '<h3>Settings</h3>' +
+            '<p>Configure display options and appearance</p>' +
+            '</div>' +
+            '</div>' +
+            '<div class="firstshorts-panel-body"></div>' +
+            '</section>'
+        );
+
+        var rightPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-preview">' +
             '<div class="firstshorts-panel-body">' +
             // Preview Metabox
@@ -520,29 +537,13 @@ jQuery(document).ready(function ($) {
             '</section>'
         );
 
-        var rightPanel = $(
-            '<section class="firstshorts-panel firstshorts-panel-settings">' +
-            '<div class="firstshorts-panel-header">' +
-            '<div class="firstshorts-panel-header-content">' +
-            '<h3>Settings</h3>' +
-            '<p>Configure display options and appearance</p>' +
-            '</div>' +
-            '</div>' +
-            '<div class="firstshorts-panel-body"></div>' +
-            '</section>'
-        );
-
         var topActions = $(
             '<div class="firstshorts-top-actions">' +
             '<div class="firstshorts-top-shortcode firstshorts-shortcode-section"></div>' +
-            '<button type="button" class="button button-primary firstshorts-save-btn firstshorts-save-btn-top">Save Short</button>' +
-            '</div>'
-        );
-
-        var actions = $(
-            '<div class="firstshorts-main-actions">' +
+            '<div class="firstshorts-save-wrapper">' +
             '<span class="firstshorts-save-hint">Ready to save settings</span>' +
-            '<button type="button" class="button button-primary firstshorts-save-btn">Save Short</button>' +
+            '<button type="button" class="button button-primary firstshorts-save-btn firstshorts-save-btn-top">Save Short</button>' +
+            '</div>' +
             '</div>'
         );
 
@@ -572,21 +573,21 @@ jQuery(document).ready(function ($) {
             shortcodeBox.hide();
         }
 
+        // Center Content - Settings (Swapped)
+        if (displayBox.length) {
+            centerPanel.find('.firstshorts-panel-body').append(displayBox.find('.inside').children());
+            displayBox.hide();
+        }
+
+        // Right Content - Preview (Swapped)
         if (previewBox.length) {
             var rawPreview = previewBox.find('.inside').children();
             // If the first child is the wrapper from PHP, move its children instead
             if (rawPreview.length === 1 && rawPreview.hasClass('firstshorts-admin-preview-wrapper')) {
                 rawPreview = rawPreview.children();
             }
-            centerPanel.find('.firstshorts-preview-content-area').append(rawPreview);
+            rightPanel.find('.firstshorts-preview-content-area').append(rawPreview);
             previewBox.hide();
-        }
-
-        // Right Content
-        if (displayBox.length) {
-            rightPanel.find('.firstshorts-panel-body').append(displayBox.find('.inside').children());
-            rightPanel.find('.firstshorts-panel-body').append(actions);
-            displayBox.hide();
         }
 
         $('.firstshorts-meta-row').remove();
@@ -824,4 +825,9 @@ jQuery(document).ready(function ($) {
             button.removeClass('is-copied');
         }, 1500);
     }
+
+    // Auto-refresh preview when list changes
+    $(document).on('firstshorts:bulk-updated', function () {
+        updatePreview();
+    });
 });

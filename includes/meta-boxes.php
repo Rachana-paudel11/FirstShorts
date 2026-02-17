@@ -188,6 +188,14 @@ function firstshorts_enqueue_admin_styles($hook)
         array(),
         $admin_css_ver
     );
+    
+    // Enqueue Tabs CSS
+    wp_enqueue_style(
+        'firstshorts-tabs-style',
+        plugin_dir_url(dirname(__FILE__)) . 'assets/css/firstshorts-tabs.css',
+        array(),
+        '1.0.0'
+    );
 
     wp_add_inline_style(
         'firstshorts-admin-style',
@@ -333,7 +341,7 @@ function firstshorts_render_display_options_metabox($post)
         $max_width = 500;
     }
     if (empty($max_height)) {
-        $max_height = 600;
+        $max_height = 620;
     }
     if (empty($cta_text)) {
         $cta_text = __('Buy Now', 'firstshorts');
@@ -344,140 +352,151 @@ function firstshorts_render_display_options_metabox($post)
 
     ?>
         <div class="firstshorts-metabox-content">
-            <div class="firstshorts-section">
-                <div class="firstshorts-section-title">
-                    <?php _e('Viewer Engagement', 'firstshorts'); ?>
-                </div>
-                <p class="description">
-                    <?php _e('Social interactions shown on the video.', 'firstshorts'); ?>
-                </p>
+            <!-- Tabs Navigation -->
+            <div class="firstshorts-tabs-wrapper">
+                <ul class="firstshorts-tabs-nav">
+                    <li class="firstshorts-tab-item is-active" data-tab="firstshorts-tab-engagement">
+                        <?php _e('Viewer Engagement', 'firstshorts'); ?>
+                    </li>
+                    <li class="firstshorts-tab-item" data-tab="firstshorts-tab-product">
+                        <?php _e('Product Action', 'firstshorts'); ?>
+                    </li>
+                    <li class="firstshorts-tab-item" data-tab="firstshorts-tab-dimensions">
+                        <?php _e('Video Dimension', 'firstshorts'); ?>
+                    </li>
+                </ul>
 
-                <div class="firstshorts-checkbox-group">
-                    <label class="firstshorts-checkbox-row">
-                        <input type="checkbox" 
-                               id="firstshorts_show_view_count" 
-                               name="firstshorts_show_view_count" 
-                               value="1" 
-                               <?php checked($show_view_count, 1); ?> />
-                        <span class="firstshorts-checkbox-label"><?php _e('Show View Count', 'firstshorts'); ?></span>
-                    </label>
-                
-                    <label class="firstshorts-checkbox-row">
-                        <input type="checkbox" 
-                               id="firstshorts_show_likes" 
-                               name="firstshorts_show_likes" 
-                               value="1" 
-                               <?php checked($show_likes, 1); ?> />
-                        <span class="firstshorts-checkbox-label"><?php _e('Enable Likes', 'firstshorts'); ?></span>
-                    </label>
-                
-                    <label class="firstshorts-checkbox-row">
-                        <input type="checkbox" 
-                               id="firstshorts_show_save" 
-                               name="firstshorts_show_save" 
-                               value="1" 
-                               <?php checked($show_save, 1); ?> />
-                        <span class="firstshorts-checkbox-label"><?php _e('Allow Save', 'firstshorts'); ?></span>
-                    </label>
-                
-                    <label class="firstshorts-checkbox-row">
-                        <input type="checkbox" 
-                               id="firstshorts_show_share" 
-                               name="firstshorts_show_share" 
-                               value="1" 
-                               <?php checked($show_share, 1); ?> />
-                        <span class="firstshorts-checkbox-label"><?php _e('Allow Share', 'firstshorts'); ?></span>
-                    </label>
+                <!-- Tab 1: Viewer Engagement -->
+                <div id="firstshorts-tab-engagement" class="firstshorts-tab-content is-active">
+                    <div class="firstshorts-section">
+                        <p class="description" style="margin-top: 0;">
+                            <?php _e('Social interactions shown on the video.', 'firstshorts'); ?>
+                        </p>
+
+                        <div class="firstshorts-checkbox-group">
+                            <label class="firstshorts-checkbox-row">
+                                <input type="checkbox" 
+                                       id="firstshorts_show_share" 
+                                       name="firstshorts_show_share" 
+                                       value="1" 
+                                       <?php checked($show_share, 1); ?> />
+                                <span class="firstshorts-checkbox-label"><?php _e('Allow Share', 'firstshorts'); ?></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Product Action -->
+                <div id="firstshorts-tab-product" class="firstshorts-tab-content">
+                    <div class="firstshorts-section">
+                        <p class="description" style="margin-top: 0;">
+                            <?php _e("Configure the Call to Action (CTA) button (e.g., 'Buy Now') to guide viewers to your product or custom link.", 'firstshorts'); ?>
+                        </p>
+                        <div class="firstshorts-checkbox-group">
+                            <label class="firstshorts-checkbox-row firstshorts-checkbox-row--plain">
+                                <input type="checkbox" 
+                                       id="firstshorts_show_buy_button" 
+                                       name="firstshorts_show_buy_button" 
+                                       value="1" 
+                                       <?php checked($show_buy_button, 1); ?> />
+                                <span class="firstshorts-checkbox-label"><?php _e('Enable Product CTA', 'firstshorts'); ?></span>
+                            </label>
+                        </div>
+
+                        <div class="firstshorts-meta-field">
+                            <label for="firstshorts_cta_text">
+                                <?php _e('CTA Text', 'firstshorts'); ?>
+                            </label>
+                            <input type="text"
+                                   id="firstshorts_cta_text"
+                                   name="firstshorts_cta_text"
+                                   value="<?php echo esc_attr($cta_text); ?>"
+                                   placeholder="Buy Now" />
+                        </div>
+
+                        <div class="firstshorts-meta-field">
+                            <label for="firstshorts_cta_link">
+                                <?php _e('CTA Link', 'firstshorts'); ?>
+                            </label>
+                            <input type="url"
+                                   id="firstshorts_cta_link"
+                                   name="firstshorts_cta_link"
+                                   value="<?php echo esc_url($cta_link); ?>"
+                                   placeholder="https://example.com/product" />
+                            <p class="description"><?php _e('The URL to redirect users when the CTA button is clicked.', 'firstshorts'); ?></p>
+                        </div>
+
+                        <div class="firstshorts-meta-field">
+                            <label for="firstshorts_cta_style">
+                                <?php _e('CTA Style', 'firstshorts'); ?>
+                            </label>
+                            <select id="firstshorts_cta_style" name="firstshorts_cta_style">
+                                <option value="primary" <?php selected($cta_style, 'primary'); ?>>
+                                    <?php _e('Primary', 'firstshorts'); ?>
+                                </option>
+                                <option value="secondary" <?php selected($cta_style, 'secondary'); ?>>
+                                    <?php _e('Secondary', 'firstshorts'); ?>
+                                </option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="firstshorts-section">
-                <div class="firstshorts-section-title firstshorts-section-title--accent">
-                    <?php _e('Product Action', 'firstshorts'); ?>
+            <script>
+            jQuery(document).ready(function($) {
+                $('.firstshorts-tab-item').on('click', function() {
+                    var tabId = $(this).data('tab');
+                    
+                    // Remove active class from all tabs and contents
+                    $('.firstshorts-tab-item').removeClass('is-active');
+                    $('.firstshorts-tab-content').removeClass('is-active');
+                    
+                    // Add active class to clicked tab and target content
+                    $(this).addClass('is-active');
+                    $('#' + tabId).addClass('is-active');
+                });
+            });
+            </script>
+
+                <!-- Tab 3: Video Dimension -->
+                <div id="firstshorts-tab-dimensions" class="firstshorts-tab-content">
+                    <div class="firstshorts-section">
+                        <p class="description" style="margin-top: 0;">
+                            <?php _e('Set the dimensions for the video card.', 'firstshorts'); ?>
+                        </p>
+                        
+                        <div class="firstshorts-meta-field">
+                            <label for="firstshorts_video_max_width">
+                                <?php _e('Card Width (px)', 'firstshorts'); ?>
+                            </label>
+                            <input type="number"
+                                   id="firstshorts_video_max_width"
+                                   name="firstshorts_video_max_width"
+                                   value="<?php echo esc_attr($max_width); ?>"
+                                   min="200"
+                                   max="500"
+                                   step="10"
+                                   style="width: 200px;" />
+                            <p class="description"><?php _e('Recommended: 280–360px', 'firstshorts'); ?></p>
+                        </div>
+
+                        <div class="firstshorts-meta-field">
+                            <label for="firstshorts_video_max_height">
+                                <?php _e('Card Height (px)', 'firstshorts'); ?>
+                            </label>
+                            <input type="number"
+                                   id="firstshorts_video_max_height"
+                                   name="firstshorts_video_max_height"
+                                   value="<?php echo esc_attr($max_height); ?>"
+                                   min="300"
+                                   max="1000"
+                                   step="10"
+                                   style="width: 200px;" />
+                            <p class="description"><?php _e('Recommended: 500–700px', 'firstshorts'); ?></p>
+                        </div>
+                    </div>
                 </div>
-                <p class="description">
-                    <?php _e('Configure the Call to Action (CTA) button to guide viewers to your product page or custom link.', 'firstshorts'); ?>
-                </p>
-                <div class="firstshorts-checkbox-group">
-                    <label class="firstshorts-checkbox-row">
-                        <input type="checkbox" 
-                               id="firstshorts_show_buy_button" 
-                               name="firstshorts_show_buy_button" 
-                               value="1" 
-                               <?php checked($show_buy_button, 1); ?> />
-                        <span class="firstshorts-checkbox-label"><?php _e('Enable Product CTA', 'firstshorts'); ?></span>
-                    </label>
-                </div>
-
-                <div class="firstshorts-meta-field">
-                    <label for="firstshorts_cta_text">
-                        <?php _e('CTA Text', 'firstshorts'); ?>
-                    </label>
-                    <input type="text"
-                           id="firstshorts_cta_text"
-                           name="firstshorts_cta_text"
-                           value="<?php echo esc_attr($cta_text); ?>"
-                           placeholder="Buy Now" />
-                </div>
-
-                <div class="firstshorts-meta-field">
-                    <label for="firstshorts_cta_link">
-                        <?php _e('CTA Link', 'firstshorts'); ?>
-                    </label>
-                    <input type="url"
-                           id="firstshorts_cta_link"
-                           name="firstshorts_cta_link"
-                           value="<?php echo esc_url($cta_link); ?>"
-                           placeholder="https://example.com/product" />
-                    <p class="description"><?php _e('The URL to redirect users when the CTA button is clicked.', 'firstshorts'); ?></p>
-                </div>
-
-                <div class="firstshorts-meta-field">
-                    <label for="firstshorts_cta_style">
-                        <?php _e('CTA Style', 'firstshorts'); ?>
-                    </label>
-                    <select id="firstshorts_cta_style" name="firstshorts_cta_style">
-                        <option value="primary" <?php selected($cta_style, 'primary'); ?>>
-                            <?php _e('Primary', 'firstshorts'); ?>
-                        </option>
-                        <option value="secondary" <?php selected($cta_style, 'secondary'); ?>>
-                            <?php _e('Secondary', 'firstshorts'); ?>
-                        </option>
-                    </select>
-                </div>
-
-
-            </div>
-
-            <div class="firstshorts-meta-field">
-                <label for="firstshorts_video_max_width">
-                    <?php _e('Card Width (px)', 'firstshorts'); ?>
-                </label>
-                <input type="number"
-                       id="firstshorts_video_max_width"
-                       name="firstshorts_video_max_width"
-                       value="<?php echo esc_attr($max_width); ?>"
-                       min="200"
-                       max="500"
-                       step="10"
-                       style="width: 200px;" />
-                <p class="description"><?php _e('Recommended: 280–360px', 'firstshorts'); ?></p>
-            </div>
-
-            <div class="firstshorts-meta-field">
-                <label for="firstshorts_video_max_height">
-                    <?php _e('Card Height (px)', 'firstshorts'); ?>
-                </label>
-                <input type="number"
-                       id="firstshorts_video_max_height"
-                       name="firstshorts_video_max_height"
-                       value="<?php echo esc_attr($max_height); ?>"
-                       min="300"
-                       max="1000"
-                       step="10"
-                       style="width: 200px;" />
-                <p class="description"><?php _e('Recommended: 500–700px', 'firstshorts'); ?></p>
-            </div>
         <?php
 }
 
@@ -635,19 +654,7 @@ function firstshorts_render_shortcodes_metabox($post)
     $post_status = get_post_status($post);
     $saved_once = get_post_meta($post->ID, '_firstshorts_saved_once', true);
     // Get selected video IDs for this post
-    // Use bulk video IDs for slider shortcode
-    $bulk_ids = get_post_meta($post->ID, '_firstshorts_bulk_video_ids', true);
-    $ids_array = array_filter(array_map('absint', explode(',', $bulk_ids)));
-    $slider_shortcode = '[fs_slider';
-    if (!empty($ids_array)) {
-        $slider_shortcode .= ' ids="' . esc_attr(implode(',', $ids_array)) . '"';
-        $slider_shortcode .= ' post_id="' . $post->ID . '"';
-        $slider_shortcode .= ' count="' . count($ids_array) . '"';
-    } else {
-        $slider_shortcode .= ' count="5"';
-    }
-    $slider_shortcode .= ']';
-    $video_url = get_post_meta($post->ID, '_firstshorts_video_url', true);
+    $slider_shortcode = '[fs_slider id="' . $post->ID . '"]';
     ?>
         <div class="firstshorts-shortcode-box firstshorts-shortcode-decongested">
             <div class="firstshorts-shortcode-grid">
@@ -928,16 +935,16 @@ add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_scripts');
 function firstshorts_get_display_options($post_id)
 {
     $defaults = array(
-        'view_count' => true,
-        'likes' => true,
-        'save' => true,
+        'view_count' => false,
+        'likes' => false,
+        'save' => false,
         'share' => true,
         'buy_button' => true,
         'cta_text' => 'Buy Now',
         'cta_link' => '',
         'cta_style' => 'primary',
         'max_width' => 500,
-        'max_height' => 600,
+        'max_height' => 620,
     );
 
     $view_count = get_post_meta($post_id, '_firstshorts_show_view_count', true);
@@ -1016,37 +1023,5 @@ function firstshorts_get_video_details($post_id)
     );
 }
 
-/**
- * Add custom columns to the Shorts list view
- */
-function firstshorts_video_columns($columns)
-{
-    $new_columns = array();
-    $new_columns['cb'] = $columns['cb'];
-    $new_columns['title'] = $columns['title'];
-    $new_columns['shortcode'] = __('Shortcode', 'firstshorts');
-    $new_columns['date'] = $columns['date'];
-    return $new_columns;
-}
-add_filter('manage_firstshorts_video_posts_columns', 'firstshorts_video_columns');
 
-/**
- * Handle custom column content
- */
-function firstshorts_video_custom_column_content($column, $post_id)
-{
-    if ($column === 'shortcode') {
-        // Get video IDs saved for this short
-        $video_ids = get_post_meta($post_id, '_firstshorts_bulk_video_ids', true);
-        $shortcode = '[firstshorts_video_slider';
-
-        if ($video_ids) {
-            $shortcode .= ' ids="' . esc_attr($video_ids) . '"';
-        }
-        $shortcode .= ' post_id="' . $post_id . '" count="5"]';
-
-        echo '<code>' . esc_html($shortcode) . '</code>';
-    }
-}
-add_action('manage_firstshorts_video_posts_custom_column', 'firstshorts_video_custom_column_content', 10, 2);
 

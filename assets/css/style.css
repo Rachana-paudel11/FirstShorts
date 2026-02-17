@@ -121,20 +121,15 @@ body.firstshorts-admin #wpbody-content {
 
 .firstshorts-builder-layout {
     display: grid;
-    grid-template-columns: minmax(260px, 1.1fr) minmax(0, 2fr) minmax(260px, 1fr);
-    gap: 22px;
+    /* Library (Fixed) | Settings (Fixed) | Preview (Flexible/Remaining) */
+    grid-template-columns: 320px 415px minmax(0, 1fr);
+    gap: 12px;
     align-items: stretch;
 }
 
-@media screen and (max-width: 1440px) {
+@media screen and (max-width: 1100px) {
     .firstshorts-builder-layout {
         grid-template-columns: 1fr;
-    }
-}
-
-@media screen and (min-width: 1441px) and (max-width: 1680px) {
-    .firstshorts-builder-layout {
-        grid-template-columns: minmax(240px, 1fr) minmax(0, 1.5fr) minmax(240px, 1fr);
     }
 }
 
@@ -146,7 +141,9 @@ body.firstshorts-admin #wpbody-content {
     padding: 14px;
     display: flex;
     flex-direction: column;
-    min-height: 750px;
+    height: calc(100vh - 150px);
+    min-height: 520px;
+    box-sizing: border-box;
 }
 
 .firstshorts-panel-header {
@@ -275,6 +272,45 @@ body.firstshorts-admin #wpbody-content {
     flex-direction: column;
     gap: 16px;
     flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
+    min-height: 0;
+    /* Critical for flex scrolling */
+}
+
+/* Library Panel: Disable body scroll, push it to list */
+.firstshorts-panel-library .firstshorts-panel-body {
+    overflow: hidden;
+    padding-right: 0;
+}
+
+.firstshorts-panel-library .firstshorts-metabox-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+.firstshorts-bulk-block {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Custom scrollbar for panel body */
+.firstshorts-panel-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.firstshorts-panel-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.firstshorts-panel-body::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
 }
 
 .firstshorts-panel-preview .firstshorts-panel-body {
@@ -312,15 +348,61 @@ body.firstshorts-admin #wpbody-content {
     background: #f7f8fd;
     border-bottom: 1px solid #eef0f5;
     gap: 10px;
+    flex-wrap: nowrap;
+    box-sizing: border-box;
 }
 
 .firstshorts-card-header h3 {
     margin: 0;
     font-size: 15px;
+    white-space: nowrap;
+    min-width: 0;
+    flex-grow: 1;
+    width: auto;
     font-weight: 700;
     color: #0f172a;
     text-transform: none;
     letter-spacing: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media screen and (max-width: 1300px) {
+    .firstshorts-card-header {
+        flex-wrap: wrap;
+    }
+
+    .firstshorts-card-header .firstshorts-panel-actions {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 8px;
+        order: 2;
+    }
+}
+
+/* Force Live Preview Header Buttons to New Line */
+.firstshorts-preview-card .firstshorts-card-header {
+    flex-wrap: wrap;
+    align-content: flex-start;
+    height: auto;
+    min-height: 80px;
+    /* Ensure space for two rows */
+    padding-bottom: 12px;
+}
+
+.firstshorts-preview-card .firstshorts-card-header h3 {
+    flex: 0 0 100%;
+    width: 100%;
+    margin-bottom: 8px;
+    /* Gap handles spacing */
+}
+
+.firstshorts-preview-card .firstshorts-card-header .firstshorts-panel-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 0;
+    gap: 8px;
 }
 
 .firstshorts-card-body {
@@ -560,16 +642,19 @@ body.firstshorts-admin .postbox .handle-order-lower {
     flex: 1;
 }
 
-.firstshorts-tab-panel {
+.firstshorts-tab-panel,
+.firstshorts-tab-content {
     display: none;
     padding: 18px;
 }
 
-.firstshorts-tab-panel.is-active {
+.firstshorts-tab-panel.is-active,
+.firstshorts-tab-content.is-active {
     display: block;
 }
 
-.firstshorts-tab-panel .postbox {
+.firstshorts-tab-panel .postbox,
+.firstshorts-tab-content .postbox {
     margin: 0;
     border: none;
     box-shadow: none;
@@ -577,11 +662,14 @@ body.firstshorts-admin .postbox .handle-order-lower {
 }
 
 .firstshorts-tab-panel .hndle,
-.firstshorts-tab-panel .handlediv {
+.firstshorts-tab-panel .handlediv,
+.firstshorts-tab-content .hndle,
+.firstshorts-tab-content .handlediv {
     display: none;
 }
 
-.firstshorts-tab-panel .inside {
+.firstshorts-tab-panel .inside,
+.firstshorts-tab-content .inside {
     padding: 0;
 }
 
@@ -626,7 +714,7 @@ body.firstshorts-admin .postbox .handle-order-lower {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 10px;
     margin: 0 auto;
     min-height: 400px;
     background: #ffffff;
@@ -653,20 +741,31 @@ body.firstshorts-admin .postbox .handle-order-lower {
 
 .firstshorts-preview-video-container {
     position: relative;
-    width: 100%;
-    height: 560px;
-    /* Fixed height for 9:16 approx 315px width */
+    width: auto;
+    /* Allow width to shrink */
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 9 / 16;
+    max-height: calc(100vh - 220px);
+    /* Prevent it from being taller than viewport header/padding */
     border-radius: 12px;
     overflow: hidden;
-    background: #0b0b0b;
+    background: #000000;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .firstshorts-preview-video {
     width: 100%;
     height: 100%;
     display: block;
-    object-fit: cover;
+    object-fit: contain;
+    /* Ensure entire video is visible inside the box */
+    max-width: 100%;
+    max-height: 100%;
 }
 
 .firstshorts-preview-overlay {
@@ -863,6 +962,7 @@ body.firstshorts-admin .postbox .handle-order-lower {
     margin-bottom: 20px;
     padding: 0 4px;
     gap: 20px;
+    flex-wrap: wrap;
 }
 
 .firstshorts-top-shortcode {
@@ -908,7 +1008,7 @@ body.firstshorts-admin .postbox .handle-order-lower {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     color: #64748b;
-    font-family: 'Consolas', 'Monaco', monospace;
+    font-family: "Manrope", "Plus Jakarta Sans", "Segoe UI", sans-serif;
     font-size: 13px;
     padding: 0 12px;
     height: 40px;
@@ -1090,7 +1190,19 @@ body.firstshorts-admin .postbox .handle-order-lower {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.firstshorts-checkbox-row:hover {
+.firstshorts-checkbox-row--plain {
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+.firstshorts-checkbox-row--plain:hover {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.firstshorts-checkbox-row:not(.firstshorts-checkbox-row--plain):hover {
     border-color: #c7d2fe;
     box-shadow: 0 8px 16px rgba(37, 99, 235, 0.1);
 }
@@ -1195,6 +1307,9 @@ body.firstshorts-admin .postbox .handle-order-lower {
     border-radius: 14px;
     overflow: hidden;
     background: #ffffff;
+    flex: 1;
+    min-height: 100px;
+    overflow-y: auto;
 }
 
 .firstshorts-bulk-item {
@@ -1325,4 +1440,49 @@ body.firstshorts-admin .postbox .handle-order-lower {
     .firstshorts-upload-btn {
         width: 100%;
     }
+}
+
+/* Top Actions Bar */
+.firstshorts-top-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid #e7e9f3;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.firstshorts-save-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.firstshorts-save-hint {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.firstshorts-save-btn-top {
+    border-radius: 8px !important;
+    padding: 7px 18px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.15) !important;
+    transition: all 0.2s ease;
+}
+
+.firstshorts-save-btn-top:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Ensure Live Preview Header Buttons don't shrink */
+.firstshorts-card-header .firstshorts-panel-actions {
+    flex-shrink: 0;
+    margin-left: 10px;
 }

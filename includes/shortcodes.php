@@ -65,7 +65,21 @@ function firstshorts_video_slider_shortcode($atts)
         'count' => 5,
         'ids' => '',
         'post_id' => 0,
+        'id' => 0,
     ), $atts);
+
+    // Alias 'id' to 'post_id'
+    if (!empty($atts['id'])) {
+        $atts['post_id'] = $atts['id'];
+    }
+
+    // If 'ids' not provided but 'post_id' is, fetch from meta
+    if (empty($atts['ids']) && !empty($atts['post_id'])) {
+        $saved_ids = get_post_meta($atts['post_id'], '_firstshorts_bulk_video_ids', true);
+        if ($saved_ids) {
+            $atts['ids'] = $saved_ids;
+        }
+    }
 
     // Query videos
     $args = array(
