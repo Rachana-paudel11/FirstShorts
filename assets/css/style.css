@@ -143,6 +143,14 @@ body.firstshorts-admin #wpbody-content {
     height: calc(100vh - 140px);
     min-height: 530px;
     box-sizing: border-box;
+    position: relative;
+    z-index: 10;
+    /* Removed overflow: hidden if any, to allow tooltips to bleed. 
+       Body handles internal scrolling. */
+}
+
+.firstshorts-panel:hover {
+    z-index: 100;
 }
 
 .firstshorts-panel-header {
@@ -150,7 +158,7 @@ body.firstshorts-admin #wpbody-content {
     border-bottom: 1px solid #dcdcde;
     margin-bottom: 0;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
@@ -159,10 +167,13 @@ body.firstshorts-admin #wpbody-content {
 .firstshorts-panel-header-content {
     flex: 1;
     min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .firstshorts-panel-header-content h3 {
-    margin: 0 0 4px;
+    margin: 0;
     font-size: 16px;
     font-weight: 700;
     color: #0f172a;
@@ -341,7 +352,7 @@ body.firstshorts-admin #wpbody-content {
     border: 1px solid #e7eaef;
     border-radius: 12px;
     background: #ffffff;
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     margin-bottom: 20px;
@@ -739,12 +750,10 @@ body.firstshorts-admin .postbox .handle-order-lower {
     padding: 20px;
     margin: 0 auto;
     min-height: 400px;
-    background-color: #f1f5f9;
-    background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
-    background-size: 20px 20px;
-    border: 1px solid #dcdcde;
+    background-color: transparent !important;
+    border: none;
     border-top: none;
-    border-radius: 0 0 6px 6px;
+    border-radius: 0 0 12px 12px;
     transition: all 0.4s ease;
     box-sizing: border-box;
     overflow: hidden;
@@ -757,34 +766,50 @@ body.firstshorts-admin .postbox .handle-order-lower {
     justify-content: center;
     width: 100%;
     min-height: 540px;
-    background: radial-gradient(circle at top, rgba(99, 102, 241, 0.08), transparent 65%);
+    background: transparent !important;
     padding: 40px 0;
 }
 
 .firstshorts-preview-nav-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
+    display: block;
     width: 100%;
+    height: 100%;
 }
 
 .firstshorts-preview-nav {
+    position: absolute;
+    top: calc(50% + 20px) !important;
+    /* Offset for panel header to stay centered in body */
+    transform: translateY(-50%);
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    display: flex;
+    display: none;
+    /* Controlled by JS */
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #1e293b;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-    transition: all 0.2s ease;
-    flex-shrink: 0;
+    color: #111827;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(255, 255, 255, 0.9);
+    transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    z-index: 250;
+    /* Stick on top of everything including giant cards */
     padding: 0;
     outline: none;
+}
+
+.firstshorts-preview-nav-prev {
+    left: 25px;
+    top: 50% !important;
+    transform: translateY(-50%);
+}
+
+.firstshorts-preview-nav-next {
+    right: 25px;
+    top: 50% !important;
+    transform: translateY(-50%);
 }
 
 .firstshorts-preview-nav:hover {
@@ -802,6 +827,29 @@ body.firstshorts-admin .postbox .handle-order-lower {
 .firstshorts-preview-nav svg {
     width: 22px;
     height: 22px;
+    display: block;
+}
+
+/* Vertical Orientation: Arrows at Top/Bottom Center */
+.firstshorts-panel-preview.is-vertical .firstshorts-preview-nav {
+    left: 50% !important;
+    right: auto !important;
+}
+
+.firstshorts-panel-preview.is-vertical .firstshorts-preview-nav-prev {
+    top: 85px !important;
+    transform: translateX(-50%) !important;
+}
+
+.firstshorts-panel-preview.is-vertical .firstshorts-preview-nav-next {
+    bottom: 30px !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
+}
+
+/* Hover fixes for vertical mode */
+.firstshorts-panel-preview.is-vertical .firstshorts-preview-nav:hover {
+    transform: translateX(-50%) scale(1.08) !important;
 }
 
 .firstshorts-preview-video-container {
@@ -1751,6 +1799,8 @@ body.firstshorts-admin .postbox .handle-order-lower {
     color: #ffffff;
     border-color: #6366f1;
     transform: scale(1.1);
+    z-index: 100005 !important;
+    position: relative;
 }
 
 .firstshorts-info-trigger svg {
@@ -1771,15 +1821,18 @@ body.firstshorts-admin .postbox .handle-order-lower {
     border-radius: 8px;
     font-size: 12px;
     line-height: 1.5;
-    width: 240px;
+    width: 210px;
     text-align: left;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 10000;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    z-index: 100000;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
     white-space: normal;
     font-weight: 400;
+    pointer-events: auto;
+    /* Prevent mouse from triggering icons underneath */
 }
 
 .firstshorts-info-trigger[data-tooltip]::before {
@@ -1791,13 +1844,339 @@ body.firstshorts-admin .postbox .handle-order-lower {
     border: 6px solid transparent;
     border-top-color: #1e293b;
     opacity: 0;
+    visibility: hidden;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 10000;
+    z-index: 100000;
     pointer-events: none;
 }
 
 .firstshorts-info-trigger:hover[data-tooltip]::after,
 .firstshorts-info-trigger:hover[data-tooltip]::before {
     opacity: 1;
+    visibility: visible;
     transform: translateX(-50%) translateY(0);
+}
+
+/* --- COMPREHENSIVE TOOLTIP & PREVIEW FIXES --- */
+
+/* 1. Global Tooltip Z-Index handling */
+.firstshorts-checkbox-row:hover,
+.firstshorts-meta-field:hover {
+    z-index: 100005 !important;
+    position: relative;
+}
+
+/* Remove internal scroll effects from settings panel */
+.firstshorts-panel-settings {
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+.firstshorts-panel-settings .firstshorts-panel-body {
+    overflow: visible !important;
+    height: auto !important;
+}
+
+/* 2. Library Panel: Tooltips point RIGHT */
+.firstshorts-panel-library .firstshorts-info-trigger[data-tooltip]::after {
+    left: 100%;
+    right: auto;
+    margin-left: 10px;
+    bottom: 50%;
+    transform: translateY(50%);
+}
+
+.firstshorts-panel-library .firstshorts-info-trigger[data-tooltip]::before {
+    left: 100%;
+    right: auto;
+    margin-left: -2px;
+    bottom: 50%;
+    top: auto;
+    transform: translateY(50%);
+    border: 6px solid transparent;
+    border-right-color: #1e293b;
+    display: block;
+}
+
+.firstshorts-panel-library .firstshorts-info-trigger:hover[data-tooltip]::after,
+.firstshorts-panel-library .firstshorts-info-trigger:hover[data-tooltip]::before {
+    transform: translateY(50%);
+}
+
+/* 3. Settings Panel: Tooltips point DOWNWARDS and shifted slightly RIGHT.
+   This prevents the tooltip from hitting the left edge of the panel. */
+.firstshorts-panel-settings .firstshorts-info-trigger[data-tooltip]::after {
+    left: 0;
+    right: auto;
+    bottom: auto;
+    top: calc(100% + 10px);
+    transform: translateX(-20px) translateY(-10px);
+    width: 220px;
+}
+
+.firstshorts-panel-settings .firstshorts-info-trigger[data-tooltip]::before {
+    left: 50%;
+    right: auto;
+    margin-left: -6px;
+    bottom: auto;
+    top: calc(100% + 2px);
+    transform: translateX(-50%) translateY(-10px);
+    border: 6px solid transparent;
+    border-bottom-color: #1e293b;
+    display: block;
+}
+
+.firstshorts-panel-settings .firstshorts-info-trigger:hover[data-tooltip]::after {
+    transform: translateX(-20px) translateY(0);
+}
+
+.firstshorts-panel-settings .firstshorts-info-trigger:hover[data-tooltip]::before {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* 4. Headers: Tooltips point DOWN (to avoid screen clipping) */
+.firstshorts-panel-header .firstshorts-info-trigger[data-tooltip]::after,
+.firstshorts-card-header .firstshorts-info-trigger[data-tooltip]::after {
+    bottom: auto !important;
+    left: 50% !important;
+    top: calc(100% + 10px) !important;
+    transform: translateX(-50%) translateY(-5px) !important;
+}
+
+.firstshorts-panel-header .firstshorts-info-trigger[data-tooltip]::before,
+.firstshorts-card-header .firstshorts-info-trigger[data-tooltip]::before {
+    bottom: auto !important;
+    left: 50% !important;
+    top: calc(100% + 2px) !important;
+    transform: translateX(-50%) translateY(-5px) !important;
+    border-top-color: transparent !important;
+    border-bottom-color: #1e293b !important;
+}
+
+.firstshorts-panel-header .firstshorts-info-trigger:hover[data-tooltip]::after,
+.firstshorts-panel-header .firstshorts-info-trigger:hover[data-tooltip]::before,
+.firstshorts-card-header .firstshorts-info-trigger:hover[data-tooltip]::after,
+.firstshorts-card-header .firstshorts-info-trigger:hover[data-tooltip]::before {
+    transform: translateX(-50%) translateY(0) !important;
+}
+
+/* 5. Live Preview Structure & Branding */
+.firstshorts-panel-preview {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background: #ffffff;
+    position: relative;
+    /* Base for sticky nav arrows */
+}
+
+.firstshorts-panel-preview .firstshorts-panel-header {
+    background: #ffffff !important;
+    z-index: 10;
+    position: relative;
+    border-bottom: 1px solid #e7eaef !important;
+}
+
+.firstshorts-panel-preview .firstshorts-panel-body {
+    padding: 0 !important;
+    background: #f1f5f9 !important;
+    background-image: radial-gradient(#cbd5e1 0.8px, transparent 0.8px) !important;
+    background-size: 24px 24px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow: auto;
+    /* ALLOW SCROLLING */
+    flex: 1 !important;
+    min-height: 0 !important;
+    position: relative;
+    width: 100% !important;
+}
+
+/* Custom Scrollbar for Preview Body (Actual Size Mode) */
+.firstshorts-panel-preview .firstshorts-panel-body::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.firstshorts-panel-preview .firstshorts-panel-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.firstshorts-panel-preview .firstshorts-panel-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+    border: 2px solid #f1f5f9;
+}
+
+.firstshorts-panel-preview .firstshorts-panel-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.firstshorts-preview-content-area {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    padding: 20px 100px !important;
+    /* Safe lanes restored but on the scrollable content instead */
+    box-sizing: border-box !important;
+    background: transparent !important;
+}
+
+.firstshorts-preview-video-container {
+    background: #000;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* 6. Mobile View Tweaks (Triggered by JS toggle) */
+.firstshorts-panel-preview.is-mobile-view .firstshorts-preview-nav {
+    width: 38px;
+    height: 38px;
+}
+
+.firstshorts-panel-preview.is-mobile-view .firstshorts-preview-nav svg {
+    width: 18px;
+    height: 18px;
+}
+
+.firstshorts-panel-preview.is-mobile-view .firstshorts-preview-nav-prev {
+    left: 8px;
+}
+
+.firstshorts-panel-preview.is-mobile-view .firstshorts-preview-nav-next {
+    right: 8px;
+}
+
+
+/* Fix Live Preview Meta Positioning */
+.firstshorts-slide-meta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 40px 15px 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.firstshorts-slide-meta>* {
+    pointer-events: auto;
+}
+
+.firstshorts-video-cta-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Frontend-Synced CTA Button Styles */
+.firstshorts-btn-cta {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.35) !important;
+    padding: 10px 20px !important;
+    border-radius: 999px !important;
+    /* Fully rounded like frontend */
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.firstshorts-btn-cta:hover {
+    background: #1d4ed8 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.45) !important;
+}
+
+.firstshorts-btn-cta-secondary {
+    background: rgba(255, 255, 255, 0.92) !important;
+    color: #111827 !important;
+}
+
+.firstshorts-btn-cta-secondary:hover {
+    background: #ffffff !important;
+}
+
+.firstshorts-btn-symbol {
+    display: flex;
+    align-items: center;
+}
+
+.firstshorts-btn-text {
+    white-space: nowrap;
+}
+
+/* Preview Scaling & Badge Styles */
+.firstshorts-fit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.firstshorts-fit-btn::after {
+    content: "Fit";
+}
+
+.firstshorts-fit-btn.is-active {
+    background: #4f46e5;
+    /* Match device button indigo */
+    color: #fff;
+    border-color: #4f46e5;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+}
+
+.firstshorts-fit-btn:not(.is-active):hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+.firstshorts-action-divider {
+    width: 1px;
+    height: 20px;
+    background: #e2e8f0;
+    margin: 0 4px;
+}
+
+.firstshorts-dimension-badge {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.9);
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    z-index: 100;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }

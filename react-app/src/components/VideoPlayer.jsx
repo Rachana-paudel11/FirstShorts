@@ -77,8 +77,11 @@ const VideoPlayer = ({
     console.log('Add to cart functionality');
   };
 
-  const maxWidth = Number(displayOptions.maxWidth) || 500;
-  const clampedMaxWidth = Math.min(500, Math.max(200, maxWidth));
+  const maxWidth = Number(displayOptions.maxWidth) || 360;
+  const maxHeight = Number(displayOptions.maxHeight) || 640;
+
+  const clampedMaxWidth = Math.min(1200, Math.max(150, maxWidth));
+  const clampedMaxHeight = Math.min(1500, Math.max(200, maxHeight));
 
   return (
     <div className="firstshorts-video-container" style={{ maxWidth: `${clampedMaxWidth}px`, padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>

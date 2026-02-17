@@ -2,6 +2,20 @@ jQuery(document).ready(function ($) {
     var bulkFrame;
     var bulkItems = [];
 
+    // Helper to prevent expensive functions from running too often
+    function debounce(func, wait) {
+        var timeout;
+        return function () {
+            var context = this, args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(function () {
+                func.apply(context, args);
+            }, wait);
+        };
+    }
+
+    var debouncedUpdatePreview = debounce(updatePreview, 250);
+
     function formatBytes(bytes) {
         if (!bytes || bytes <= 0) return ' --';
         var units = ['B', 'KB', 'MB', 'GB'];
@@ -278,32 +292,46 @@ jQuery(document).ready(function ($) {
         var container = previewContentBox.find('.firstshorts-preview-video-container');
         var previewEmpty = previewContentBox.find('.firstshorts-preview-empty');
 
-        // Apply Card Width & Height if not in special device mode
-        var activeDevice = $('.firstshorts-device-btn.is-active').text().trim().toLowerCase();
+        // Apply Card Width & Height
         var manualWidth = $('#firstshorts_video_max_width').val() || 500;
         var manualHeight = $('#firstshorts_video_max_height').val() || 630;
+        var isFitMode = $('.firstshorts-fit-btn').hasClass('is-active');
 
-        if (activeDevice === 'desktop') {
-            previewContentBox.css({
-                'max-width': manualWidth + 'px',
-                'height': 'auto'
+        // Add dimension badge to container if it doesn't exist
+        var badge = container.find('.firstshorts-dimension-badge');
+        if (!badge.length) {
+            badge = $('<div class="firstshorts-dimension-badge"></div>');
+            container.prepend(badge);
+        }
+        badge.text(manualWidth + ' × ' + manualHeight + ' px');
+
+        var availW = previewContentBox.width() - 60;
+        var availH = previewContentBox.height() - 60;
+        var scale = isFitMode ? Math.min(availW / manualWidth, availH / manualHeight, 1) : 1;
+
+        var panelBody = previewContentBox.closest('.firstshorts-panel-body');
+        panelBody.css({
+            'overflow': isFitMode ? 'hidden' : 'auto',
+            'align-items': isFitMode ? 'center' : 'flex-start'
+        });
+
+        previewContentBox.css({
+            'max-width': '100%',
+            'height': isFitMode ? '100%' : 'auto',
+            'display': 'flex',
+            'align-items': 'center',
+            'justify-content': 'center'
+        });
+
+        if (container.length) {
+            container.css({
+                'width': manualWidth + 'px',
+                'height': manualHeight + 'px',
+                'transform': 'scale(' + scale + ')',
+                'transform-origin': 'center center',
+                'flex-shrink': '0',
+                'margin': isFitMode ? '0' : '60px auto'
             });
-            if (container.length) {
-                container.css({
-                    'width': '100%',
-                    'height': manualHeight + 'px',
-                    'max-height': manualHeight + 'px'
-                });
-            }
-        } else {
-            // In tablet/mobile, we might want to scale but keep aspect ratio or follow device width
-            if (container.length) {
-                container.css({
-                    'width': '100%',
-                    'height': '500px', // Default for mobile preview
-                    'max-height': '500px'
-                });
-            }
         }
 
         // Fallback if structure is different
@@ -343,10 +371,16 @@ jQuery(document).ready(function ($) {
         // Also show the parent wrapper if it was hidden by PHP
         $('#firstshorts-preview-player').show();
 
+        var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
+        $('.firstshorts-panel-preview').toggleClass('is-vertical', orientation === 'vertical');
+        var scrollSnap = $('#firstshorts_scroll_snap').is(':checked');
+
         var sliderProps = {
             display: 'flex',
-            overflowX: 'auto',
-            scrollSnapType: 'x mandatory',
+            flexDirection: orientation === 'vertical' ? 'column' : 'row',
+            overflowX: orientation === 'vertical' ? 'hidden' : 'auto',
+            overflowY: orientation === 'vertical' ? 'auto' : 'hidden',
+            scrollSnapType: (orientation === 'vertical' ? 'y' : 'x') + (scrollSnap ? ' mandatory' : ' none'),
             height: '100%',
             width: '100%'
         };
@@ -370,9 +404,16 @@ jQuery(document).ready(function ($) {
 
         items.forEach(function (item) {
             var slide = $('<div class="firstshorts-preview-slide"></div>').css({
-                minWidth: '100%', scrollSnapAlign: 'start', height: '100%', position: 'relative', backgroundColor: '#000', overflow: 'hidden'
+                minWidth: '100%',
+                scrollSnapAlign: 'start',
+                height: orientation === 'vertical' ? '100%' : '100%',
+                width: '100%',
+                position: 'relative',
+                backgroundColor: '#000',
+                overflow: 'hidden',
+                flexShrink: 0
             });
-            var video = $('<video playsinline loop muted autoplay controls preload="auto" style="width:100%; height:100%; object-fit:contain; background:#000;"></video>');
+            var video = $('<video playsinline loop autoplay controls preload="auto" style="width:100%; height:100%; object-fit:contain; background:#000;"></video>');
             video.append($('<source>').attr('src', item.url).attr('type', 'video/mp4'));
             video.on('click', function () {
                 if (this.paused) this.play(); else this.pause();
@@ -435,23 +476,70 @@ jQuery(document).ready(function ($) {
             }
 
             sliderWrapper.append(slide);
-            // Ensure video loads and try to play
             video[0].load();
-            video[0].play().catch(function (e) {
-                console.log("Preview play failed:", e);
-            });
         });
 
         // Show/Hide navigation arrows based on count
-        var navPrev = $('#firstshorts-preview-nav-prev');
-        var navNext = $('#firstshorts-preview-nav-next');
+        var navPrev = $('.firstshorts-panel-preview').find('#firstshorts-preview-nav-prev');
+        var navNext = $('.firstshorts-panel-preview').find('#firstshorts-preview-nav-next');
+
         if (items.length > 1) {
-            navPrev.show();
-            navNext.show();
+            navPrev.css('display', 'flex');
+            navNext.css('display', 'flex');
+
+            // Update icons based on orientation
+            if (orientation === 'vertical') {
+                navPrev.html('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>');
+                navNext.html('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+            } else {
+                navPrev.html('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>');
+                navNext.html('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>');
+            }
         } else {
             navPrev.hide();
             navNext.hide();
         }
+
+        // Sync videos on first render
+        setTimeout(syncPreviewVideos, 100);
+
+        // Add scroll listener for manual swiping/scrolling
+        sliderWrapper.off('scroll.firstshorts').on('scroll.firstshorts', debounce(syncPreviewVideos, 150));
+    }
+
+    /**
+     * Smart Audio/Video Management
+     * Pauses all videos except the one currently in the center of the viewport
+     */
+    function syncPreviewVideos() {
+        var slider = $('.firstshorts-preview-slider');
+        if (!slider.length) return;
+
+        var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
+        var scrollPos = orientation === 'vertical' ? slider.scrollTop() : slider.scrollLeft();
+        var sliderDim = orientation === 'vertical' ? slider.height() : slider.width();
+        var centerPos = scrollPos + (sliderDim / 2);
+
+        slider.find('.firstshorts-preview-slide').each(function () {
+            var slide = $(this);
+            var video = slide.find('video')[0];
+            if (!video) return;
+
+            var slideStart = orientation === 'vertical' ? this.offsetTop : this.offsetLeft;
+            var slideDim = orientation === 'vertical' ? slide.height() : slide.width();
+            var slideEnd = slideStart + slideDim;
+
+            // If this slide is covering the center of the slider, it's the active one
+            if (centerPos >= slideStart && centerPos <= slideEnd) {
+                if (video.paused) {
+                    video.play().catch(function (e) { });
+                }
+            } else {
+                if (!video.paused) {
+                    video.pause();
+                }
+            }
+        });
     }
 
     function updateSaveState() {
@@ -495,8 +583,8 @@ jQuery(document).ready(function ($) {
         var leftPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-library">' +
             '<div class="firstshorts-panel-header">' +
-            '<div class="firstshorts-panel-header-content" style="display: flex; align-items: center; gap: 8px;">' +
-            '<h3 style="margin-bottom: 0;">Videos</h3>' +
+            '<div class="firstshorts-panel-header-content">' +
+            '<h3>Videos</h3>' +
             '<span class="firstshorts-info-trigger" data-tooltip="Manage your video library. Selected videos will appear in the slider on your site."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>' +
             '</div>' +
             '<div class="firstshorts-panel-actions">' +
@@ -510,8 +598,8 @@ jQuery(document).ready(function ($) {
         var centerPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-settings">' +
             '<div class="firstshorts-panel-header">' +
-            '<div class="firstshorts-panel-header-content" style="display: flex; align-items: center; gap: 8px;">' +
-            '<h3 style="margin-bottom: 0;">Settings</h3>' +
+            '<div class="firstshorts-panel-header-content">' +
+            '<h3>Settings</h3>' +
             '<span class="firstshorts-info-trigger" data-tooltip="Customize how your videos look and behave on the frontend."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>' +
             '</div>' +
             '</div>' +
@@ -521,19 +609,18 @@ jQuery(document).ready(function ($) {
 
         var rightPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-preview">' +
-            '<div class="firstshorts-panel-body">' +
-            // Preview Metabox
-            '<div class="firstshorts-card firstshorts-preview-card">' +
-            '<div class="firstshorts-card-header">' +
+            '<div class="firstshorts-panel-header">' +
+            '<div class="firstshorts-panel-header-content">' +
             '<h3>Live Preview</h3>' +
+            '</div>' +
             '<div class="firstshorts-panel-actions">' +
-            '<button type="button" class="firstshorts-device-btn is-active">Desktop</button>' +
-            '<button type="button" class="firstshorts-device-btn">Tablet</button>' +
-            '<button type="button" class="firstshorts-device-btn">Mobile</button>' +
+            '<button type="button" class="firstshorts-fit-btn is-active" title="Toggle Scale to Fit">' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>' +
+            '</button>' +
             '</div>' +
             '</div>' +
-            '<div class="firstshorts-card-body firstshorts-preview-content-area"></div>' +
-            '</div>' +
+            '<div class="firstshorts-panel-body">' +
+            '<div class="firstshorts-preview-content-area"></div>' +
             '</div>' +
             '</section>'
         );
@@ -588,6 +675,13 @@ jQuery(document).ready(function ($) {
                 rawPreview = rawPreview.children();
             }
             rightPanel.find('.firstshorts-preview-content-area').append(rawPreview);
+
+            // MOVE NAVIGATION ARROWS to panel root so they stay sticky
+            var arrows = rightPanel.find('.firstshorts-preview-nav');
+            if (arrows.length) {
+                rightPanel.append(arrows);
+            }
+
             previewBox.hide();
         }
 
@@ -612,22 +706,22 @@ jQuery(document).ready(function ($) {
             updatePreview();
         });
         $(document).on('input', '#firstshorts_cta_text', function () {
-            updatePreview();
+            debouncedUpdatePreview();
         });
         $(document).on('input', '#firstshorts_cta_link', function () {
-            updatePreview();
+            debouncedUpdatePreview();
         });
         $(document).on('input change', '#firstshorts_video_max_width', function () {
-            updatePreview();
+            debouncedUpdatePreview();
         });
         $(document).on('input change', '#firstshorts_video_max_height', function () {
-            updatePreview();
+            debouncedUpdatePreview();
         });
         $(document).on('change', '#firstshorts_display_type', function () {
             updateSaveState();
         });
         $(document).on('change', '#firstshorts_show_likes, #firstshorts_show_save, #firstshorts_show_share, #firstshorts_show_view_count', function () {
-            updatePreview();
+            debouncedUpdatePreview();
         });
         $(document).on('change input', '.firstshorts-panel-settings input, .firstshorts-panel-settings select', updateSaveState);
         $(document).on('firstshorts:bulk-updated', function () {
@@ -635,29 +729,14 @@ jQuery(document).ready(function ($) {
             updatePreview();
         });
 
-        // Device Toggle Buttons
-        $(document).on('click', '.firstshorts-device-btn', function (e) {
+        // Fit Toggle
+        $(document).on('click', '.firstshorts-fit-btn', function (e) {
             e.preventDefault();
-            var btn = $(this);
-            var mode = btn.text().trim().toLowerCase();
-            var previewArea = $('.firstshorts-preview-content-area');
-
-            // Toggle active state
-            btn.siblings().removeClass('is-active');
-            btn.addClass('is-active');
-
-            // Apply size
-            if (mode === 'desktop') {
-                previewArea.css({ 'max-width': '100%', 'margin': '0 auto' });
-            } else if (mode === 'tablet') {
-                previewArea.css({ 'max-width': '768px', 'margin': '0 auto' });
-            } else if (mode === 'mobile') {
-                previewArea.css({ 'max-width': '375px', 'margin': '0 auto' });
-            }
-
-            // Trigger window resize so React components can update if needed
-            window.dispatchEvent(new Event('resize'));
+            $(this).toggleClass('is-active');
+            updatePreview();
         });
+
+        // Device Toggle Buttons - REMOVED
 
         // Save Button
         mainWrapper.on('click', '.firstshorts-save-btn', function () {
@@ -795,17 +874,24 @@ jQuery(document).ready(function ($) {
         setBulkFeedback('Video removed.', 'success');
     });
 
-    // Live Preview Navigation
     $(document).on('click', '#firstshorts-preview-nav-prev', function (e) {
         e.preventDefault();
         var slider = $('.firstshorts-preview-slider');
         if (slider.length) {
-            var scrollAmount = slider[0].offsetWidth;
-            slider.animate({
-                scrollLeft: slider.scrollLeft() - scrollAmount
-            }, {
+            var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
+            var scrollAmount = orientation === 'vertical' ? slider[0].offsetHeight : slider[0].offsetWidth;
+
+            var animProps = {};
+            if (orientation === 'vertical') {
+                animProps.scrollTop = slider.scrollTop() - scrollAmount;
+            } else {
+                animProps.scrollLeft = slider.scrollLeft() - scrollAmount;
+            }
+
+            slider.animate(animProps, {
                 duration: 400,
-                easing: 'swing'
+                easing: 'swing',
+                complete: syncPreviewVideos
             });
         }
     });
@@ -814,12 +900,20 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         var slider = $('.firstshorts-preview-slider');
         if (slider.length) {
-            var scrollAmount = slider[0].offsetWidth;
-            slider.animate({
-                scrollLeft: slider.scrollLeft() + scrollAmount
-            }, {
+            var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
+            var scrollAmount = orientation === 'vertical' ? slider[0].offsetHeight : slider[0].offsetWidth;
+
+            var animProps = {};
+            if (orientation === 'vertical') {
+                animProps.scrollTop = slider.scrollTop() + scrollAmount;
+            } else {
+                animProps.scrollLeft = slider.scrollLeft() + scrollAmount;
+            }
+
+            slider.animate(animProps, {
                 duration: 400,
-                easing: 'swing'
+                easing: 'swing',
+                complete: syncPreviewVideos
             });
         }
     });
@@ -873,7 +967,7 @@ jQuery(document).ready(function ($) {
     $(document).on('input change',
         '#firstshorts_show_share, #firstshorts_show_buy_button, #firstshorts_cta_text, ' +
         '#firstshorts_cta_link, #firstshorts_cta_style, #firstshorts_video_max_width, ' +
-        '#firstshorts_video_max_height',
+        '#firstshorts_video_max_height, #firstshorts_slider_orientation, #firstshorts_scroll_snap',
         function () {
             updatePreview();
         }

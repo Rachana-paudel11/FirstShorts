@@ -337,11 +337,22 @@ function firstshorts_render_display_options_metabox($post)
     $cta_link = get_post_meta($post->ID, '_firstshorts_cta_link', true);
     $cta_style = get_post_meta($post->ID, '_firstshorts_cta_style', true);
     $product_description = get_post_meta($post->ID, '_firstshorts_product_description', true);
+    
+    $slider_orientation = get_post_meta($post->ID, '_firstshorts_slider_orientation', true);
+    if (empty($slider_orientation)) {
+        $slider_orientation = 'horizontal';
+    }
+
+    $scroll_snap = get_post_meta($post->ID, '_firstshorts_scroll_snap', true);
+    if ($scroll_snap === '') {
+        $scroll_snap = 1; // On by default
+    }
+
     if (empty($max_width)) {
-        $max_width = 500;
+        $max_width = 360;
     }
     if (empty($max_height)) {
-        $max_height = 630;
+        $max_height = 640;
     }
     if (empty($cta_text)) {
         $cta_text = __('Buy Now', 'firstshorts');
@@ -355,38 +366,85 @@ function firstshorts_render_display_options_metabox($post)
             <!-- Tabs Navigation -->
             <div class="firstshorts-tabs-wrapper">
                 <ul class="firstshorts-tabs-nav">
-                    <li class="firstshorts-tab-item is-active" data-tab="firstshorts-tab-engagement">
-                        <?php _e('Engagement', 'firstshorts'); ?>
+                    <li class="firstshorts-tab-item is-active" data-tab="firstshorts-tab-dimensions">
+                        <?php _e('Display Settings', 'firstshorts'); ?>
                     </li>
                     <li class="firstshorts-tab-item" data-tab="firstshorts-tab-product">
-                        <?php _e('Click Action', 'firstshorts'); ?>
+                        <?php _e('CTA / Click Action', 'firstshorts'); ?>
                     </li>
-                    <li class="firstshorts-tab-item" data-tab="firstshorts-tab-dimensions">
-                        <?php _e('Display Settings', 'firstshorts'); ?>
+                    <li class="firstshorts-tab-item" data-tab="firstshorts-tab-engagement">
+                        <?php _e('Engagement', 'firstshorts'); ?>
                     </li>
                 </ul>
 
-                <!-- Tab 1: Viewer Engagement -->
-                <div id="firstshorts-tab-engagement" class="firstshorts-tab-content is-active">
+                <!-- Tab 1: Display Settings -->
+                <div id="firstshorts-tab-dimensions" class="firstshorts-tab-content is-active">
                     <div class="firstshorts-section">
                         <p class="description" style="margin-top: 0;">
-                            <?php _e('Social interactions shown on the video.', 'firstshorts'); ?>
+                            <?php _e('Set the dimensions for the video card.', 'firstshorts'); ?>
                         </p>
+                        
+                        <div class="firstshorts-meta-field">
+                            <label for="firstshorts_video_max_width">
+                                <?php _e('Card Width (px)', 'firstshorts'); ?>
+                            </label>
+                            <input type="number"
+                                   id="firstshorts_video_max_width"
+                                   name="firstshorts_video_max_width"
+                                   value="<?php echo esc_attr($max_width); ?>"
+                                   min="150"
+                                   max="1200"
+                                   step="10"
+                                   style="width: 200px;" />
+                            <p class="description"><?php _e('Recommended: 320–450px', 'firstshorts'); ?></p>
+                        </div>
 
-                        <div class="firstshorts-checkbox-group">
+                        <div class="firstshorts-meta-field">
+                            <label for="firstshorts_video_max_height">
+                                <?php _e('Card Height (px)', 'firstshorts'); ?>
+                            </label>
+                            <input type="number"
+                                   id="firstshorts_video_max_height"
+                                   name="firstshorts_video_max_height"
+                                   value="<?php echo esc_attr($max_height); ?>"
+                                   min="200"
+                                   max="1500"
+                                   step="10"
+                                   style="width: 200px;" />
+                            <p class="description"><?php _e('Recommended: 550–750px', 'firstshorts'); ?></p>
+                        </div>
+
+                        <div class="firstshorts-section-divider" style="margin: 20px 0; border-top: 1px solid #e2e8f0;"></div>
+
+                        <div class="firstshorts-meta-field">
+                            <label for="firstshorts_slider_orientation">
+                                <?php _e('Scroll Direction', 'firstshorts'); ?>
+                            </label>
+                            <select id="firstshorts_slider_orientation" name="firstshorts_slider_orientation" style="width: 200px;">
+                                <option value="horizontal" <?php selected($slider_orientation, 'horizontal'); ?>>
+                                    <?php _e('Horizontal Scroll', 'firstshorts'); ?>
+                                </option>
+                                <option value="vertical" <?php selected($slider_orientation, 'vertical'); ?>>
+                                    <?php _e('Vertical Scroll (Feed)', 'firstshorts'); ?>
+                                </option>
+                            </select>
+                            <p class="description"><?php _e('Choose how users move through videos.', 'firstshorts'); ?></p>
+                        </div>
+
+                        <div class="firstshorts-checkbox-group" style="margin-top: 15px;">
                             <label class="firstshorts-checkbox-row">
                                 <input type="checkbox" 
-                                       id="firstshorts_show_share" 
-                                       name="firstshorts_show_share" 
+                                       id="firstshorts_scroll_snap" 
+                                       name="firstshorts_scroll_snap" 
                                        value="1" 
-                                       <?php checked($show_share, 1); ?> />
-                                <span class="firstshorts-checkbox-label"><?php _e('Allow Share', 'firstshorts'); ?></span>
+                                       <?php checked($scroll_snap, 1); ?> />
+                                <span class="firstshorts-checkbox-label"><?php _e('Enable Scroll Snap (Locks to Video)', 'firstshorts'); ?></span>
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tab 2: Product Action -->
+                <!-- Tab 2: CTA / Product Action -->
                 <div id="firstshorts-tab-product" class="firstshorts-tab-content">
                     <div class="firstshorts-section">
                         <div class="firstshorts-checkbox-group">
@@ -445,6 +503,26 @@ function firstshorts_render_display_options_metabox($post)
                         </div>
                     </div>
                 </div>
+
+                <!-- Tab 3: Engagement -->
+                <div id="firstshorts-tab-engagement" class="firstshorts-tab-content">
+                    <div class="firstshorts-section">
+                        <p class="description" style="margin-top: 0;">
+                            <?php _e('Social interactions shown on the video.', 'firstshorts'); ?>
+                        </p>
+
+                        <div class="firstshorts-checkbox-group">
+                            <label class="firstshorts-checkbox-row">
+                                <input type="checkbox" 
+                                       id="firstshorts_show_share" 
+                                       name="firstshorts_show_share" 
+                                       value="1" 
+                                       <?php checked($show_share, 1); ?> />
+                                <span class="firstshorts-checkbox-label"><?php _e('Allow Share', 'firstshorts'); ?></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <script>
@@ -463,44 +541,6 @@ function firstshorts_render_display_options_metabox($post)
             });
             </script>
 
-                <!-- Tab 3: Display Settings -->
-                <div id="firstshorts-tab-dimensions" class="firstshorts-tab-content">
-                    <div class="firstshorts-section">
-                        <p class="description" style="margin-top: 0;">
-                            <?php _e('Set the dimensions for the video card.', 'firstshorts'); ?>
-                        </p>
-                        
-                        <div class="firstshorts-meta-field">
-                            <label for="firstshorts_video_max_width">
-                                <?php _e('Card Width (px)', 'firstshorts'); ?>
-                            </label>
-                            <input type="number"
-                                   id="firstshorts_video_max_width"
-                                   name="firstshorts_video_max_width"
-                                   value="<?php echo esc_attr($max_width); ?>"
-                                   min="200"
-                                   max="500"
-                                   step="10"
-                                   style="width: 200px;" />
-                            <p class="description"><?php _e('Recommended: 280–360px', 'firstshorts'); ?></p>
-                        </div>
-
-                        <div class="firstshorts-meta-field">
-                            <label for="firstshorts_video_max_height">
-                                <?php _e('Card Height (px)', 'firstshorts'); ?>
-                            </label>
-                            <input type="number"
-                                   id="firstshorts_video_max_height"
-                                   name="firstshorts_video_max_height"
-                                   value="<?php echo esc_attr($max_height); ?>"
-                                   min="300"
-                                   max="1000"
-                                   step="10"
-                                   style="width: 200px;" />
-                            <p class="description"><?php _e('Recommended: 500–700px', 'firstshorts'); ?></p>
-                        </div>
-                    </div>
-                </div>
         <?php
 }
 
@@ -814,6 +854,26 @@ function firstshorts_save_video_meta($post_id)
         );
     }
 
+    if (isset($_POST['firstshorts_video_max_width'])) {
+        update_post_meta($post_id, '_firstshorts_video_max_width', absint($_POST['firstshorts_video_max_width']));
+    }
+
+    if (isset($_POST['firstshorts_video_max_height'])) {
+        update_post_meta($post_id, '_firstshorts_video_max_height', absint($_POST['firstshorts_video_max_height']));
+    }
+
+    if (isset($_POST['firstshorts_slider_orientation'])) {
+        update_post_meta($post_id, '_firstshorts_slider_orientation', sanitize_text_field($_POST['firstshorts_slider_orientation']));
+    }
+
+    // Scroll Snap is a checkbox
+    $scroll_snap = isset($_POST['firstshorts_scroll_snap']) ? 1 : 0;
+    update_post_meta($post_id, '_firstshorts_scroll_snap', $scroll_snap);
+
+    if (isset($_POST['firstshorts_product_description'])) {
+        update_post_meta($post_id, '_firstshorts_product_description', sanitize_textarea_field($_POST['firstshorts_product_description']));
+    }
+
 
 
     // Bulk create videos from media library selection
@@ -841,24 +901,20 @@ function firstshorts_save_video_meta($post_id)
 
     if (isset($_POST['firstshorts_video_max_width'])) {
         $max_width = absint($_POST['firstshorts_video_max_width']);
-        if ($max_width < 200) {
-            $max_width = 200;
-        } elseif ($max_width > 500) {
-            $max_width = 500;
+        if ($max_width < 150) {
+            $max_width = 150;
+        } elseif ($max_width > 1200) {
+            $max_width = 1200;
         }
-        update_post_meta(
-            $post_id,
-            '_firstshorts_video_max_width',
-            $max_width
-        );
+        update_post_meta($post_id, '_firstshorts_video_max_width', $max_width);
     }
 
     if (isset($_POST['firstshorts_video_max_height'])) {
         $max_height = absint($_POST['firstshorts_video_max_height']);
-        if ($max_height < 300) {
-            $max_height = 300;
-        } elseif ($max_height > 1000) {
-            $max_height = 1000;
+        if ($max_height < 200) {
+            $max_height = 200;
+        } elseif ($max_height > 1500) {
+            $max_height = 1500;
         }
         update_post_meta(
             $post_id,
@@ -866,6 +922,20 @@ function firstshorts_save_video_meta($post_id)
             $max_height
         );
     }
+
+    if (isset($_POST['firstshorts_slider_orientation'])) {
+        update_post_meta(
+            $post_id,
+            '_firstshorts_slider_orientation',
+            sanitize_text_field($_POST['firstshorts_slider_orientation'])
+        );
+    }
+
+    update_post_meta(
+        $post_id,
+        '_firstshorts_scroll_snap',
+        isset($_POST['firstshorts_scroll_snap']) ? 1 : 0
+    );
 
     // Removed display_type save logic (dead code)
 
@@ -951,8 +1021,10 @@ function firstshorts_get_display_options($post_id)
         'cta_text' => 'Buy Now',
         'cta_link' => '',
         'cta_style' => 'primary',
-        'max_width' => 500,
-        'max_height' => 630,
+        'max_width' => 360,
+        'max_height' => 640,
+        'orientation' => 'horizontal',
+        'scroll_snap' => true,
     );
 
     $view_count = get_post_meta($post_id, '_firstshorts_show_view_count', true);
@@ -975,6 +1047,12 @@ function firstshorts_get_display_options($post_id)
     $cta_text = $cta_text === '' ? $defaults['cta_text'] : $cta_text;
     $cta_link = $cta_link === '' ? $defaults['cta_link'] : $cta_link;
     $cta_style = $cta_style === '' ? $defaults['cta_style'] : $cta_style;
+    
+    $orientation = get_post_meta($post_id, '_firstshorts_slider_orientation', true);
+    $orientation = empty($orientation) ? $defaults['orientation'] : $orientation;
+
+    $scroll_snap = get_post_meta($post_id, '_firstshorts_scroll_snap', true);
+    $scroll_snap = $scroll_snap === '' ? $defaults['scroll_snap'] : (bool) $scroll_snap;
     $product_description = get_post_meta($post_id, '_firstshorts_product_description', true);
     $max_width = $max_width === '' ? $defaults['max_width'] : (int) $max_width;
     $max_height = $max_height === '' ? $defaults['max_height'] : (int) $max_height;
@@ -992,6 +1070,8 @@ function firstshorts_get_display_options($post_id)
         'product_description' => $product_description,
         'max_width' => $max_width,
         'max_height' => $max_height,
+        'orientation' => $orientation,
+        'scroll_snap' => $scroll_snap,
     );
 }
 
