@@ -156,10 +156,7 @@ jQuery(document).ready(function ($) {
                 parts.push(rejected + ' unsupported');
             }
 
-            // If only '1 added', don't show the message as requested
-            if (parts.length === 1 && parts[0] === '1 added') {
-                setBulkFeedback('', '');
-            } else {
+            if (parts.length) {
                 setBulkFeedback(parts.join(' · '), rejected ? 'warning' : 'success');
             }
         }
@@ -281,15 +278,32 @@ jQuery(document).ready(function ($) {
         var container = previewContentBox.find('.firstshorts-preview-video-container');
         var previewEmpty = previewContentBox.find('.firstshorts-preview-empty');
 
-        // Apply Card Width if not in special device mode
+        // Apply Card Width & Height if not in special device mode
         var activeDevice = $('.firstshorts-device-btn.is-active').text().trim().toLowerCase();
+        var manualWidth = $('#firstshorts_video_max_width').val() || 500;
+        var manualHeight = $('#firstshorts_video_max_height').val() || 630;
+
         if (activeDevice === 'desktop') {
-            var manualWidth = $('#firstshorts_video_max_width').val() || 500;
             previewContentBox.css({
                 'max-width': manualWidth + 'px',
                 'height': 'auto'
             });
-            // Let CSS handle the mini-preview height/width for better frontend-mini feel
+            if (container.length) {
+                container.css({
+                    'width': '100%',
+                    'height': manualHeight + 'px',
+                    'max-height': manualHeight + 'px'
+                });
+            }
+        } else {
+            // In tablet/mobile, we might want to scale but keep aspect ratio or follow device width
+            if (container.length) {
+                container.css({
+                    'width': '100%',
+                    'height': '500px', // Default for mobile preview
+                    'max-height': '500px'
+                });
+            }
         }
 
         // Fallback if structure is different
@@ -481,9 +495,9 @@ jQuery(document).ready(function ($) {
         var leftPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-library">' +
             '<div class="firstshorts-panel-header">' +
-            '<div class="firstshorts-panel-header-content">' +
-            '<h3>Videos</h3>' +
-            '<p>Choose videos from your media library</p>' +
+            '<div class="firstshorts-panel-header-content" style="display: flex; align-items: center; gap: 8px;">' +
+            '<h3 style="margin-bottom: 0;">Videos</h3>' +
+            '<span class="firstshorts-info-trigger" data-tooltip="Manage your video library. Selected videos will appear in the slider on your site."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>' +
             '</div>' +
             '<div class="firstshorts-panel-actions">' +
             '<button type="button" id="firstshorts_bulk_upload_btn" class="button firstshorts-upload-btn">Add Video</button>' +
@@ -496,9 +510,9 @@ jQuery(document).ready(function ($) {
         var centerPanel = $(
             '<section class="firstshorts-panel firstshorts-panel-settings">' +
             '<div class="firstshorts-panel-header">' +
-            '<div class="firstshorts-panel-header-content">' +
-            '<h3>Settings</h3>' +
-            '<p>Configure display options and appearance</p>' +
+            '<div class="firstshorts-panel-header-content" style="display: flex; align-items: center; gap: 8px;">' +
+            '<h3 style="margin-bottom: 0;">Settings</h3>' +
+            '<span class="firstshorts-info-trigger" data-tooltip="Customize how your videos look and behave on the frontend."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>' +
             '</div>' +
             '</div>' +
             '<div class="firstshorts-panel-body"></div>' +
@@ -786,10 +800,13 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         var slider = $('.firstshorts-preview-slider');
         if (slider.length) {
-            var scrollAmount = slider.width();
+            var scrollAmount = slider[0].offsetWidth;
             slider.animate({
                 scrollLeft: slider.scrollLeft() - scrollAmount
-            }, 300);
+            }, {
+                duration: 400,
+                easing: 'swing'
+            });
         }
     });
 
@@ -797,10 +814,13 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         var slider = $('.firstshorts-preview-slider');
         if (slider.length) {
-            var scrollAmount = slider.width();
+            var scrollAmount = slider[0].offsetWidth;
             slider.animate({
                 scrollLeft: slider.scrollLeft() + scrollAmount
-            }, 300);
+            }, {
+                duration: 400,
+                easing: 'swing'
+            });
         }
     });
 

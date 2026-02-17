@@ -419,13 +419,15 @@ function firstshorts_render_display_options_metabox($post)
                         <div class="firstshorts-meta-field">
                             <label for="firstshorts_cta_link">
                                 <?php _e('CTA Link', 'firstshorts'); ?>
+                                <span class="firstshorts-info-trigger" data-tooltip="<?php esc_attr_e('Enter the URL where users should be redirected when they click the CTA button.', 'firstshorts'); ?>">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                </span>
                             </label>
                             <input type="url"
                                    id="firstshorts_cta_link"
                                    name="firstshorts_cta_link"
                                    value="<?php echo esc_url($cta_link); ?>"
                                    placeholder="https://example.com/product" />
-                            <p class="description"><?php _e('The URL to redirect users when the CTA button is clicked.', 'firstshorts'); ?></p>
                         </div>
 
                         <div class="firstshorts-meta-field">

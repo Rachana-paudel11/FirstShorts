@@ -1273,11 +1273,29 @@ body.firstshorts-admin .postbox .handle-order-lower {
 }
 
 .firstshorts-section {
-    margin-bottom: 16px;
-    padding: 16px;
-    border-radius: 6px;
-    border: 1px solid #dcdcde;
-    background: #ffffff;
+    margin-bottom: 24px;
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+}
+
+.firstshorts-tab-content .firstshorts-section {
+    margin-bottom: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+.firstshorts-tab-content .firstshorts-checkbox-row {
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin-bottom: 8px;
+}
+
+.firstshorts-tab-content .firstshorts-checkbox-row:hover {
+    box-shadow: none;
 }
 
 /* Consistently color coded section titles */
