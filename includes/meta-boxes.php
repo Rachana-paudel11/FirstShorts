@@ -341,7 +341,7 @@ function firstshorts_render_display_options_metabox($post)
         $max_width = 500;
     }
     if (empty($max_height)) {
-        $max_height = 620;
+        $max_height = 630;
     }
     if (empty($cta_text)) {
         $cta_text = __('Buy Now', 'firstshorts');
@@ -356,13 +356,13 @@ function firstshorts_render_display_options_metabox($post)
             <div class="firstshorts-tabs-wrapper">
                 <ul class="firstshorts-tabs-nav">
                     <li class="firstshorts-tab-item is-active" data-tab="firstshorts-tab-engagement">
-                        <?php _e('Viewer Engagement', 'firstshorts'); ?>
+                        <?php _e('Engagement', 'firstshorts'); ?>
                     </li>
                     <li class="firstshorts-tab-item" data-tab="firstshorts-tab-product">
-                        <?php _e('Product Action', 'firstshorts'); ?>
+                        <?php _e('Click Action', 'firstshorts'); ?>
                     </li>
                     <li class="firstshorts-tab-item" data-tab="firstshorts-tab-dimensions">
-                        <?php _e('Video Dimension', 'firstshorts'); ?>
+                        <?php _e('Display Settings', 'firstshorts'); ?>
                     </li>
                 </ul>
 
@@ -389,9 +389,6 @@ function firstshorts_render_display_options_metabox($post)
                 <!-- Tab 2: Product Action -->
                 <div id="firstshorts-tab-product" class="firstshorts-tab-content">
                     <div class="firstshorts-section">
-                        <p class="description" style="margin-top: 0;">
-                            <?php _e("Configure the Call to Action (CTA) button (e.g., 'Buy Now') to guide viewers to your product or custom link.", 'firstshorts'); ?>
-                        </p>
                         <div class="firstshorts-checkbox-group">
                             <label class="firstshorts-checkbox-row firstshorts-checkbox-row--plain">
                                 <input type="checkbox" 
@@ -399,7 +396,12 @@ function firstshorts_render_display_options_metabox($post)
                                        name="firstshorts_show_buy_button" 
                                        value="1" 
                                        <?php checked($show_buy_button, 1); ?> />
-                                <span class="firstshorts-checkbox-label"><?php _e('Enable Product CTA', 'firstshorts'); ?></span>
+                                <span class="firstshorts-checkbox-label">
+                                    <?php _e('Enable Product CTA', 'firstshorts'); ?>
+                                    <span class="firstshorts-info-trigger" data-tooltip="<?php esc_attr_e("Configure the Call to Action (CTA) button (e.g., 'Buy Now') to guide viewers to your product or custom link.", 'firstshorts'); ?>">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                    </span>
+                                </span>
                             </label>
                         </div>
 
@@ -459,7 +461,7 @@ function firstshorts_render_display_options_metabox($post)
             });
             </script>
 
-                <!-- Tab 3: Video Dimension -->
+                <!-- Tab 3: Display Settings -->
                 <div id="firstshorts-tab-dimensions" class="firstshorts-tab-content">
                     <div class="firstshorts-section">
                         <p class="description" style="margin-top: 0;">
@@ -561,17 +563,11 @@ function firstshorts_render_video_details_metabox($post)
                        value="<?php echo esc_attr(get_post_meta($post->ID, '_firstshorts_bulk_video_data', true)); ?>" />
                 <div class="firstshorts-bulk-summary">
                     <div class="firstshorts-bulk-stat">
-                        <span class="firstshorts-bulk-label"><?php _e('Selected', 'firstshorts'); ?></span>
-                        <span class="firstshorts-bulk-count">0 videos</span>
+                        <span class="firstshorts-bulk-label"><?php _e('Selected Videos', 'firstshorts'); ?></span>
+                        <span class="firstshorts-bulk-count">0</span>
                     </div>
                 </div>
                 <div class="firstshorts-bulk-actions">
-                    <button type="button" class="button firstshorts-bulk-select-all" disabled>
-                        <?php _e('Select all', 'firstshorts'); ?>
-                    </button>
-                    <button type="button" class="button firstshorts-bulk-remove-selected" disabled>
-                        <?php _e('Remove selected', 'firstshorts'); ?>
-                    </button>
                     <button type="button" class="button firstshorts-bulk-clear" disabled>
                         <?php _e('Clear list', 'firstshorts'); ?>
                     </button>
@@ -611,23 +607,33 @@ function firstshorts_render_preview_metabox($post)
                 </p>
             
                 <div class="firstshorts-preview-player" id="firstshorts-preview-player" style="display: none;">
-                    <!-- Video Container with 9:16 aspect ratio -->
-                    <div class="firstshorts-preview-video-container">
-                        <video class="firstshorts-preview-video" id="firstshorts-preview-video" preload="metadata"></video>
-                    
-                        <!-- Overlay buttons will go here -->
-                        <div class="firstshorts-preview-overlay" id="firstshorts-preview-overlay">
-                            <!-- Buy buttons (top) -->
-                            <div class="firstshorts-preview-cta-row" id="firstshorts-preview-cta-row" style="display: none;">
-                                <button class="firstshorts-preview-btn firstshorts-preview-btn-cta" type="button">🛍 Buy Now</button>
-                                <button class="firstshorts-preview-btn firstshorts-preview-btn-cta firstshorts-preview-btn-cta-secondary" type="button">🛒 Add to Cart</button>
-                            </div>
+                    <div class="firstshorts-preview-nav-wrapper">
+                        <button type="button" class="firstshorts-preview-nav firstshorts-preview-nav-prev" id="firstshorts-preview-nav-prev" aria-label="Previous">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+
+                        <!-- Video Container with 9:16 aspect ratio -->
+                        <div class="firstshorts-preview-video-container">
+                            <video class="firstshorts-preview-video" id="firstshorts-preview-video" preload="metadata"></video>
                         
-                            <!-- Action buttons (side) -->
-                            <div class="firstshorts-preview-actions" id="firstshorts-preview-actions">
-                                <!-- Dynamically populated by JS -->
+                            <!-- Overlay buttons will go here -->
+                            <div class="firstshorts-preview-overlay" id="firstshorts-preview-overlay">
+                                <!-- Buy buttons (top) -->
+                                <div class="firstshorts-preview-cta-row" id="firstshorts-preview-cta-row" style="display: none;">
+                                    <button class="firstshorts-preview-btn firstshorts-preview-btn-cta" type="button">🛍 Buy Now</button>
+                                    <button class="firstshorts-preview-btn firstshorts-preview-btn-cta firstshorts-preview-btn-cta-secondary" type="button">🛒 Add to Cart</button>
+                                </div>
+                            
+                                <!-- Action buttons (side) -->
+                                <div class="firstshorts-preview-actions" id="firstshorts-preview-actions">
+                                    <!-- Dynamically populated by JS -->
+                                </div>
                             </div>
                         </div>
+
+                        <button type="button" class="firstshorts-preview-nav firstshorts-preview-nav-next" id="firstshorts-preview-nav-next" aria-label="Next">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -944,7 +950,7 @@ function firstshorts_get_display_options($post_id)
         'cta_link' => '',
         'cta_style' => 'primary',
         'max_width' => 500,
-        'max_height' => 620,
+        'max_height' => 630,
     );
 
     $view_count = get_post_meta($post_id, '_firstshorts_show_view_count', true);

@@ -44,14 +44,11 @@ jQuery(document).ready(function ($) {
 
     function updateBulkSummary() {
         var count = bulkItems.length;
-        $('.firstshorts-bulk-count').text(count + (count === 1 ? ' video' : ' videos'));
+        $('.firstshorts-bulk-count').text(count);
     }
 
     function updateBulkActions() {
         var hasItems = bulkItems.length > 0;
-        var hasSelected = bulkItems.some(function (item) { return item.selected; });
-        $('.firstshorts-bulk-select-all').prop('disabled', !hasItems);
-        $('.firstshorts-bulk-remove-selected').prop('disabled', !hasSelected);
         $('.firstshorts-bulk-clear').prop('disabled', !hasItems);
     }
 
@@ -137,7 +134,7 @@ jQuery(document).ready(function ($) {
                 id: data.id,
                 label: data.title || data.filename || ('Video ' + data.id),
                 filename: data.filename || '',
-                url: data.url || '', // proper video URL
+                url: data.url || attachment.get('url') || '', // try both
                 icon: data.icon || '',
                 bytes: data.filesizeInBytes || 0,
                 sizeLabel: data.filesizeHumanReadable || formatBytes(data.filesizeInBytes),
@@ -288,12 +285,11 @@ jQuery(document).ready(function ($) {
         var activeDevice = $('.firstshorts-device-btn.is-active').text().trim().toLowerCase();
         if (activeDevice === 'desktop') {
             var manualWidth = $('#firstshorts_video_max_width').val() || 500;
-            var manualHeight = $('#firstshorts_video_max_height').val() || 620;
             previewContentBox.css({
                 'max-width': manualWidth + 'px',
-                'height': 'auto' // Area grows with content, but inner container handles the height
+                'height': 'auto'
             });
-            container.css('height', manualHeight + 'px');
+            // Let CSS handle the mini-preview height/width for better frontend-mini feel
         }
 
         // Fallback if structure is different
@@ -338,8 +334,7 @@ jQuery(document).ready(function ($) {
             overflowX: 'auto',
             scrollSnapType: 'x mandatory',
             height: '100%',
-            width: '100%',
-            scrollbarWidth: 'none'
+            width: '100%'
         };
 
         var sliderWrapper = container.find('.firstshorts-preview-slider');
@@ -349,8 +344,7 @@ jQuery(document).ready(function ($) {
 
             sliderWrapper = $('<div class="firstshorts-preview-slider"></div>');
             sliderWrapper.css(sliderProps);
-            var style = $('<style>.firstshorts-preview-slider::-webkit-scrollbar { display: none; }</style>');
-            container.append(style, sliderWrapper);
+            container.append(sliderWrapper);
             var overlay = container.find('.firstshorts-preview-overlay');
             if (overlay.length) container.append(overlay);
         }
@@ -364,9 +358,8 @@ jQuery(document).ready(function ($) {
             var slide = $('<div class="firstshorts-preview-slide"></div>').css({
                 minWidth: '100%', scrollSnapAlign: 'start', height: '100%', position: 'relative', backgroundColor: '#000', overflow: 'hidden'
             });
-            var video = $('<video playsinline loop muted></video>');
-            video.attr('src', item.url);
-            video.css({ width: '100%', height: '100%', objectFit: 'cover' });
+            var video = $('<video playsinline loop muted autoplay controls preload="auto" style="width:100%; height:100%; object-fit:contain; background:#000;"></video>');
+            video.append($('<source>').attr('src', item.url).attr('type', 'video/mp4'));
             video.on('click', function () {
                 if (this.paused) this.play(); else this.pause();
             });
@@ -411,46 +404,40 @@ jQuery(document).ready(function ($) {
                     }
                 });
 
-                var cartBtn = $('<button type="button" class="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"></button>');
-                cartBtn.html('<span class="firstshorts-btn-symbol"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M20 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span> <span class="firstshorts-btn-text">Add to Cart</span>');
-
-                ctaRow.append(buyBtn, cartBtn);
+                ctaRow.append(buyBtn);
                 metaContainer.append(ctaRow);
             }
             slide.append(metaContainer);
 
-            var showLikes = $('#firstshorts_show_likes').is(':checked');
-            var showSave = $('#firstshorts_show_save').is(':checked');
             var showShare = $('#firstshorts_show_share').is(':checked');
-            var showViews = $('#firstshorts_show_view_count').is(':checked');
 
-            if (showLikes || showSave || showShare || showViews) {
+            if (showShare) {
                 var actionRow = $('<div class="firstshorts-preview-actions"></div>');
                 actionRow.css('pointer-events', 'auto');
 
-                if (showViews) {
-                    var viewBtn = $('<div class="firstshorts-preview-btn firstshorts-preview-btn-overlay firstshorts-preview-btn-stat"><span class="firstshorts-btn-symbol"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></span><span class="firstshorts-btn-count">0</span></div>');
-                    actionRow.append(viewBtn);
-                }
-                if (showLikes) {
-                    var likeBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay"><span class="firstshorts-btn-symbol"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></span><span class="firstshorts-btn-count">0</span></button>');
-                    actionRow.append(likeBtn);
-                }
-                if (showSave) {
-                    var saveBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay"><span class="firstshorts-btn-symbol"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></span></button>');
-                    actionRow.append(saveBtn);
-                }
-                if (showShare) {
-                    var shareBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay"><span class="firstshorts-btn-symbol"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span></button>');
-                    actionRow.append(shareBtn);
-                }
+                var shareBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay"><span class="firstshorts-btn-symbol"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span></button>');
+                actionRow.append(shareBtn);
                 slide.append(actionRow);
             }
 
             sliderWrapper.append(slide);
-            // Ensure video loads
+            // Ensure video loads and try to play
             video[0].load();
+            video[0].play().catch(function (e) {
+                console.log("Preview play failed:", e);
+            });
         });
+
+        // Show/Hide navigation arrows based on count
+        var navPrev = $('#firstshorts-preview-nav-prev');
+        var navNext = $('#firstshorts-preview-nav-next');
+        if (items.length > 1) {
+            navPrev.show();
+            navNext.show();
+        } else {
+            navPrev.hide();
+            navNext.hide();
+        }
     }
 
     function updateSaveState() {
@@ -495,7 +482,7 @@ jQuery(document).ready(function ($) {
             '<section class="firstshorts-panel firstshorts-panel-library">' +
             '<div class="firstshorts-panel-header">' +
             '<div class="firstshorts-panel-header-content">' +
-            '<h3>Video Library</h3>' +
+            '<h3>Videos</h3>' +
             '<p>Choose videos from your media library</p>' +
             '</div>' +
             '<div class="firstshorts-panel-actions">' +
@@ -726,27 +713,35 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '#firstshorts_bulk_upload_btn', function (e) {
         e.preventDefault();
 
-        if (bulkFrame) {
-            bulkFrame.open();
-            return;
+        // Get IDs of items already in our list to exclude them from the library view
+        var existingIds = bulkItems.map(function (item) { return item.id; });
+
+        if (!bulkFrame) {
+            bulkFrame = wp.media({
+                title: firstshortsAdmin.uploadTitle,
+                button: { text: firstshortsAdmin.uploadButton },
+                library: {
+                    type: firstshortsAdmin.allowedTypes || ['video'],
+                    post__not_in: existingIds
+                },
+                multiple: true
+            });
+
+            bulkFrame.on('select', function () {
+                var selection = bulkFrame.state().get('selection');
+                addBulkItemsFromSelection(selection);
+                renderBulkList();
+                syncBulkHidden();
+                updateSaveState();
+                updatePreview();
+            });
+
+            // Refresh the exclusion list every time we open if frame is reused
+            bulkFrame.on('open', function () {
+                var currentIds = bulkItems.map(function (item) { return item.id; });
+                bulkFrame.state().get('library').props.set('post__not_in', currentIds);
+            });
         }
-
-        bulkFrame = wp.media({
-            title: firstshortsAdmin.uploadTitle,
-            button: { text: firstshortsAdmin.uploadButton },
-            library: { type: firstshortsAdmin.allowedTypes || ['video'] },
-            multiple: true
-        });
-
-        bulkFrame.on('select', function () {
-            var selection = bulkFrame.state().get('selection');
-            addBulkItemsFromSelection(selection);
-            renderBulkList();
-            // syncBulkHidden is called inside renderBulkList, but let's be explicit
-            syncBulkHidden();
-            updateSaveState();
-            updatePreview();
-        });
 
         bulkFrame.open();
     });
@@ -784,6 +779,29 @@ jQuery(document).ready(function ($) {
         bulkItems = bulkItems.filter(function (item) { return item.id !== id; });
         renderBulkList();
         setBulkFeedback('Video removed.', 'success');
+    });
+
+    // Live Preview Navigation
+    $(document).on('click', '#firstshorts-preview-nav-prev', function (e) {
+        e.preventDefault();
+        var slider = $('.firstshorts-preview-slider');
+        if (slider.length) {
+            var scrollAmount = slider.width();
+            slider.animate({
+                scrollLeft: slider.scrollLeft() - scrollAmount
+            }, 300);
+        }
+    });
+
+    $(document).on('click', '#firstshorts-preview-nav-next', function (e) {
+        e.preventDefault();
+        var slider = $('.firstshorts-preview-slider');
+        if (slider.length) {
+            var scrollAmount = slider.width();
+            slider.animate({
+                scrollLeft: slider.scrollLeft() + scrollAmount
+            }, 300);
+        }
     });
 
     // Initialize
@@ -830,4 +848,14 @@ jQuery(document).ready(function ($) {
     $(document).on('firstshorts:bulk-updated', function () {
         updatePreview();
     });
+
+    // Reactive Settings: Update preview when any display option changes
+    $(document).on('input change',
+        '#firstshorts_show_share, #firstshorts_show_buy_button, #firstshorts_cta_text, ' +
+        '#firstshorts_cta_link, #firstshorts_cta_style, #firstshorts_video_max_width, ' +
+        '#firstshorts_video_max_height',
+        function () {
+            updatePreview();
+        }
+    );
 });
