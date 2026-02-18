@@ -10,19 +10,26 @@ const VideoSliderCard = ({ video, isActive }) => {
   const [progress, setProgress] = useState(0);
   const [lastTap, setLastTap] = useState(0);
   const [showHeart, setShowHeart] = useState(false);
+  const [showPlayPause, setShowPlayPause] = useState(null);
+  const [muteStatusTimer, setMuteStatusTimer] = useState(null);
+  const [showMuteIndicator, setShowMuteIndicator] = useState(false);
 
   useEffect(() => {
-    if (videoRef.current) {
-      if (isActive) {
-        videoRef.current.play().catch(e => {
-          // Fallback if autoplay is blocked or muted is required
-          console.log('Playback starting:', e);
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    if (isActive) {
+      const playPromise = vid.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.log('Autoplay prevented:', e);
         });
-      } else {
-        videoRef.current.pause();
       }
+    } else {
+      vid.pause();
     }
   }, [isActive]);
+
   const defaultOptions = {
     showViewCount: true,
     showLikes: true,
@@ -54,6 +61,9 @@ const VideoSliderCard = ({ video, isActive }) => {
   };
 
   const handleVideoClick = (e) => {
+    // Prevent interaction if video is not active to avoid audio chaos
+    if (!isActive) return;
+
     const now = Date.now();
     if (now - lastTap < 300) {
       // Double tap detected
@@ -61,11 +71,28 @@ const VideoSliderCard = ({ video, isActive }) => {
       setShowHeart(true);
       setTimeout(() => setShowHeart(false), 800);
     } else {
-      // Single tap - toggle play/pause or mute? 
-      // Let's toggle mute as it's more UX friendly for shorts
-      setIsMuted(!isMuted);
+      // Single tap - toggle play/pause
+      if (videoRef.current) {
+        if (videoRef.current.paused) {
+          videoRef.current.play();
+          setShowPlayPause('play');
+        } else {
+          videoRef.current.pause();
+          setShowPlayPause('pause');
+        }
+        setTimeout(() => setShowPlayPause(null), 800);
+      }
     }
     setLastTap(now);
+  };
+
+  const toggleMute = (e) => {
+    if (e) e.stopPropagation();
+    setIsMuted(!isMuted);
+    setShowMuteIndicator(true);
+    if (muteStatusTimer) clearTimeout(muteStatusTimer);
+    const timer = setTimeout(() => setShowMuteIndicator(false), 1500);
+    setMuteStatusTimer(timer);
   };
 
   const handleTimeUpdate = () => {
@@ -139,7 +166,7 @@ const VideoSliderCard = ({ video, isActive }) => {
 
         {/* Mute Toggle */}
         <button
-          onClick={() => setIsMuted(!isMuted)}
+          onClick={toggleMute}
           className="firstshorts-mute-btn"
           style={{
             position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', zIndex: 20
@@ -152,16 +179,36 @@ const VideoSliderCard = ({ video, isActive }) => {
           )}
         </button>
 
+        {/* Play/Pause Flash Overlay */}
+        {showPlayPause && (
+          <div className="firstshorts-status-flash" style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none', zIndex: 100, background: 'rgba(0,0,0,0.3)', borderRadius: '50%', width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'statusFlash 0.8s ease-out'
+          }}>
+            {showPlayPause === 'play' ? (
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="#fff"><path d="M5 3l14 9-14 9V3z"></path></svg>
+            ) : (
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+            )}
+          </div>
+        )}
+
+        {/* Mute Status Tip */}
+        {showMuteIndicator && (
+          <div className="firstshorts-mute-indicator" style={{
+            position: 'absolute', top: '60px', right: '15px', background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', zIndex: 20, animation: 'fadeInOut 1.5s ease-in-out'
+          }}>
+            {isMuted ? 'MUTED' : 'UNMUTED'}
+          </div>
+        )}
+
         {/* Double Tap Heart Animation */}
-        {
-          showHeart && (
-            <div className="firstshorts-heart-animation" style={{
-              position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none', zIndex: 100, animation: 'heartPulse 0.8s ease-out'
-            }
-            }>
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            </div>
-          )}
+        {showHeart && (
+          <div className="firstshorts-heart-animation" style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none', zIndex: 100, animation: 'heartPulse 0.8s ease-out'
+          }}>
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          </div>
+        )}
 
         <div className="firstshorts-preview-overlay" style={{ pointerEvents: 'none' }}>
           {(displayOptions.showViewCount || displayOptions.showLikes || displayOptions.showSave || displayOptions.showShare) && (

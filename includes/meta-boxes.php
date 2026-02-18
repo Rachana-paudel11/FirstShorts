@@ -217,49 +217,12 @@ function firstshorts_admin_body_class($classes)
 }
 add_filter('admin_body_class', 'firstshorts_admin_body_class');
 
-function firstshorts_admin_loading_fallback()
-{
-    global $post_type;
-    if ($post_type !== 'firstshorts_video') {
-        return;
-    }
-
-    echo '<script>'
-        . 'window.addEventListener("load",function(){'
-        . 'document.body.classList.remove("firstshorts-admin-loading");'
-        . '});'
-        . '</script>';
-}
-add_action('admin_head', 'firstshorts_admin_loading_fallback');
 
 
-/**
- * Hide default permalink UI for FirstShorts Video
- */
-function firstshorts_hide_default_permalink_ui()
-{
-    global $post_type;
-    if ($post_type !== 'firstshorts_video') {
-        return;
-    }
 
-    echo '<style>#edit-slug-box { display: none; }</style>';
-}
-add_action('admin_head', 'firstshorts_hide_default_permalink_ui');
 
-/**
- * Hide Screen Options tab for FirstShorts Video
- */
-function firstshorts_hide_screen_options_tab()
-{
-    global $post_type;
-    if ($post_type !== 'firstshorts_video') {
-        return;
-    }
 
-    echo '<style>#screen-options-link-wrap, #screen-meta { display: none; }</style>';
-}
-add_action('admin_head', 'firstshorts_hide_screen_options_tab');
+
 
 /**
  * Remove Publish meta box for FirstShorts Video
@@ -438,7 +401,12 @@ function firstshorts_render_display_options_metabox($post)
                                        name="firstshorts_scroll_snap" 
                                        value="1" 
                                        <?php checked($scroll_snap, 1); ?> />
-                                <span class="firstshorts-checkbox-label"><?php _e('Enable Scroll Snap (Locks to Video)', 'firstshorts'); ?></span>
+                                <span class="firstshorts-checkbox-label">
+                                    <?php _e('Enable Scroll Snap (Locks to Video)', 'firstshorts'); ?>
+                                    <span class="firstshorts-info-trigger" data-tooltip="<?php esc_attr_e('Forces the scroll to center on a single video, creating a seamless, app-like experience similar to TikTok or Reels.', 'firstshorts'); ?>">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                    </span>
+                                </span>
                             </label>
                         </div>
                     </div>
@@ -969,7 +937,7 @@ function firstshorts_enqueue_admin_scripts($hook)
     wp_enqueue_script(
         'firstshorts-admin',
         plugin_dir_url(__FILE__) . '../assets/js/admin-video-upload.js',
-        array('jquery'),
+        array('jquery', 'jquery-ui-sortable'),
         $admin_js_ver,
         true
     );

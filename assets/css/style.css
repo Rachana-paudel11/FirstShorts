@@ -1555,7 +1555,8 @@ body.firstshorts-admin .postbox .handle-order-lower {
 
 .firstshorts-bulk-item {
     display: grid;
-    grid-template-columns: 18px 44px minmax(0, 1fr) auto;
+    /* Added column for handle: 32px 24px 44px 1fr auto */
+    grid-template-columns: 32px 24px 44px minmax(0, 1fr) auto;
     gap: 10px;
     align-items: center;
     padding: 8px 12px;
@@ -2180,3 +2181,281 @@ body.firstshorts-admin .postbox .handle-order-lower {
     pointer-events: none;
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
+
+/* Admin Bulk Sorting */
+.firstshorts-bulk-handle {
+    cursor: grab;
+    padding: 10px;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.firstshorts-bulk-handle:hover {
+    color: #64748b;
+}
+
+.firstshorts-bulk-handle:active {
+    cursor: grabbing;
+}
+
+.firstshorts-bulk-placeholder {
+    height: 60px;
+    background: #f1f5f9;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.ui-sortable-helper {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    background: #fff !important;
+    cursor: grabbing !important;
+}
+
+/* --- LUXURY UX ENHANCEMENTS --- */
+
+/* Save Button Pulse */
+@keyframes fs-pulse-glow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+    }
+}
+
+.firstshorts-save-btn-top.has-changes {
+    animation: fs-pulse-glow 2s infinite;
+    position: relative;
+}
+
+.firstshorts-save-hint {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+.firstshorts-save-hint.is-visible {
+    color: #059669;
+    opacity: 1;
+}
+
+.firstshorts-save-hint.is-error {
+    color: #dc2626;
+    opacity: 1;
+}
+
+/* Copy Button Styling */
+.firstshorts-copy-btn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 14px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    color: #475569 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin-right: 15px !important;
+}
+
+.firstshorts-copy-btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+    transform: translateY(-1px) !important;
+}
+
+.firstshorts-copy-btn.is-copied {
+    background: #059669 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+}
+
+.firstshorts-copy-btn svg {
+    transition: transform 0.2s ease !important;
+}
+
+.firstshorts-copy-btn:active svg {
+    transform: scale(0.9) !important;
+}
+
+/* Heart Animation (Double Tap) */
+@keyframes heartPulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+    }
+}
+
+/* Video Progress Bar (Admin Sync) */
+.firstshorts-video-progress-container {
+    pointer-events: none;
+}
+
+/* Video Status Indicators */
+@keyframes statusFlash {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    20% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    80% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+.firstshorts-status-flash {
+    pointer-events: none;
+    z-index: 100;
+}
+
+.firstshorts-mute-indicator {
+    pointer-events: none;
+    z-index: 110;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Skeleton Loading Effect */
+@keyframes fs-shimmer {
+    0% {
+        background-position: -468px 0;
+    }
+
+    100% {
+        background-position: 468px 0;
+    }
+}
+
+.firstshorts-preview-content-area.is-loading {
+    background: #f6f7f8;
+    background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+    background-repeat: no-repeat;
+    background-size: 800px 100%;
+    animation: fs-shimmer 1.5s linear infinite forwards;
+}/* Tooltips */
+.firstshorts-info-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    color: #94a3b8;
+    margin-left: 6px;
+    cursor: help;
+    transition: color 0.2s;
+    position: relative;
+    vertical-align: middle;
+}
+
+.firstshorts-info-trigger:hover {
+    color: #3b82f6;
+}
+
+.firstshorts-info-trigger::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    background: #1e293b;
+    color: #fff;
+    padding: 6px 10px;
+    font-size: 11px;
+    line-height: 1.4;
+    border-radius: 6px;
+    white-space: normal;
+    width: max-content;
+    max-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.firstshorts-info-trigger::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    border: 6px solid transparent;
+    border-top-color: #1e293b;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    pointer-events: none;
+    z-index: 1000;
+    margin-bottom: -4px;
+}
+
+.firstshorts-info-trigger:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.firstshorts-info-trigger:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+/* Inline styles moved from meta-boxes.php */
+#edit-slug-box { display: none; }
+#screen-options-link-wrap, #screen-meta { display: none; }

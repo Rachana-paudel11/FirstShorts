@@ -2,6 +2,19 @@ jQuery(document).ready(function ($) {
     var bulkFrame;
     var bulkItems = [];
 
+    var ICONS = {
+        DRAG: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>',
+        BUY: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>',
+        SHARE: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>',
+        PREV_V: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>',
+        NEXT_V: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>',
+        PREV_H: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>',
+        NEXT_H: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
+        INFO: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+        FIT: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>',
+        COPY: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'
+    };
+
     // Helper to prevent expensive functions from running too often
     function debounce(func, wait) {
         var timeout;
@@ -59,6 +72,14 @@ jQuery(document).ready(function ($) {
     function updateBulkSummary() {
         var count = bulkItems.length;
         $('.firstshorts-bulk-count').text(count);
+
+        var totalSeconds = 0;
+        bulkItems.forEach(function (item) {
+            if (item.bytes) {
+                // If it's a real item, maybe we have duration?
+                // For now let's just show count, but we can add more stats later
+            }
+        });
     }
 
     function updateBulkActions() {
@@ -78,8 +99,10 @@ jQuery(document).ready(function ($) {
         }
 
         bulkItems.forEach(function (item) {
-            var row = $('<li class="firstshorts-bulk-item"></li>');
+            var row = $('<li class="firstshorts-bulk-item"></li>').data('id', item.id);
             if (item.selected) row.addClass('is-selected');
+
+            var handle = $('<div class="firstshorts-bulk-handle" title="Drag to reorder">' + ICONS.DRAG + '</div>');
 
             var checkbox = $('<input type="checkbox" class="firstshorts-bulk-select" />');
             checkbox.prop('checked', !!item.selected).data('id', item.id);
@@ -115,9 +138,34 @@ jQuery(document).ready(function ($) {
             });
             descWrapper.append(descInput);
 
-            row.append(checkbox, preview, meta, removeBtn, descWrapper);
+            row.append(handle, checkbox, preview, meta, removeBtn, descWrapper);
             list.append(row);
         });
+
+        // Initialize sorting
+        if (list.hasClass('ui-sortable')) {
+            list.sortable('destroy');
+        }
+
+        if (bulkItems.length > 1) {
+            list.sortable({
+                handle: '.firstshorts-bulk-handle',
+                placeholder: 'firstshorts-bulk-placeholder',
+                axis: 'y',
+                update: function () {
+                    var newOrder = [];
+                    list.children('.firstshorts-bulk-item').each(function () {
+                        var id = $(this).data('id');
+                        var item = bulkItems.find(function (i) { return i.id == id; });
+                        if (item) newOrder.push(item);
+                    });
+                    bulkItems = newOrder;
+                    syncBulkHidden();
+                    updatePreview();
+                    updateSaveState();
+                }
+            });
+        }
 
         updateBulkSummary();
         updateBulkActions();
@@ -447,7 +495,7 @@ jQuery(document).ready(function ($) {
                 var ctaClass = item.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : '';
 
                 var buyBtn = $('<button type="button" class="firstshorts-btn firstshorts-btn-cta ' + ctaClass + '"></button>');
-                buyBtn.html('<span class="firstshorts-btn-symbol"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg></span> <span class="firstshorts-btn-text">' + ctaText + '</span>');
+                buyBtn.html('<span class="firstshorts-btn-symbol">' + ICONS.BUY + '</span> <span class="firstshorts-btn-text">' + ctaText + '</span>');
                 buyBtn.on('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -470,7 +518,7 @@ jQuery(document).ready(function ($) {
                 var actionRow = $('<div class="firstshorts-preview-actions"></div>');
                 actionRow.css('pointer-events', 'auto');
 
-                var shareBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay"><span class="firstshorts-btn-symbol"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span></button>');
+                var shareBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay"><span class="firstshorts-btn-symbol">' + ICONS.SHARE + '</span></button>');
                 actionRow.append(shareBtn);
                 slide.append(actionRow);
             }
@@ -489,11 +537,11 @@ jQuery(document).ready(function ($) {
 
             // Update icons based on orientation
             if (orientation === 'vertical') {
-                navPrev.html('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>');
-                navNext.html('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+                navPrev.html(ICONS.PREV_V);
+                navNext.html(ICONS.NEXT_V);
             } else {
-                navPrev.html('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>');
-                navNext.html('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>');
+                navPrev.html(ICONS.PREV_H);
+                navNext.html(ICONS.NEXT_H);
             }
         } else {
             navPrev.hide();
@@ -551,11 +599,16 @@ jQuery(document).ready(function ($) {
         // Visual feedback
         var actions = $('.firstshorts-save-wrapper');
         var hint = actions.find('.firstshorts-save-hint');
+        var saveBtn = $('.firstshorts-save-btn-top');
 
         if (!hasVideo) {
-            hint.text('Select at least one video or enter a URL');
+            hint.text('Select at least one video or enter a URL').addClass('is-error').removeClass('is-visible');
+            saveBtn.removeClass('has-changes');
         } else {
-            hint.text('Ready to save settings');
+            // For now, since we don't track every change, we'll just show "Ready"
+            // But we can add a visual pulse to the button to make it look ready
+            hint.text('Unsaved changes').removeClass('is-error').addClass('is-visible');
+            saveBtn.addClass('has-changes');
         }
         toggleVideoUrlError(!hasVideo);
     }
@@ -585,7 +638,7 @@ jQuery(document).ready(function ($) {
             '<div class="firstshorts-panel-header">' +
             '<div class="firstshorts-panel-header-content">' +
             '<h3>Videos</h3>' +
-            '<span class="firstshorts-info-trigger" data-tooltip="Manage your video library. Selected videos will appear in the slider on your site."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>' +
+            '<span class="firstshorts-info-trigger" data-tooltip="Manage your video library. Selected videos will appear in the slider on your site.">' + ICONS.INFO + '</span>' +
             '</div>' +
             '<div class="firstshorts-panel-actions">' +
             '<button type="button" id="firstshorts_bulk_upload_btn" class="button firstshorts-upload-btn">Add Video</button>' +
@@ -600,7 +653,7 @@ jQuery(document).ready(function ($) {
             '<div class="firstshorts-panel-header">' +
             '<div class="firstshorts-panel-header-content">' +
             '<h3>Settings</h3>' +
-            '<span class="firstshorts-info-trigger" data-tooltip="Customize how your videos look and behave on the frontend."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>' +
+            '<span class="firstshorts-info-trigger" data-tooltip="Customize how your videos look and behave on the frontend.">' + ICONS.INFO + '</span>' +
             '</div>' +
             '</div>' +
             '<div class="firstshorts-panel-body"></div>' +
@@ -615,7 +668,7 @@ jQuery(document).ready(function ($) {
             '</div>' +
             '<div class="firstshorts-panel-actions">' +
             '<button type="button" class="firstshorts-fit-btn is-active" title="Toggle Scale to Fit">' +
-            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>' +
+            ICONS.FIT +
             '</button>' +
             '</div>' +
             '</div>' +
@@ -629,6 +682,10 @@ jQuery(document).ready(function ($) {
             '<div class="firstshorts-top-actions">' +
             '<div class="firstshorts-top-shortcode firstshorts-shortcode-section"></div>' +
             '<div class="firstshorts-save-wrapper">' +
+            '<button type="button" class="firstshorts-copy-btn" title="Copy Shortcode">' +
+            ICONS.COPY +
+            '<span>Copy Shortcode</span>' +
+            '</button>' +
             '<span class="firstshorts-save-hint">Ready to save settings</span>' +
             '<button type="button" class="button button-primary firstshorts-save-btn firstshorts-save-btn-top">Save Short</button>' +
             '</div>' +
@@ -727,6 +784,24 @@ jQuery(document).ready(function ($) {
         $(document).on('firstshorts:bulk-updated', function () {
             updateSaveState();
             updatePreview();
+        });
+
+        // Copy Shortcode Button
+        mainWrapper.on('click', '.firstshorts-copy-btn', function (e) {
+            e.preventDefault();
+            var code = $('.firstshorts-shortcode-preview code').text();
+            if (code) {
+                var btn = $(this);
+                navigator.clipboard.writeText(code).then(function () {
+                    var originalText = btn.find('span').text();
+                    btn.find('span').text('Copied!');
+                    btn.addClass('is-copied');
+                    setTimeout(function () {
+                        btn.find('span').text(originalText);
+                        btn.removeClass('is-copied');
+                    }, 2000);
+                });
+            }
         });
 
         // Fit Toggle
@@ -869,9 +944,13 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '.firstshorts-bulk-remove', function (e) {
         e.preventDefault();
         var id = $(this).data('id');
-        bulkItems = bulkItems.filter(function (item) { return item.id !== id; });
-        renderBulkList();
-        setBulkFeedback('Video removed.', 'success');
+        var row = $(this).closest('.firstshorts-bulk-item');
+
+        row.fadeOut(300, function () {
+            bulkItems = bulkItems.filter(function (item) { return item.id !== id; });
+            renderBulkList();
+            setBulkFeedback('Video removed.', 'success');
+        });
     });
 
     $(document).on('click', '#firstshorts-preview-nav-prev', function (e) {
@@ -972,4 +1051,9 @@ jQuery(document).ready(function ($) {
             updatePreview();
         }
     );
+});
+
+/* Inline JS moved from meta-boxes.php */
+window.addEventListener('load', function () {
+    document.body.classList.remove('firstshorts-admin-loading');
 });
