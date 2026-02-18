@@ -429,6 +429,7 @@ jQuery(document).ready(function ($) {
             overflowX: orientation === 'vertical' ? 'hidden' : 'auto',
             overflowY: orientation === 'vertical' ? 'auto' : 'hidden',
             scrollSnapType: (orientation === 'vertical' ? 'y' : 'x') + (scrollSnap ? ' mandatory' : ' none'),
+            webkitOverflowScrolling: 'touch',
             height: '100%',
             width: '100%'
         };
@@ -602,12 +603,8 @@ jQuery(document).ready(function ($) {
         var saveBtn = $('.firstshorts-save-btn-top');
 
         if (!hasVideo) {
-            hint.text('Select at least one video or enter a URL').addClass('is-error').removeClass('is-visible');
             saveBtn.removeClass('has-changes');
         } else {
-            // For now, since we don't track every change, we'll just show "Ready"
-            // But we can add a visual pulse to the button to make it look ready
-            hint.text('Unsaved changes').removeClass('is-error').addClass('is-visible');
             saveBtn.addClass('has-changes');
         }
         toggleVideoUrlError(!hasVideo);
@@ -682,11 +679,6 @@ jQuery(document).ready(function ($) {
             '<div class="firstshorts-top-actions">' +
             '<div class="firstshorts-top-shortcode firstshorts-shortcode-section"></div>' +
             '<div class="firstshorts-save-wrapper">' +
-            '<button type="button" class="firstshorts-copy-btn" title="Copy Shortcode">' +
-            ICONS.COPY +
-            '<span>Copy Shortcode</span>' +
-            '</button>' +
-            '<span class="firstshorts-save-hint">Ready to save settings</span>' +
             '<button type="button" class="button button-primary firstshorts-save-btn firstshorts-save-btn-top">Save Short</button>' +
             '</div>' +
             '</div>'
@@ -804,6 +796,10 @@ jQuery(document).ready(function ($) {
             }
         });
 
+        $(document).on('change', '#firstshorts_cta_style', function () {
+            debouncedUpdatePreview();
+        });
+
         // Fit Toggle
         $(document).on('click', '.firstshorts-fit-btn', function (e) {
             e.preventDefault();
@@ -857,7 +853,7 @@ jQuery(document).ready(function ($) {
                 return;
             }
 
-            $(this).prop('disabled', true).text('Saving...');
+            $(this).prop('disabled', true).text('Saved Short');
             $(window).off('beforeunload');
             if (window.onbeforeunload) window.onbeforeunload = null;
 

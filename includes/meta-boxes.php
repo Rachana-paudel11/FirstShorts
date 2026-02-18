@@ -359,7 +359,7 @@ function firstshorts_render_display_options_metabox($post)
                                    max="1200"
                                    step="10"
                                    style="width: 200px;" />
-                            <p class="description"><?php _e('Recommended: 320–450px', 'firstshorts'); ?></p>
+                            <p class="description"><?php _e('Set the width of the video card. Defaults: 360px.', 'firstshorts'); ?></p>
                         </div>
 
                         <div class="firstshorts-meta-field">
@@ -374,7 +374,7 @@ function firstshorts_render_display_options_metabox($post)
                                    max="1500"
                                    step="10"
                                    style="width: 200px;" />
-                            <p class="description"><?php _e('Recommended: 550–750px', 'firstshorts'); ?></p>
+                            <p class="description"><?php _e('Set the height of the video card. Defaults: 640px.', 'firstshorts'); ?></p>
                         </div>
 
                         <div class="firstshorts-section-divider" style="margin: 20px 0; border-top: 1px solid #e2e8f0;"></div>
