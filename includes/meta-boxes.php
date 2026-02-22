@@ -394,21 +394,7 @@ function firstshorts_render_display_options_metabox($post)
                             <p class="description"><?php _e('Choose how users move through videos.', 'firstshorts'); ?></p>
                         </div>
 
-                        <div class="firstshorts-checkbox-group" style="margin-top: 15px;">
-                            <label class="firstshorts-checkbox-row">
-                                <input type="checkbox" 
-                                       id="firstshorts_scroll_snap" 
-                                       name="firstshorts_scroll_snap" 
-                                       value="1" 
-                                       <?php checked($scroll_snap, 1); ?> />
-                                <span class="firstshorts-checkbox-label">
-                                    <?php _e('Enable Scroll Snap (Locks to Video)', 'firstshorts'); ?>
-                                    <span class="firstshorts-info-trigger" data-tooltip="<?php esc_attr_e('Forces the scroll to center on a single video, creating a seamless, app-like experience similar to TikTok or Reels.', 'firstshorts'); ?>">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                                    </span>
-                                </span>
-                            </label>
-                        </div>
+
                     </div>
                 </div>
 
@@ -834,9 +820,8 @@ function firstshorts_save_video_meta($post_id)
         update_post_meta($post_id, '_firstshorts_slider_orientation', sanitize_text_field($_POST['firstshorts_slider_orientation']));
     }
 
-    // Scroll Snap is a checkbox
-    $scroll_snap = isset($_POST['firstshorts_scroll_snap']) ? 1 : 0;
-    update_post_meta($post_id, '_firstshorts_scroll_snap', $scroll_snap);
+    // Scroll Snap is now enabled by default and hidden from UI
+    update_post_meta($post_id, '_firstshorts_scroll_snap', 1);
 
     if (isset($_POST['firstshorts_product_description'])) {
         update_post_meta($post_id, '_firstshorts_product_description', sanitize_textarea_field($_POST['firstshorts_product_description']));
@@ -1019,8 +1004,8 @@ function firstshorts_get_display_options($post_id)
     $orientation = get_post_meta($post_id, '_firstshorts_slider_orientation', true);
     $orientation = empty($orientation) ? $defaults['orientation'] : $orientation;
 
-    $scroll_snap = get_post_meta($post_id, '_firstshorts_scroll_snap', true);
-    $scroll_snap = $scroll_snap === '' ? $defaults['scroll_snap'] : (bool) $scroll_snap;
+    // Scroll Snap is now always enabled by default
+    $scroll_snap = true;
     $product_description = get_post_meta($post_id, '_firstshorts_product_description', true);
     $max_width = $max_width === '' ? $defaults['max_width'] : (int) $max_width;
     $max_height = $max_height === '' ? $defaults['max_height'] : (int) $max_height;

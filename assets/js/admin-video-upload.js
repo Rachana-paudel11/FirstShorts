@@ -421,14 +421,16 @@ jQuery(document).ready(function ($) {
 
         var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
         $('.firstshorts-panel-preview').toggleClass('is-vertical', orientation === 'vertical');
-        var scrollSnap = $('#firstshorts_scroll_snap').is(':checked');
+
+        // Scroll Snap is now forced to true by default
+        var scrollSnap = true;
 
         var sliderProps = {
             display: 'flex',
             flexDirection: orientation === 'vertical' ? 'column' : 'row',
             overflowX: orientation === 'vertical' ? 'hidden' : 'auto',
             overflowY: orientation === 'vertical' ? 'auto' : 'hidden',
-            scrollSnapType: (orientation === 'vertical' ? 'y' : 'x') + (scrollSnap ? ' mandatory' : ' none'),
+            scrollSnapType: (orientation === 'vertical' ? 'y' : 'x') + ' mandatory', // Always mandatory
             webkitOverflowScrolling: 'touch',
             height: '100%',
             width: '100%'
@@ -440,11 +442,21 @@ jQuery(document).ready(function ($) {
             container.find('.firstshorts-preview-video').remove();
 
             sliderWrapper = $('<div class="firstshorts-preview-slider"></div>');
-            sliderWrapper.css(sliderProps);
             container.append(sliderWrapper);
             var overlay = container.find('.firstshorts-preview-overlay');
             if (overlay.length) container.append(overlay);
         }
+
+        // Always re-apply these styles (handles orientation changes too)
+        sliderWrapper.css($.extend({}, sliderProps, {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
+            height: '100%'
+        }));
 
         sliderWrapper.empty();
 
@@ -462,7 +474,7 @@ jQuery(document).ready(function ($) {
                 overflow: 'hidden',
                 flexShrink: 0
             });
-            var video = $('<video playsinline loop autoplay controls preload="auto" style="width:100%; height:100%; object-fit:contain; background:#000;"></video>');
+            var video = $('<video playsinline loop muted controls preload="auto" style="width:100%; height:100%; object-fit:contain; background:#000;"></video>');
             video.append($('<source>').attr('src', item.url).attr('type', 'video/mp4'));
             video.on('click', function () {
                 if (this.paused) this.play(); else this.pause();
@@ -553,7 +565,13 @@ jQuery(document).ready(function ($) {
         setTimeout(syncPreviewVideos, 100);
 
         // Add scroll listener for manual swiping/scrolling
-        sliderWrapper.off('scroll.firstshorts').on('scroll.firstshorts', debounce(syncPreviewVideos, 150));
+        sliderWrapper.off('scroll.firstshorts').on('scroll.firstshorts', function () {
+            // Immediately pause all videos to avoid sound overlap during fast scrolling
+            $(this).find('video').each(function () { this.pause(); });
+            debouncedSync();
+        });
+
+        var debouncedSync = debounce(syncPreviewVideos, 200);
     }
 
     /**
@@ -564,28 +582,34 @@ jQuery(document).ready(function ($) {
         var slider = $('.firstshorts-preview-slider');
         if (!slider.length) return;
 
+        var sliderRect = slider[0].getBoundingClientRect();
         var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
-        var scrollPos = orientation === 'vertical' ? slider.scrollTop() : slider.scrollLeft();
-        var sliderDim = orientation === 'vertical' ? slider.height() : slider.width();
-        var centerPos = scrollPos + (sliderDim / 2);
+        var centerX = sliderRect.left + sliderRect.width / 2;
+        var centerY = sliderRect.top + sliderRect.height / 2;
 
         slider.find('.firstshorts-preview-slide').each(function () {
             var slide = $(this);
             var video = slide.find('video')[0];
             if (!video) return;
 
-            var slideStart = orientation === 'vertical' ? this.offsetTop : this.offsetLeft;
-            var slideDim = orientation === 'vertical' ? slide.height() : slide.width();
-            var slideEnd = slideStart + slideDim;
+            var rect = this.getBoundingClientRect();
+            var isActive = false;
 
-            // If this slide is covering the center of the slider, it's the active one
-            if (centerPos >= slideStart && centerPos <= slideEnd) {
+            if (orientation === 'vertical') {
+                isActive = (centerY >= rect.top && centerY <= rect.bottom);
+            } else {
+                isActive = (centerX >= rect.left && centerX <= rect.right);
+            }
+
+            if (isActive) {
                 if (video.paused) {
+                    video.muted = false;
                     video.play().catch(function (e) { });
                 }
             } else {
                 if (!video.paused) {
                     video.pause();
+                    video.muted = true;
                 }
             }
         });
@@ -949,47 +973,53 @@ jQuery(document).ready(function ($) {
         });
     });
 
+    function navigatePreview(direction) {
+        var slider = $('.firstshorts-preview-slider');
+        if (!slider.length || slider.is(':animated')) return;
+
+        var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
+        var amount = orientation === 'vertical' ? slider[0].clientHeight : slider[0].clientWidth;
+        if (amount <= 0) return;
+
+        // Pause all videos immediately
+        slider.find('video').each(function () { this.pause(); });
+
+        // Temporarily disable scroll-snap so jQuery animate() isn't cancelled by CSS
+        slider.css('scroll-snap-type', 'none');
+
+        var animProp = {};
+        if (orientation === 'vertical') {
+            animProp.scrollTop = slider.scrollTop() + (direction * amount);
+        } else {
+            animProp.scrollLeft = slider.scrollLeft() + (direction * amount);
+        }
+
+        slider.animate(animProp, 400, 'swing', function () {
+            // Re-enable scroll snap after animation completes
+            slider.css('scroll-snap-type', (orientation === 'vertical' ? 'y' : 'x') + ' mandatory');
+            syncPreviewVideos();
+        });
+    }
+
     $(document).on('click', '#firstshorts-preview-nav-prev', function (e) {
         e.preventDefault();
-        var slider = $('.firstshorts-preview-slider');
-        if (slider.length) {
-            var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
-            var scrollAmount = orientation === 'vertical' ? slider[0].offsetHeight : slider[0].offsetWidth;
-
-            var animProps = {};
-            if (orientation === 'vertical') {
-                animProps.scrollTop = slider.scrollTop() - scrollAmount;
-            } else {
-                animProps.scrollLeft = slider.scrollLeft() - scrollAmount;
-            }
-
-            slider.animate(animProps, {
-                duration: 400,
-                easing: 'swing',
-                complete: syncPreviewVideos
-            });
-        }
+        navigatePreview(-1);
     });
 
     $(document).on('click', '#firstshorts-preview-nav-next', function (e) {
         e.preventDefault();
-        var slider = $('.firstshorts-preview-slider');
-        if (slider.length) {
-            var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
-            var scrollAmount = orientation === 'vertical' ? slider[0].offsetHeight : slider[0].offsetWidth;
+        navigatePreview(1);
+    });
 
-            var animProps = {};
-            if (orientation === 'vertical') {
-                animProps.scrollTop = slider.scrollTop() + scrollAmount;
-            } else {
-                animProps.scrollLeft = slider.scrollLeft() + scrollAmount;
-            }
-
-            slider.animate(animProps, {
-                duration: 400,
-                easing: 'swing',
-                complete: syncPreviewVideos
+    // Auto-pause sound when switching browser tabs (Admin Preview)
+    $(document).on('visibilitychange', function () {
+        if (document.hidden) {
+            $('.firstshorts-preview-slider video').each(function () {
+                this.pause();
             });
+        } else {
+            // Re-sync which video should be playing sound when tab comes back
+            setTimeout(syncPreviewVideos, 100);
         }
     });
 

@@ -18,7 +18,7 @@ const VideoSliderCard = ({ video, isActive }) => {
     const vid = videoRef.current;
     if (!vid) return;
 
-    if (isActive) {
+    if (isActive && !document.hidden) {
       const playPromise = vid.play();
       if (playPromise !== undefined) {
         playPromise.catch(e => {
@@ -28,6 +28,18 @@ const VideoSliderCard = ({ video, isActive }) => {
     } else {
       vid.pause();
     }
+  }, [isActive]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden && videoRef.current) {
+        videoRef.current.pause();
+      } else if (!document.hidden && isActive && videoRef.current) {
+        videoRef.current.play().catch(() => { });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [isActive]);
 
   const defaultOptions = {
@@ -148,7 +160,7 @@ const VideoSliderCard = ({ video, isActive }) => {
           poster={video.thumbnail}
           className="firstshorts-slide-image"
           loop
-          muted={isMuted}
+          muted={!isActive || isMuted}
           playsInline
           onTimeUpdate={handleTimeUpdate}
           onClick={handleVideoClick}
@@ -518,7 +530,7 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
             onClick={prevSlide}
             aria-label="Previous slide"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               {orientation === 'vertical' ? <polyline points="18 15 12 9 6 15"></polyline> : <polyline points="15 18 9 12 15 6"></polyline>}
             </svg>
           </button>
@@ -527,7 +539,7 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
             onClick={nextSlide}
             aria-label="Next slide"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               {orientation === 'vertical' ? <polyline points="6 9 12 15 18 9"></polyline> : <polyline points="9 18 15 12 9 6"></polyline>}
             </svg>
           </button>
