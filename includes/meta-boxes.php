@@ -929,13 +929,20 @@ function firstshorts_enqueue_admin_scripts($hook)
 
     // Pass data to JavaScript
     global $post;
+
+    // Reliably get the post being edited - $_GET['post'] is set on post.php, $post may not be ready yet
+    $current_post_id = isset($_GET['post']) ? absint($_GET['post']) : ($post ? $post->ID : 0);
+    $current_post    = $current_post_id ? get_post($current_post_id) : $post;
+    $is_saved = $current_post && in_array($current_post->post_status, array('publish', 'private', 'future'), true);
+
     wp_localize_script('firstshorts-admin', 'firstshortsAdmin', array(
-        'uploadTitle' => __('Select Video', 'firstshorts'),
+        'uploadTitle'  => __('Select Video', 'firstshorts'),
         'uploadButton' => __('Use this video', 'firstshorts'),
         'allowedTypes' => array('video/mp4', 'video/webm', 'video/ogg'),
-        'nonce' => wp_create_nonce('firstshorts_video_nonce'),
-        'ajaxUrl' => admin_url('admin-ajax.php'),
-        'postId' => $post->ID,
+        'nonce'        => wp_create_nonce('firstshorts_video_nonce'),
+        'ajaxUrl'      => admin_url('admin-ajax.php'),
+        'postId'       => $current_post_id,
+        'isSaved'      => $is_saved ? 'yes' : 'no',
     ));
 }
 add_action('admin_enqueue_scripts', 'firstshorts_enqueue_admin_scripts');

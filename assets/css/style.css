@@ -1258,9 +1258,8 @@ body.firstshorts-admin .postbox .handle-order-lower {
 }
 
 .firstshorts-copy-btn.is-copied {
-    background: #16a34a;
-    border-color: #16a34a;
-    color: #ffffff;
+    opacity: 0.75;
+    cursor: default;
 }
 
 /* Display Options & Video Details are rendered inside tabs */
@@ -2293,9 +2292,8 @@ body.firstshorts-admin .postbox .handle-order-lower {
 }
 
 .firstshorts-copy-btn.is-copied {
-    background: #059669 !important;
-    border-color: #059669 !important;
-    color: #ffffff !important;
+    opacity: 0.75 !important;
+    cursor: default !important;
 }
 
 .firstshorts-copy-btn svg {

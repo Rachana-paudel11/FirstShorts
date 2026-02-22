@@ -703,7 +703,7 @@ jQuery(document).ready(function ($) {
             '<div class="firstshorts-top-actions">' +
             '<div class="firstshorts-top-shortcode firstshorts-shortcode-section"></div>' +
             '<div class="firstshorts-save-wrapper">' +
-            '<button type="button" class="button button-primary firstshorts-save-btn firstshorts-save-btn-top">Save Short</button>' +
+            '<button type="button" class="button button-primary firstshorts-save-btn firstshorts-save-btn-top">' + (firstshortsAdmin.isSaved === 'yes' ? 'Update Short' : 'Save Short') + '</button>' +
             '</div>' +
             '</div>'
         );
