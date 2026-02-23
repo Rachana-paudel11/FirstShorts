@@ -744,7 +744,7 @@ jQuery(document).ready(function ($) {
             displayBox.hide();
         }
 
-        // 5. Preview (Right)
+        // Right        // 5. Preview (Right)
         if (previewBox.length) {
             var rawPreview = previewBox.find('.inside');
             var previewContent = rawPreview.children().detach();
@@ -757,13 +757,6 @@ jQuery(document).ready(function ($) {
             var target = rightPanel.find('#fs-preview-target');
             if (target.length) {
                 target.empty().append(previewContent);
-            }
-
-            // Move navigation arrows to the panel root so they stay sticky
-            var arrows = target.find('.firstshorts-preview-nav');
-            if (!arrows.length) arrows = rightPanel.find('.firstshorts-preview-nav');
-            if (arrows.length) {
-                rightPanel.append(arrows);
             }
 
             previewBox.hide();
