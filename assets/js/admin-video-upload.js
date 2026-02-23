@@ -746,16 +746,22 @@ jQuery(document).ready(function ($) {
 
         // 5. Preview (Right)
         if (previewBox.length) {
-            var previewContent = previewBox.find('.inside').children().detach();
+            var rawPreview = previewBox.find('.inside');
+            var previewContent = rawPreview.children().detach();
+
+            // If the metabox was empty for some reason, add the default empty message manually
+            if (previewContent.length === 0) {
+                previewContent = $('<p class="firstshorts-preview-empty" id="firstshorts-preview-empty">Select a video to see a preview.</p>');
+            }
+
             var target = rightPanel.find('#fs-preview-target');
             if (target.length) {
-                target.append(previewContent);
-            } else {
-                rightPanel.find('.firstshorts-preview-content-area').append(previewContent);
+                target.empty().append(previewContent);
             }
 
             // Move navigation arrows to the panel root so they stay sticky
-            var arrows = rightPanel.find('.firstshorts-preview-nav');
+            var arrows = target.find('.firstshorts-preview-nav');
+            if (!arrows.length) arrows = rightPanel.find('.firstshorts-preview-nav');
             if (arrows.length) {
                 rightPanel.append(arrows);
             }
@@ -771,8 +777,10 @@ jQuery(document).ready(function ($) {
         }
 
         // --- Init Functionality ---
-        updateSaveState();
-        updatePreview();
+        setTimeout(function () {
+            updateSaveState();
+            updatePreview();
+        }, 50);
         // updateShortcodePreview(); // Removed to prevent overwriting PHP state on load
 
         // Bind Events
