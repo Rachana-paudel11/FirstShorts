@@ -132,6 +132,23 @@ body.firstshorts-admin #wpbody-content {
     }
 }
 
+.firstshorts-builder {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box;
+    display: block !important;
+}
+
+/* Force parent containers to expand for our builder */
+#poststuff #post-body.columns-2 #post-body-content,
+.post-type-firstshorts_video #post-body-content {
+    width: 100% !important;
+    max-width: none !important;
+    float: none !important;
+}
+
 .firstshorts-panel {
     background: #ffffff;
     border: 1px solid #e7eaef;
@@ -148,8 +165,14 @@ body.firstshorts-admin #wpbody-content {
     box-sizing: border-box;
     position: relative;
     z-index: 10;
-    /* Removed overflow: hidden if any, to allow tooltips to bleed. 
-       Body handles internal scrolling. */
+}
+
+/* Hide stray thumbnail links that might leak from theme meta boxes */
+#fs-panel-preview #set-post-thumbnail,
+.firstshorts-panel-settings #set-post-thumbnail,
+.firstshorts-panel [id*="set-post-thumbnail"],
+.firstshorts-panel .inside a[id*="thumbnail"] {
+    display: none !important;
 }
 
 .firstshorts-panel:hover {
