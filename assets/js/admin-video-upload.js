@@ -873,18 +873,28 @@ jQuery(document).ready(function ($) {
         mainWrapper.on('click', '.firstshorts-save-btn-top', function (e) {
             e.preventDefault();
 
-            // validation: check for title
+            var btn = $(this);
             var titleField = $('#title');
-            if (titleField.length && !titleField.val().trim()) {
-                alert('Please enter a title for your Short before saving.');
-                titleField.focus();
+            var videoUrlField = $('#firstshorts_video_url');
+            var hasVideoInput = videoUrlField.val() && videoUrlField.val().trim() !== '';
+            var hasBulkSelection = bulkItems.filter(function (i) { return i.selected; }).length > 0;
+            var hasVideo = hasVideoInput || hasBulkSelection;
+
+            var isTitleValid = !titleField.length || !!titleField.val().trim();
+
+            if (!isTitleValid || !hasVideo) {
+                // Shake the title field if empty
+                if (!isTitleValid) {
+                    titleField.addClass('shake');
+                    titleField.focus();
+                    setTimeout(function () { titleField.removeClass('shake'); }, 500);
+                }
+
+                // Shake the save button as general feedback
+                btn.addClass('shake');
+                setTimeout(function () { btn.removeClass('shake'); }, 500);
                 return;
             }
-
-            // Visual feedback that something is happening
-            var btn = $(this);
-            var originalText = btn.text();
-            btn.prop('disabled', true).text('Saving...');
 
             // Trigger WordPress native publish/update button
             var publishBtn = $('#publish');
@@ -895,16 +905,8 @@ jQuery(document).ready(function ($) {
             } else if (saveBtn.length) {
                 saveBtn.click();
             } else {
-                // Last ditch effort: submit the form directly if button isn't found
                 $('#post').submit();
             }
-
-            // Re-enable after a while if page didn't reload (though it usually does on save)
-            setTimeout(function () {
-                if (btn.text() === 'Saving...') {
-                    btn.prop('disabled', false).text(originalText);
-                }
-            }, 5000);
         });
 
         // Copy Shortcode Button
