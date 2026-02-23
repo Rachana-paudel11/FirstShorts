@@ -132,21 +132,31 @@ body.firstshorts-admin #wpbody-content {
     }
 }
 
-.firstshorts-builder {
+/* Force parent containers to expand for our builder - Breakout mode */
+.post-type-firstshorts_video #wpcontent {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.post-type-firstshorts_video #wpbody-content {
+    padding-bottom: 0 !important;
+    float: none !important;
     width: 100% !important;
+}
+
+.firstshorts-builder {
+    width: calc(100vw - 180px) !important;
+    /* Account for collapsed/open sidebar */
     max-width: none !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+    margin: 0 !important;
+    padding: 20px !important;
     box-sizing: border-box;
     display: block !important;
 }
 
-/* Force parent containers to expand for our builder */
-#poststuff #post-body.columns-2 #post-body-content,
-.post-type-firstshorts_video #post-body-content {
-    width: 100% !important;
-    max-width: none !important;
-    float: none !important;
+/* Adjust for collapsed sidebar */
+.folded .firstshorts-builder {
+    width: calc(100vw - 56px) !important;
 }
 
 .firstshorts-panel {
@@ -168,11 +178,16 @@ body.firstshorts-admin #wpbody-content {
 }
 
 /* Hide stray thumbnail links that might leak from theme meta boxes */
-#fs-panel-preview #set-post-thumbnail,
-.firstshorts-panel-settings #set-post-thumbnail,
-.firstshorts-panel [id*="set-post-thumbnail"],
-.firstshorts-panel .inside a[id*="thumbnail"] {
+#set-post-thumbnail,
+[id*="set-post-thumbnail"],
+.firstshorts-panel a[id*="thumbnail"],
+.firstshorts-panel .hide-if-no-js {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .firstshorts-panel:hover {

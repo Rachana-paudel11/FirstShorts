@@ -767,25 +767,31 @@ jQuery(document).ready(function ($) {
         // 5. Preview (Right)
         if (previewBox.length) {
             var rawPreview = previewBox.find('.inside');
-            // If .inside is missing (can happen if detached previously), use the box itself
             var previewContent = rawPreview.length ? rawPreview.children().detach() : previewBox.children().detach();
 
             var target = rightPanel.find('#fs-preview-target');
             if (target.length) {
-                // If the metabox was empty (lag/conflict), ensure we have the default structure
-                if (previewContent.length === 0 || (previewContent.length === 1 && previewContent.text().trim() === '')) {
-                    var emptyBody = $('<div class="firstshorts-preview-body"></div>');
-                    emptyBody.append($('<p class="firstshorts-preview-empty" id="firstshorts-preview-empty">Select a video to see a preview.</p>'));
-                    target.empty().append(emptyBody);
-                } else {
-                    target.empty().append(previewContent);
+                target.empty();
+
+                // CRITICAL: Always ensure the video container exists so updatePreview can find it
+                var playerStructure = $('<div id="firstshorts-preview-player" class="firstshorts-preview-video-container" style="display:none;"></div>');
+                var emptyMsg = $('<p class="firstshorts-preview-empty" id="firstshorts-preview-empty">Select a video to see a preview.</p>');
+
+                var bodyWrapper = $('<div class="firstshorts-preview-body"></div>');
+                bodyWrapper.append(playerStructure, emptyMsg);
+                target.append(bodyWrapper);
+
+                // If we detached actual content (like from a previous session load), put it back
+                if (previewContent.length > 0 && !previewContent.hasClass('firstshorts-preview-empty')) {
+                    var container = target.find('.firstshorts-preview-video-container');
+                    container.append(previewContent).show();
+                    target.find('.firstshorts-preview-empty').hide();
                 }
             }
 
-            // MOVE NAVIGATION ARROWS to panel root so they stay sticky and visible
+            // MOVE NAVIGATION ARROWS to panel root
             var arrows = target.find('.firstshorts-preview-nav');
             if (!arrows.length) arrows = rightPanel.find('.firstshorts-preview-nav');
-
             if (arrows.length) {
                 rightPanel.append(arrows);
             }
@@ -795,8 +801,8 @@ jQuery(document).ready(function ($) {
 
         $('.firstshorts-meta-row').remove();
 
-        // Final cleanup of stray theme elements that might have leaked during detach/append
-        $('.firstshorts-panel-settings').find('#set-post-thumbnail, [id*="set-post-thumbnail"], .hide-if-no-js').remove();
+        // Final cleanup of stray theme elements
+        $('.firstshorts-panel-settings, .firstshorts-panel-preview').find('#set-post-thumbnail, [id*="set-post-thumbnail"], .hide-if-no-js').remove();
 
         var editorWrapper = $('#postdivrich');
         if (editorWrapper.length) {
@@ -807,7 +813,7 @@ jQuery(document).ready(function ($) {
         setTimeout(function () {
             updateSaveState();
             updatePreview();
-        }, 300);
+        }, 400);
         // updateShortcodePreview(); // Removed to prevent overwriting PHP state on load
 
         // Bind Events
