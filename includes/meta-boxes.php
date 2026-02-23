@@ -938,7 +938,7 @@ function firstshorts_enqueue_admin_scripts($hook)
     wp_localize_script('firstshorts-admin', 'firstshortsAdmin', array(
         'uploadTitle'  => __('Select Video', 'firstshorts'),
         'uploadButton' => __('Use this video', 'firstshorts'),
-        'allowedTypes' => array('video/mp4', 'video/webm', 'video/ogg'),
+        'allowedTypes' => 'video',
         'nonce'        => wp_create_nonce('firstshorts_video_nonce'),
         'ajaxUrl'      => admin_url('admin-ajax.php'),
         'postId'       => $current_post_id,

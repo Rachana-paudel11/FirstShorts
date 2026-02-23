@@ -333,8 +333,10 @@ jQuery(document).ready(function ($) {
     }
 
     function updatePreview() {
-        var previewContentBox = $('.firstshorts-preview-content-area');
-        // If wrapper not found (maybe legacy), try the container directly
+        var previewContentBox = $('#fs-preview-target');
+        // Fallback to class if ID not yet in DOM or for backward compatibility
+        if (!previewContentBox.length) previewContentBox = $('.firstshorts-preview-content-area');
+        // Final fallback to parent of container if needed
         if (!previewContentBox.length) previewContentBox = $('.firstshorts-preview-video-container').parent();
 
         var container = previewContentBox.find('.firstshorts-preview-video-container');
@@ -682,7 +684,7 @@ jQuery(document).ready(function ($) {
         );
 
         var rightPanel = $(
-            '<section class="firstshorts-panel firstshorts-panel-preview">' +
+            '<section id="fs-panel-preview" class="firstshorts-panel firstshorts-panel-preview">' +
             '<div class="firstshorts-panel-header">' +
             '<div class="firstshorts-panel-header-content">' +
             '<h3>Live Preview</h3>' +
@@ -694,7 +696,7 @@ jQuery(document).ready(function ($) {
             '</div>' +
             '</div>' +
             '<div class="firstshorts-panel-body">' +
-            '<div class="firstshorts-preview-content-area"></div>' +
+            '<div class="firstshorts-preview-content-area" id="fs-preview-target"></div>' +
             '</div>' +
             '</section>'
         );
@@ -716,40 +718,43 @@ jQuery(document).ready(function ($) {
 
         // --- Move CONTENT ---
 
-        // Left Content
-        var detailsContent = detailsBox.find('.inside').children();
-        if (detailsContent.length) {
+        // 1. Details (Left)
+        if (detailsBox.length) {
+            var detailsContent = detailsBox.find('.inside').children().detach();
             leftPanel.find('.firstshorts-panel-body').append(detailsContent);
             // Hide duplicate button inside content
             leftPanel.find('#firstshorts_bulk_upload_btn').not('.firstshorts-upload-btn').closest('.firstshorts-video-actions').hide();
+            detailsBox.hide();
         }
-        detailsBox.hide();
 
-        // Thumbnail is handled by WordPress usually, user asked to remove it if redundant
+        // 2. Thumbnail
         thumbnailBox.hide();
 
-        // Center Content - Preview (Shortcode moved to top)
+        // 3. Shortcodes (Top Bar)
         if (shortcodeBox.length) {
-            mainWrapper.find('.firstshorts-shortcode-section').append(shortcodeBox.find('.inside').children());
+            var shortcodeContent = shortcodeBox.find('.inside').children().detach();
+            topActions.find('.firstshorts-shortcode-section').append(shortcodeContent);
             shortcodeBox.hide();
         }
 
-        // Center Content - Settings (Swapped)
+        // 4. Settings (Center)
         if (displayBox.length) {
-            centerPanel.find('.firstshorts-panel-body').append(displayBox.find('.inside').children());
+            var settingsContent = displayBox.find('.inside').children().detach();
+            centerPanel.find('.firstshorts-panel-body').append(settingsContent);
             displayBox.hide();
         }
 
-        // Right Content - Preview (Swapped)
+        // 5. Preview (Right)
         if (previewBox.length) {
-            var rawPreview = previewBox.find('.inside').children();
-            // If the first child is the wrapper from PHP, move its children instead
-            if (rawPreview.length === 1 && rawPreview.hasClass('firstshorts-admin-preview-wrapper')) {
-                rawPreview = rawPreview.children();
+            var previewContent = previewBox.find('.inside').children().detach();
+            var target = rightPanel.find('#fs-preview-target');
+            if (target.length) {
+                target.append(previewContent);
+            } else {
+                rightPanel.find('.firstshorts-preview-content-area').append(previewContent);
             }
-            rightPanel.find('.firstshorts-preview-content-area').append(rawPreview);
 
-            // MOVE NAVIGATION ARROWS to panel root so they stay sticky
+            // Move navigation arrows to the panel root so they stay sticky
             var arrows = rightPanel.find('.firstshorts-preview-nav');
             if (arrows.length) {
                 rightPanel.append(arrows);

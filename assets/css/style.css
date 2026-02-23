@@ -142,6 +142,8 @@ body.firstshorts-admin #wpbody-content {
     flex-direction: column;
     height: calc(100vh - 140px);
     min-height: 530px;
+    min-width: 320px;
+    /* Added to prevent collapse */
     box-sizing: border-box;
     position: relative;
     z-index: 10;
