@@ -764,30 +764,19 @@ jQuery(document).ready(function ($) {
             displayBox.hide();
         }
 
-        // 5. Preview (Right)
+        // Right        // 5. Preview (Right)
         if (previewBox.length) {
             var rawPreview = previewBox.find('.inside');
-            // If .inside is missing (can happen if detached previously), use the box itself
-            var previewContent = rawPreview.length ? rawPreview.children().detach() : previewBox.children().detach();
+            var previewContent = rawPreview.children().detach();
+
+            // If the metabox was empty for some reason, add the default empty message manually
+            if (previewContent.length === 0) {
+                previewContent = $('<p class="firstshorts-preview-empty" id="firstshorts-preview-empty">Select a video to see a preview.</p>');
+            }
 
             var target = rightPanel.find('#fs-preview-target');
             if (target.length) {
-                // If miraculously the content is 0 (or just whitespace), show empty state
-                if (previewContent.length === 0 || (previewContent.length === 1 && previewContent.text().trim() === '')) {
-                    var emptyBody = $('<div class="firstshorts-preview-body"></div>');
-                    emptyBody.append($('<p class="firstshorts-preview-empty" id="firstshorts-preview-empty">Select a video to see a preview.</p>'));
-                    target.empty().append(emptyBody);
-                } else {
-                    target.empty().append(previewContent);
-                }
-            }
-
-            // MOVE NAVIGATION ARROWS to panel root so they stay sticky and visible
-            var arrows = rightPanel.find('.firstshorts-preview-nav');
-            if (!arrows.length && target.length) arrows = target.find('.firstshorts-preview-nav');
-
-            if (arrows.length) {
-                rightPanel.append(arrows);
+                target.empty().append(previewContent);
             }
 
             previewBox.hide();
@@ -804,7 +793,7 @@ jQuery(document).ready(function ($) {
         setTimeout(function () {
             updateSaveState();
             updatePreview();
-        }, 250);
+        }, 50);
         // updateShortcodePreview(); // Removed to prevent overwriting PHP state on load
 
         // Bind Events
