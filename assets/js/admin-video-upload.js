@@ -641,12 +641,23 @@ jQuery(document).ready(function ($) {
             return;
         }
 
-        // Meta box shells
+        // Meta box shells - Use flexible selectors for better compatibility across sites
         var displayBox = $('#firstshorts_video_display_options');
         var detailsBox = $('#firstshorts_video_details');
-        var thumbnailBox = $('#postimagediv');
         var previewBox = $('#firstshorts_video_preview');
         var shortcodeBox = $('#firstshorts_video_shortcodes');
+        var thumbnailBox = $('#postimagediv');
+
+        // Fallbacks if IDs are different (some plugins/themes prefix them)
+        if (!displayBox.length) displayBox = $('[id*="firstshorts_video_display_options"]');
+        if (!detailsBox.length) detailsBox = $('[id*="firstshorts_video_details"]');
+        if (!previewBox.length) previewBox = $('[id*="firstshorts_video_preview"]');
+        if (!shortcodeBox.length) shortcodeBox = $('[id*="firstshorts_video_shortcodes"]');
+
+        // If even fallbacks fail but we find the preview wrapper, use its parent
+        if (!previewBox.length && $('.firstshorts-admin-preview-wrapper').length) {
+            previewBox = $('.firstshorts-admin-preview-wrapper').closest('.postbox');
+        }
 
         if (!displayBox.length || !detailsBox.length) {
             return;
@@ -740,23 +751,43 @@ jQuery(document).ready(function ($) {
         // 4. Settings (Center)
         if (displayBox.length) {
             var settingsContent = displayBox.find('.inside').children().detach();
+
+            // SECURITY CHECK: If preview content was accidentally caught (sometimes happens with grouping plugins)
+            // exclude it from the settings panel move
+            var accidentalPreview = settingsContent.filter('.firstshorts-admin-preview-wrapper, #firstshorts_video_preview');
+            if (accidentalPreview.length) {
+                settingsContent = settingsContent.not(accidentalPreview);
+                if (!previewBox.length) previewBox = accidentalPreview;
+            }
+
             centerPanel.find('.firstshorts-panel-body').append(settingsContent);
             displayBox.hide();
         }
 
-        // Right        // 5. Preview (Right)
+        // 5. Preview (Right)
         if (previewBox.length) {
             var rawPreview = previewBox.find('.inside');
-            var previewContent = rawPreview.children().detach();
-
-            // If the metabox was empty for some reason, add the default empty message manually
-            if (previewContent.length === 0) {
-                previewContent = $('<p class="firstshorts-preview-empty" id="firstshorts-preview-empty">Select a video to see a preview.</p>');
-            }
+            // If .inside is missing (can happen if detached previously), use the box itself
+            var previewContent = rawPreview.length ? rawPreview.children().detach() : previewBox.children().detach();
 
             var target = rightPanel.find('#fs-preview-target');
             if (target.length) {
-                target.empty().append(previewContent);
+                // If miraculously the content is 0 (or just whitespace), show empty state
+                if (previewContent.length === 0 || (previewContent.length === 1 && previewContent.text().trim() === '')) {
+                    var emptyBody = $('<div class="firstshorts-preview-body"></div>');
+                    emptyBody.append($('<p class="firstshorts-preview-empty" id="firstshorts-preview-empty">Select a video to see a preview.</p>'));
+                    target.empty().append(emptyBody);
+                } else {
+                    target.empty().append(previewContent);
+                }
+            }
+
+            // MOVE NAVIGATION ARROWS to panel root so they stay sticky and visible
+            var arrows = rightPanel.find('.firstshorts-preview-nav');
+            if (!arrows.length && target.length) arrows = target.find('.firstshorts-preview-nav');
+
+            if (arrows.length) {
+                rightPanel.append(arrows);
             }
 
             previewBox.hide();
@@ -773,7 +804,7 @@ jQuery(document).ready(function ($) {
         setTimeout(function () {
             updateSaveState();
             updatePreview();
-        }, 50);
+        }, 250);
         // updateShortcodePreview(); // Removed to prevent overwriting PHP state on load
 
         // Bind Events

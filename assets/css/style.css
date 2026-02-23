@@ -141,9 +141,10 @@ body.firstshorts-admin #wpbody-content {
     display: flex;
     flex-direction: column;
     height: calc(100vh - 140px);
-    min-height: 530px;
+    min-height: 540px;
     min-width: 320px;
-    /* Added to prevent collapse */
+    background-color: #ffffff !important;
+    /* Force white background */
     box-sizing: border-box;
     position: relative;
     z-index: 10;
@@ -726,14 +727,6 @@ body.firstshorts-admin .postbox .handle-order-lower {
 #firstshorts_video_preview .inside {
     padding: 0;
     flex: 1;
-}
-
-.firstshorts-preview-body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 240px;
-    background: radial-gradient(circle at top, rgba(99, 102, 241, 0.08), transparent 65%);
 }
 
 .firstshorts-preview-empty {
