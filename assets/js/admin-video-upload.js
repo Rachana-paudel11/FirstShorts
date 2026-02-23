@@ -543,12 +543,12 @@ jQuery(document).ready(function ($) {
         });
 
         // Show/Hide navigation arrows based on count
-        var navPrev = $('.firstshorts-panel-preview').find('#firstshorts-preview-nav-prev');
-        var navNext = $('.firstshorts-panel-preview').find('#firstshorts-preview-nav-next');
+        var navWrapper = $('.firstshorts-panel-preview').find('.firstshorts-preview-nav');
+        var navPrev = navWrapper.find('#firstshorts-preview-nav-prev');
+        var navNext = navWrapper.find('#firstshorts-preview-nav-next');
 
         if (items.length > 1) {
-            navPrev.css('display', 'flex');
-            navNext.css('display', 'flex');
+            navWrapper.css('display', 'block');
 
             // Update icons based on orientation
             if (orientation === 'vertical') {
@@ -559,8 +559,7 @@ jQuery(document).ready(function ($) {
                 navNext.html(ICONS.NEXT_H);
             }
         } else {
-            navPrev.hide();
-            navNext.hide();
+            navWrapper.hide();
         }
 
         // Sync videos on first render
@@ -589,24 +588,41 @@ jQuery(document).ready(function ($) {
         var centerX = sliderRect.left + sliderRect.width / 2;
         var centerY = sliderRect.top + sliderRect.height / 2;
 
-        slider.find('.firstshorts-preview-slide').each(function () {
+        var closestSlide = null;
+        var minDistance = Infinity;
+
+        var slides = slider.find('.firstshorts-preview-slide');
+        slides.each(function () {
+            var rect = this.getBoundingClientRect();
+            var distance = 0;
+
+            if (orientation === 'vertical') {
+                distance = Math.abs(centerY - (rect.top + rect.height / 2));
+            } else {
+                distance = Math.abs(centerX - (rect.left + rect.width / 2));
+            }
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestSlide = $(this);
+            }
+        });
+
+        slides.each(function () {
             var slide = $(this);
             var video = slide.find('video')[0];
             if (!video) return;
 
-            var rect = this.getBoundingClientRect();
-            var isActive = false;
+            var isClosest = (closestSlide && slide[0] === closestSlide[0]);
 
-            if (orientation === 'vertical') {
-                isActive = (centerY >= rect.top && centerY <= rect.bottom);
-            } else {
-                isActive = (centerX >= rect.left && centerX <= rect.right);
-            }
-
-            if (isActive) {
+            if (isClosest) {
                 if (video.paused) {
-                    video.muted = false;
-                    video.play().catch(function (e) { });
+                    video.muted = false; // Unmute current
+                    video.play().catch(function (e) {
+                        // Fallback for browser block: play muted
+                        video.muted = true;
+                        video.play().catch(function () { });
+                    });
                 }
             } else {
                 if (!video.paused) {
@@ -857,8 +873,17 @@ jQuery(document).ready(function ($) {
         mainWrapper.on('click', '.firstshorts-save-btn-top', function (e) {
             e.preventDefault();
 
+            // validation: check for title
+            var titleField = $('#title');
+            if (titleField.length && !titleField.val().trim()) {
+                alert('Please enter a title for your Short before saving.');
+                titleField.focus();
+                return;
+            }
+
             // Visual feedback that something is happening
             var btn = $(this);
+            var originalText = btn.text();
             btn.prop('disabled', true).text('Saving...');
 
             // Trigger WordPress native publish/update button
@@ -873,6 +898,13 @@ jQuery(document).ready(function ($) {
                 // Last ditch effort: submit the form directly if button isn't found
                 $('#post').submit();
             }
+
+            // Re-enable after a while if page didn't reload (though it usually does on save)
+            setTimeout(function () {
+                if (btn.text() === 'Saving...') {
+                    btn.prop('disabled', false).text(originalText);
+                }
+            }, 5000);
         });
 
         // Copy Shortcode Button
