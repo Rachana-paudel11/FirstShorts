@@ -789,10 +789,15 @@ jQuery(document).ready(function ($) {
                 }
             }
 
-            // MOVE NAVIGATION ARROWS to panel root
-            var arrows = target.find('.firstshorts-preview-nav');
-            if (!arrows.length) arrows = rightPanel.find('.firstshorts-preview-nav');
-            if (arrows.length) {
+            // --- ENSURE NAVIGATION ARROWS EXIST ---
+            var arrows = rightPanel.find('.firstshorts-preview-nav');
+            if (!arrows.length) {
+                arrows = $(
+                    '<div class="firstshorts-preview-nav">' +
+                    '<button type="button" id="firstshorts-preview-nav-prev" class="firstshorts-nav-btn prev">' + ICONS.PREV_H + '</button>' +
+                    '<button type="button" id="firstshorts-preview-nav-next" class="firstshorts-nav-btn next">' + ICONS.NEXT_H + '</button>' +
+                    '</div>'
+                );
                 rightPanel.append(arrows);
             }
 
@@ -846,6 +851,28 @@ jQuery(document).ready(function ($) {
         $(document).on('firstshorts:bulk-updated', function () {
             updateSaveState();
             updatePreview();
+        });
+
+        // --- Save Short Button Handler ---
+        mainWrapper.on('click', '.firstshorts-save-btn-top', function (e) {
+            e.preventDefault();
+
+            // Visual feedback that something is happening
+            var btn = $(this);
+            btn.prop('disabled', true).text('Saving...');
+
+            // Trigger WordPress native publish/update button
+            var publishBtn = $('#publish');
+            var saveBtn = $('#save-post');
+
+            if (publishBtn.length) {
+                publishBtn.click();
+            } else if (saveBtn.length) {
+                saveBtn.click();
+            } else {
+                // Last ditch effort: submit the form directly if button isn't found
+                $('#post').submit();
+            }
         });
 
         // Copy Shortcode Button
