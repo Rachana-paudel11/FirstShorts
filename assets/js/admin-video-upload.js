@@ -362,7 +362,8 @@ jQuery(document).ready(function ($) {
         var panelBody = previewContentBox.closest('.firstshorts-panel-body');
         panelBody.css({
             'overflow': isFitMode ? 'hidden' : 'auto',
-            'align-items': isFitMode ? 'center' : 'flex-start'
+            'align-items': isFitMode ? 'center' : 'flex-start',
+            'position': 'relative'
         });
 
         previewContentBox.css({
@@ -541,29 +542,41 @@ jQuery(document).ready(function ($) {
             sliderWrapper.append(slide);
             video[0].load();
         });
+        // --- PREVIEW NAVIGATION ARROWS ---
+        // Move back to container to scale with the video in "Fit" mode
+        var navWrapper = container.find('.firstshorts-preview-nav');
 
-        // Show/Hide navigation arrows based on count
-        var navWrapper = $('.firstshorts-panel-preview').find('.firstshorts-preview-nav');
-        var navPrev = navWrapper.find('#firstshorts-preview-nav-prev');
-        var navNext = navWrapper.find('#firstshorts-preview-nav-next');
-
-        if (items.length > 1) {
-            navWrapper.css('display', 'block');
-
-            // Update icons based on orientation
-            if (orientation === 'vertical') {
-                navPrev.html(ICONS.PREV_V);
-                navNext.html(ICONS.NEXT_V);
-            } else {
-                navPrev.html(ICONS.PREV_H);
-                navNext.html(ICONS.NEXT_H);
-            }
-        } else {
-            navWrapper.hide();
+        if (!navWrapper.length) {
+            navWrapper = $(
+                '<div class="firstshorts-preview-nav">' +
+                '<button type="button" id="firstshorts-preview-nav-prev" class="firstshorts-nav-btn prev" title="Previous Video"></button>' +
+                '<button type="button" id="firstshorts-preview-nav-next" class="firstshorts-nav-btn next" title="Next Video"></button>' +
+                '</div>'
+            );
+            container.append(navWrapper);
         }
 
+        navWrapper.css({
+            'display': 'block',
+            'pointer-events': 'none',
+            'z-index': '9999'
+        });
+
+        var prevBtn = navWrapper.find('#firstshorts-preview-nav-prev');
+        var nextBtn = navWrapper.find('#firstshorts-preview-nav-next');
+
+        if (orientation === 'vertical') {
+            prevBtn.html(ICONS.PREV_V);
+            nextBtn.html(ICONS.NEXT_V);
+        } else {
+            prevBtn.html(ICONS.PREV_H);
+            nextBtn.html(ICONS.NEXT_H);
+        }
+
+        navWrapper.find('.firstshorts-nav-btn').css('pointer-events', 'auto');
+
         // Sync videos on first render
-        setTimeout(syncPreviewVideos, 100);
+        setTimeout(syncPreviewVideos, 300);
 
         // Add scroll listener for manual swiping/scrolling
         sliderWrapper.off('scroll.firstshorts').on('scroll.firstshorts', function () {
@@ -616,19 +629,20 @@ jQuery(document).ready(function ($) {
             var isClosest = (closestSlide && slide[0] === closestSlide[0]);
 
             if (isClosest) {
-                if (video.paused) {
-                    video.muted = false; // Unmute current
-                    video.play().catch(function (e) {
-                        // Fallback for browser block: play muted
+                // Unmute and play the active video
+                video.muted = false;
+                video.volume = 1.0;
+                var promise = video.play();
+                if (promise !== undefined) {
+                    promise.catch(function (error) {
+                        // If blocked, try muted autoplay
                         video.muted = true;
                         video.play().catch(function () { });
                     });
                 }
             } else {
-                if (!video.paused) {
-                    video.pause();
-                    video.muted = true;
-                }
+                video.pause();
+                video.muted = true;
             }
         });
     }
@@ -805,17 +819,7 @@ jQuery(document).ready(function ($) {
                 }
             }
 
-            // --- ENSURE NAVIGATION ARROWS EXIST ---
-            var arrows = rightPanel.find('.firstshorts-preview-nav');
-            if (!arrows.length) {
-                arrows = $(
-                    '<div class="firstshorts-preview-nav">' +
-                    '<button type="button" id="firstshorts-preview-nav-prev" class="firstshorts-nav-btn prev">' + ICONS.PREV_H + '</button>' +
-                    '<button type="button" id="firstshorts-preview-nav-next" class="firstshorts-nav-btn next">' + ICONS.NEXT_H + '</button>' +
-                    '</div>'
-                );
-                rightPanel.append(arrows);
-            }
+            // Navigation arrows are now managed dynamically in updatePreview() to ensure they always load.
 
             previewBox.hide();
         }
@@ -890,9 +894,15 @@ jQuery(document).ready(function ($) {
                     setTimeout(function () { titleField.removeClass('shake'); }, 500);
                 }
 
-                // Shake the save button as general feedback
-                btn.addClass('shake');
-                setTimeout(function () { btn.removeClass('shake'); }, 500);
+                // Shake the ADD VIDEO button if no video is present
+                if (!hasVideo) {
+                    var addVideoBtn = $('#firstshorts_bulk_upload_btn');
+                    if (addVideoBtn.length) {
+                        addVideoBtn.addClass('shake');
+                        setTimeout(function () { addVideoBtn.removeClass('shake'); }, 500);
+                    }
+                }
+
                 return;
             }
 
@@ -937,70 +947,9 @@ jQuery(document).ready(function ($) {
             $(this).toggleClass('is-active');
             updatePreview();
         });
-
-        // Device Toggle Buttons - REMOVED
-
-        // Save Button
-        mainWrapper.on('click', '.firstshorts-save-btn', function () {
-            // Validation
-            var videoUrlField = $('#firstshorts_video_url');
-            var titleField = $('#title');
-            var hasVideo = videoUrlField.val() || bulkItems.length > 0;
-            var hasTitle = titleField.val() && titleField.val().trim() !== '';
-
-            if (!hasTitle) {
-                // Highlight the title field instead of showing an alert
-                var titleWrap = $('#titlewrap');
-                titleField.addClass('firstshorts-title-error');
-                titleWrap.addClass('firstshorts-title-error-wrap');
-
-                // Add or update the hint message below the title field
-                var hintId = 'firstshorts-title-hint';
-                var existingHint = $('#' + hintId);
-                if (!existingHint.length) {
-                    var hint = $('<p id="' + hintId + '" class="firstshorts-title-hint">Please add a title for your Short</p>');
-                    titleWrap.after(hint);
-                } else {
-                    existingHint.show();
-                }
-
-                // Scroll to and focus the title field
-                $('html, body').animate({ scrollTop: titleField.offset().top - 80 }, 300);
-                titleField.trigger('focus');
-
-                // Remove error state when user starts typing
-                titleField.off('input.firstshortsTitle').on('input.firstshortsTitle', function () {
-                    titleField.removeClass('firstshorts-title-error');
-                    titleWrap.removeClass('firstshorts-title-error-wrap');
-                    $('#' + hintId).hide();
-                });
-
-                return;
-            }
-
-            if (!hasVideo) {
-                toggleVideoUrlError(true);
-                videoUrlField.trigger('focus');
-                return;
-            }
-
-            $(this).prop('disabled', true).text('Saved Short');
-            $(window).off('beforeunload');
-            if (window.onbeforeunload) window.onbeforeunload = null;
-
-            // Find best button to trigger (Publish or Update)
-            var publishBtn = $('#publish');
-            var saveDraftBtn = $('#save-post');
-
-            if (publishBtn.length) {
-                publishBtn.trigger('click');
-            } else if (saveDraftBtn.length) {
-                saveDraftBtn.trigger('click');
-            } else {
-                $('#post').submit();
-            }
-        });
     }
+
+    // --- Global Event Listeners (Outside init to avoid duplicates) ---
 
     // --- Global Event Listeners ---
 
@@ -1103,8 +1052,12 @@ jQuery(document).ready(function ($) {
 
         slider.animate(animProp, 400, 'swing', function () {
             // Re-enable scroll snap after animation completes
-            slider.css('scroll-snap-type', (orientation === 'vertical' ? 'y' : 'x') + ' mandatory');
-            syncPreviewVideos();
+            var snapType = (orientation === 'vertical' ? 'y' : 'x') + ' mandatory';
+            slider.css({
+                'scroll-snap-type': snapType,
+                '-webkit-scroll-snap-type': snapType
+            });
+            setTimeout(syncPreviewVideos, 50);
         });
     }
 

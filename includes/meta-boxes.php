@@ -358,7 +358,7 @@ function firstshorts_render_display_options_metabox($post)
                                    min="150"
                                    max="1200"
                                    step="10"
-                                   style="width: 200px;" />
+                                    />
                             <p class="description"><?php _e('Set the width of the video card. Defaults: 360px.', 'firstshorts'); ?></p>
                         </div>
 
@@ -373,17 +373,17 @@ function firstshorts_render_display_options_metabox($post)
                                    min="200"
                                    max="1500"
                                    step="10"
-                                   style="width: 200px;" />
+                                    />
                             <p class="description"><?php _e('Set the height of the video card. Defaults: 640px.', 'firstshorts'); ?></p>
                         </div>
 
-                        <div class="firstshorts-section-divider" style="margin: 20px 0; border-top: 1px solid #e2e8f0;"></div>
+                        <div class="firstshorts-section-divider"></div>
 
                         <div class="firstshorts-meta-field">
                             <label for="firstshorts_slider_orientation">
                                 <?php _e('Scroll Direction', 'firstshorts'); ?>
                             </label>
-                            <select id="firstshorts_slider_orientation" name="firstshorts_slider_orientation" style="width: 200px;">
+                            <select id="firstshorts_slider_orientation" name="firstshorts_slider_orientation" style="max-width: 400px;">
                                 <option value="horizontal" <?php selected($slider_orientation, 'horizontal'); ?>>
                                     <?php _e('Horizontal Scroll', 'firstshorts'); ?>
                                 </option>
