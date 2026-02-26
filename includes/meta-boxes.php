@@ -288,10 +288,6 @@ function firstshorts_render_display_options_metabox($post)
     wp_nonce_field('firstshorts_video_nonce', 'firstshorts_video_nonce_field');
 
     // Retrieve saved checkbox values from post meta
-    // get_post_meta returns 1 if checked, 0 if unchecked
-    $show_view_count = get_post_meta($post->ID, '_firstshorts_show_view_count', true);
-    $show_likes = get_post_meta($post->ID, '_firstshorts_show_likes', true);
-    $show_save = get_post_meta($post->ID, '_firstshorts_show_save', true);
     $show_share = get_post_meta($post->ID, '_firstshorts_show_share', true);
     $show_buy_button = get_post_meta($post->ID, '_firstshorts_show_buy_button', true);
     $max_width = get_post_meta($post->ID, '_firstshorts_video_max_width', true);
@@ -603,33 +599,22 @@ function firstshorts_render_preview_metabox($post)
                 </p>
             
                 <div class="firstshorts-preview-player" id="firstshorts-preview-player" style="display: none;">
-                    <div class="firstshorts-preview-nav-wrapper">
-                        <button type="button" class="firstshorts-preview-nav firstshorts-preview-nav-prev" id="firstshorts-preview-nav-prev" aria-label="Previous">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                        </button>
-
-                        <!-- Video Container with 9:16 aspect ratio -->
-                        <div class="firstshorts-preview-video-container">
-                            <video class="firstshorts-preview-video" id="firstshorts-preview-video" preload="metadata"></video>
+                    <!-- Video Container with 9:16 aspect ratio -->
+                    <div class="firstshorts-preview-video-container">
+                        <video class="firstshorts-preview-video" id="firstshorts-preview-video" preload="metadata"></video>
+                    
+                        <!-- Overlay buttons will go here -->
+                        <div class="firstshorts-preview-overlay" id="firstshorts-preview-overlay">
+                            <!-- Buy buttons (top) -->
+                            <div class="firstshorts-preview-cta-row" id="firstshorts-preview-cta-row" style="display: none;">
+                                <button class="firstshorts-preview-btn firstshorts-preview-btn-cta" type="button">🛍 Buy Now</button>
+                            </div>
                         
-                            <!-- Overlay buttons will go here -->
-                            <div class="firstshorts-preview-overlay" id="firstshorts-preview-overlay">
-                                <!-- Buy buttons (top) -->
-                                <div class="firstshorts-preview-cta-row" id="firstshorts-preview-cta-row" style="display: none;">
-                                    <button class="firstshorts-preview-btn firstshorts-preview-btn-cta" type="button">🛍 Buy Now</button>
-                                    <button class="firstshorts-preview-btn firstshorts-preview-btn-cta firstshorts-preview-btn-cta-secondary" type="button">🛒 Add to Cart</button>
-                                </div>
-                            
-                                <!-- Action buttons (side) -->
-                                <div class="firstshorts-preview-actions" id="firstshorts-preview-actions">
-                                    <!-- Dynamically populated by JS -->
-                                </div>
+                            <!-- Action buttons (side) -->
+                            <div class="firstshorts-preview-actions" id="firstshorts-preview-actions">
+                                <!-- Dynamically populated by JS -->
                             </div>
                         </div>
-
-                        <button type="button" class="firstshorts-preview-nav firstshorts-preview-nav-next" id="firstshorts-preview-nav-next" aria-label="Next">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -743,7 +728,6 @@ function firstshorts_save_video_meta($post_id)
     }
 
     // Step 5: Save display options (checkboxes for buttons)
-    // Array of all checkbox field names
     $display_fields = array(
         'firstshorts_show_view_count',
         'firstshorts_show_likes',
@@ -752,85 +736,57 @@ function firstshorts_save_video_meta($post_id)
         'firstshorts_show_buy_button'
     );
 
-    // Loop through each checkbox field
     foreach ($display_fields as $field) {
-        // Add underscore prefix for meta key (WordPress convention)
         $meta_key = '_' . $field;
-
-        // If checkbox is checked, save 1; if unchecked, save 0
         $value = isset($_POST[$field]) ? 1 : 0;
-
-        // Save to database
         update_post_meta($post_id, $meta_key, $value);
     }
 
     // Step 6: Save video details
-
-    // Save Video URL (with security: sanitize and escape)
     if (isset($_POST['firstshorts_video_url'])) {
-        update_post_meta(
-            $post_id,
-            '_firstshorts_video_url',
-            esc_url_raw($_POST['firstshorts_video_url']) // Validates and escapes URL
-        );
+        update_post_meta($post_id, '_firstshorts_video_url', esc_url_raw($_POST['firstshorts_video_url']));
     }
 
-    // Save Video Duration (sanitize number input)
     if (isset($_POST['firstshorts_video_duration'])) {
-        update_post_meta(
-            $post_id,
-            '_firstshorts_video_duration',
-            sanitize_text_field($_POST['firstshorts_video_duration']) // Convert to safe text
-        );
+        update_post_meta($post_id, '_firstshorts_video_duration', sanitize_text_field($_POST['firstshorts_video_duration']));
     }
 
     if (isset($_POST['firstshorts_cta_text'])) {
-        update_post_meta(
-            $post_id,
-            '_firstshorts_cta_text',
-            sanitize_text_field($_POST['firstshorts_cta_text'])
-        );
+        update_post_meta($post_id, '_firstshorts_cta_text', sanitize_text_field($_POST['firstshorts_cta_text']));
     }
 
     if (isset($_POST['firstshorts_cta_link'])) {
-        update_post_meta(
-            $post_id,
-            '_firstshorts_cta_link',
-            esc_url_raw($_POST['firstshorts_cta_link'])
-        );
+        update_post_meta($post_id, '_firstshorts_cta_link', esc_url_raw($_POST['firstshorts_cta_link']));
     }
 
     if (isset($_POST['firstshorts_cta_style'])) {
-        update_post_meta(
-            $post_id,
-            '_firstshorts_cta_style',
-            sanitize_text_field($_POST['firstshorts_cta_style'])
-        );
+        update_post_meta($post_id, '_firstshorts_cta_style', sanitize_text_field($_POST['firstshorts_cta_style']));
     }
 
     if (isset($_POST['firstshorts_video_max_width'])) {
-        update_post_meta($post_id, '_firstshorts_video_max_width', absint($_POST['firstshorts_video_max_width']));
+        $max_width = absint($_POST['firstshorts_video_max_width']);
+        $max_width = max(150, min(1200, $max_width));
+        update_post_meta($post_id, '_firstshorts_video_max_width', $max_width);
     }
 
     if (isset($_POST['firstshorts_video_max_height'])) {
-        update_post_meta($post_id, '_firstshorts_video_max_height', absint($_POST['firstshorts_video_max_height']));
+        $max_height = absint($_POST['firstshorts_video_max_height']);
+        $max_height = max(200, min(1500, $max_height));
+        update_post_meta($post_id, '_firstshorts_video_max_height', $max_height);
     }
 
     if (isset($_POST['firstshorts_slider_orientation'])) {
         update_post_meta($post_id, '_firstshorts_slider_orientation', sanitize_text_field($_POST['firstshorts_slider_orientation']));
     }
 
-    // Scroll Snap is now enabled by default and hidden from UI
+    // Scroll Snap is enabled by default
     update_post_meta($post_id, '_firstshorts_scroll_snap', 1);
 
     if (isset($_POST['firstshorts_product_description'])) {
         update_post_meta($post_id, '_firstshorts_product_description', sanitize_textarea_field($_POST['firstshorts_product_description']));
     }
 
-
-
-    // Bulk create videos from media library selection
-    // Bulk creation now handled by AJAX, so only store bulk_video_ids here
+    // Bulk creation data
     if (isset($_POST['firstshorts_bulk_video_ids'])) {
         $raw_ids = sanitize_text_field(wp_unslash($_POST['firstshorts_bulk_video_ids']));
         $ids = array_filter(array_map('absint', explode(',', $raw_ids)));
@@ -842,57 +798,10 @@ function firstshorts_save_video_meta($post_id)
     }
 
     if (isset($_POST['firstshorts_bulk_video_data'])) {
-        update_post_meta(
-            $post_id,
-            '_firstshorts_bulk_video_data',
-            wp_unslash($_POST['firstshorts_bulk_video_data']) // JSON string
-        );
+        update_post_meta($post_id, '_firstshorts_bulk_video_data', wp_unslash($_POST['firstshorts_bulk_video_data']));
     }
 
     // Mark as saved once to enable shortcodes
-    update_post_meta($post_id, '_firstshorts_saved_once', '1');
-
-    if (isset($_POST['firstshorts_video_max_width'])) {
-        $max_width = absint($_POST['firstshorts_video_max_width']);
-        if ($max_width < 150) {
-            $max_width = 150;
-        } elseif ($max_width > 1200) {
-            $max_width = 1200;
-        }
-        update_post_meta($post_id, '_firstshorts_video_max_width', $max_width);
-    }
-
-    if (isset($_POST['firstshorts_video_max_height'])) {
-        $max_height = absint($_POST['firstshorts_video_max_height']);
-        if ($max_height < 200) {
-            $max_height = 200;
-        } elseif ($max_height > 1500) {
-            $max_height = 1500;
-        }
-        update_post_meta(
-            $post_id,
-            '_firstshorts_video_max_height',
-            $max_height
-        );
-    }
-
-    if (isset($_POST['firstshorts_slider_orientation'])) {
-        update_post_meta(
-            $post_id,
-            '_firstshorts_slider_orientation',
-            sanitize_text_field($_POST['firstshorts_slider_orientation'])
-        );
-    }
-
-    update_post_meta(
-        $post_id,
-        '_firstshorts_scroll_snap',
-        isset($_POST['firstshorts_scroll_snap']) ? 1 : 0
-    );
-
-    // Removed display_type save logic (dead code)
-
-    // Mark that settings have been saved at least once
     update_post_meta($post_id, '_firstshorts_saved_once', 1);
 }
 add_action('save_post_firstshorts_video', 'firstshorts_save_video_meta');
@@ -1032,42 +941,6 @@ function firstshorts_get_display_options($post_id)
         'max_height' => $max_height,
         'orientation' => $orientation,
         'scroll_snap' => $scroll_snap,
-    );
-}
-
-/**
- * Helper Function: Get Video Details
- * 
- * Used in frontend shortcode/template to retrieve video information
- * 
- * Parameters:
- * @param int $post_id - Video post ID
- * 
- * Returns:
- * @return array - Associative array with video data
- *   Example: [
- *     'url' => 'https://yoursite.com/videos/demo.mp4',
- *     'source' => 'self-hosted',
- *     'duration' => '300'
- *   ]
- * 
- * Pseudo Code:
- * 1. Query database for video URL
- * 2. Query database for video source type
- * 3. Query database for video duration
- * 4. Return all values in array format
- * 
- * Usage Example:
- * $details = firstshorts_get_video_details(123);
- * echo "<video src='" . $details['url'] . "'></video>";
- * echo "Duration: " . $details['duration'] . " seconds";
- */
-function firstshorts_get_video_details($post_id)
-{
-    // Retrieve video metadata from database
-    return array(
-        'url' => get_post_meta($post_id, '_firstshorts_video_url', true),        // Full URL to video file
-        'duration' => get_post_meta($post_id, '_firstshorts_video_duration', true), // Duration in seconds
     );
 }
 

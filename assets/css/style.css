@@ -381,8 +381,7 @@ body.firstshorts-admin #wpbody-content {
 }
 
 .firstshorts-panel-preview .firstshorts-panel-body {
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 .firstshorts-panel-library .firstshorts-meta-field label,
@@ -798,8 +797,13 @@ body.firstshorts-admin .postbox .handle-order-lower {
     border-radius: 0 0 12px 12px;
     transition: all 0.4s ease;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
     position: relative;
+}
+
+.firstshorts-preview-outer-wrapper {
+    position: relative;
+    border-radius: 12px;
 }
 
 .firstshorts-preview-body {
@@ -807,7 +811,7 @@ body.firstshorts-admin .postbox .handle-order-lower {
     align-items: center;
     justify-content: center;
     width: 100%;
-    min-height: 540px;
+    min-height: 400px;
     background: transparent !important;
     padding: 40px 0;
 }
@@ -821,30 +825,24 @@ body.firstshorts-admin .postbox .handle-order-lower {
 /* Navigation Arrows */
 .firstshorts-preview-nav {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
     pointer-events: none;
-    /* Let clicks pass through to video unless on buttons */
-    z-index: 50;
-    display: none;
+    z-index: 9999;
+    display: block;
 }
 
 .firstshorts-nav-btn {
     position: absolute;
-    background: rgba(255, 255, 255, 1) !important;
-    backdrop-filter: blur(8px);
-    border: 1px solid #cbd5e1;
-    width: 44px;
-    height: 44px;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex !important;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     color: #1e293b;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 0;
     margin: 0;
@@ -853,49 +851,26 @@ body.firstshorts-admin .postbox .handle-order-lower {
 }
 
 .firstshorts-nav-btn:hover {
-    background: #ffffff;
-    transform: translateY(-50%) scale(1.1);
-    color: #000;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    border-color: #cbd5e1;
+    background: #ffffff !important;
+    color: #6366f1 !important;
+    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.2);
+    border-color: #6366f1;
 }
 
 .firstshorts-nav-btn svg {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
 }
 
-/* Horizontal Positioning */
-.firstshorts-nav-btn.prev {
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
+/* Hover States & Active (scale effect only) */
+.firstshorts-nav-btn.prev:hover,
+.firstshorts-nav-btn.next:hover {
+    transform: scale(1.12);
 }
 
-.firstshorts-nav-btn.next {
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-/* Vertical Positioning */
-.is-vertical .firstshorts-nav-btn.prev {
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.is-vertical .firstshorts-nav-btn.next {
-    bottom: 20px;
-    top: auto;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-/* Specific Hover Fix for Vertical Mode */
-.is-vertical .firstshorts-nav-btn.prev:hover,
-.is-vertical .firstshorts-nav-btn.next:hover {
-    transform: translateX(-50%) scale(1.1);
+.firstshorts-nav-btn.prev:active,
+.firstshorts-nav-btn.next:active {
+    transform: scale(0.94);
 }
 
 .firstshorts-preview-nav svg {
@@ -908,23 +883,13 @@ body.firstshorts-admin .postbox .handle-order-lower {
     right: 0 !important;
 }
 
-#firstshorts-preview-nav-prev:active,
-#firstshorts-preview-nav-next:active {
-    transform: translateY(-50%) scale(0.9);
-}
-
-.is-vertical #firstshorts-preview-nav-prev:active,
-.is-vertical #firstshorts-preview-nav-next:active {
-    transform: translateX(-50%) scale(0.9) !important;
-}
-
 
 
 .firstshorts-preview-video-container {
     position: relative;
-    height: 500px;
-    /* Fixed height for mini-preview */
-    aspect-ratio: 9 / 16;
+    height: 100%;
+    width: 100%;
+    /* Aspect ratio now managed by parent dimensions or defaults */
     border-radius: 6px;
     overflow: clip;
     /* clip prevents container from scrolling but allows inner slider to scroll */
@@ -1509,6 +1474,8 @@ body.firstshorts-admin .postbox .handle-order-lower {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .firstshorts-bulk-stat {
@@ -1608,11 +1575,12 @@ body.firstshorts-admin .postbox .handle-order-lower {
     border-radius: 12px;
     background: #ffffff;
     flex: 1;
-    min-height: 100px;
-    max-height: 450px;
-    /* Limit height to show ~3-4 items and enable scroll */
+    min-height: 300px;
+    /* Removed max-height to prevent "shrinking" look in large panels */
     overflow-y: auto;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Slim scrollbar for the library list */
@@ -2123,14 +2091,6 @@ body.firstshorts-admin .postbox .handle-order-lower {
 .firstshorts-panel-preview.is-mobile-view .firstshorts-nav-btn svg {
     width: 18px;
     height: 18px;
-}
-
-.firstshorts-panel-preview.is-mobile-view #firstshorts-preview-nav-prev {
-    left: 8px;
-}
-
-.firstshorts-panel-preview.is-mobile-view #firstshorts-preview-nav-next {
-    right: 8px;
 }
 
 

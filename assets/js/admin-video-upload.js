@@ -339,15 +339,60 @@ jQuery(document).ready(function ($) {
         // Final fallback to parent of container if needed
         if (!previewContentBox.length) previewContentBox = $('.firstshorts-preview-video-container').parent();
 
-        var container = previewContentBox.find('.firstshorts-preview-video-container');
-        var previewEmpty = previewContentBox.find('.firstshorts-preview-empty');
+        var container = previewContentBox.find('.firstshorts-preview-video-container').first();
+        var previewEmpty = previewContentBox.find('.firstshorts-preview-empty').first();
+        var outerWrapper = container.parent('.firstshorts-preview-outer-wrapper');
+
+        var items = [];
+        var manualUrl = $('#firstshorts_video_url').val() ? $('#firstshorts_video_url').val().trim() : '';
+        if (manualUrl) {
+            items.push({
+                url: manualUrl,
+                description: '',
+                ctaStyle: $('#firstshorts_cta_style').val() || 'primary'
+            });
+        } else {
+            bulkItems.forEach(function (item) {
+                if (item.selected && item.url) {
+                    items.push({
+                        url: item.url,
+                        description: item.description || '',
+                        ctaStyle: $('#firstshorts_cta_style').val() || 'primary'
+                    });
+                }
+            });
+        }
+
+        if (items.length === 0) {
+            if (outerWrapper.length) outerWrapper.hide();
+            container.hide();
+            previewContentBox.css('padding', '20px');
+
+            // Remove scrollbars when empty
+            previewContentBox.closest('.firstshorts-panel-body').css('overflow', 'hidden');
+
+            if (previewEmpty.length) previewEmpty.show();
+            return;
+        }
+
+        if (previewEmpty.length) previewEmpty.hide();
+        if (outerWrapper.length) outerWrapper.show();
+        container.show();
+        $('#firstshorts-preview-player').show();
 
         // Apply Card Width & Height
-        var manualWidth = $('#firstshorts_video_max_width').val() || 500;
-        var manualHeight = $('#firstshorts_video_max_height').val() || 630;
+        var manualWidth = $('#firstshorts_video_max_width').val() || 360;
+        var manualHeight = $('#firstshorts_video_max_height').val() || 640;
         var isFitMode = $('.firstshorts-fit-btn').hasClass('is-active');
 
-        // Add dimension badge to container if it doesn't exist
+        // Ensure outer wrapper exists for scaling
+        if (!outerWrapper.length && container.length) {
+            container.wrap('<div class="firstshorts-preview-outer-wrapper"></div>');
+            outerWrapper = container.parent();
+            outerWrapper.show();
+        }
+
+        // Add dimension badge
         var badge = container.find('.firstshorts-dimension-badge');
         if (!badge.length) {
             badge = $('<div class="firstshorts-dimension-badge"></div>');
@@ -355,8 +400,8 @@ jQuery(document).ready(function ($) {
         }
         badge.text(manualWidth + ' × ' + manualHeight + ' px');
 
-        var availW = previewContentBox.width() - 60;
-        var availH = previewContentBox.height() - 60;
+        var availW = previewContentBox.width() - 80;
+        var availH = previewContentBox.height() - 80;
         var scale = isFitMode ? Math.min(availW / manualWidth, availH / manualHeight, 1) : 1;
 
         var panelBody = previewContentBox.closest('.firstshorts-panel-body');
@@ -367,60 +412,37 @@ jQuery(document).ready(function ($) {
         });
 
         previewContentBox.css({
+            'position': 'relative',
             'max-width': '100%',
             'height': isFitMode ? '100%' : 'auto',
             'display': 'flex',
             'align-items': 'center',
-            'justify-content': 'center'
+            'justify-content': 'center',
+            'padding': '40px',
+            'overflow': 'visible'
         });
 
-        if (container.length) {
-            container.css({
+        if (outerWrapper.length) {
+            outerWrapper.css({
                 'width': manualWidth + 'px',
                 'height': manualHeight + 'px',
                 'transform': 'scale(' + scale + ')',
                 'transform-origin': 'center center',
                 'flex-shrink': '0',
-                'margin': isFitMode ? '0' : '60px auto'
+                'margin': isFitMode ? '0' : '60px auto',
+                'position': 'relative',
+                'display': 'block'
+            });
+            container.css({
+                'width': '100%',
+                'height': '100%',
+                'transform': 'none',
+                'margin': '0'
             });
         }
 
-        // Fallback if structure is different
-        if (!container.length) container = $('.firstshorts-preview-video-container');
-        if (!previewEmpty.length) previewEmpty = $('.firstshorts-preview-empty');
-
-        if (!container.length) return;
-
-        var items = [];
-        var manualUrl = $('#firstshorts_video_url').val() ? $('#firstshorts_video_url').val().trim() : '';
-        if (manualUrl) {
-            items.push({
-                url: manualUrl,
-                description: '', // Global preview doesn't have per-video desc for manual URL
-                ctaStyle: $('#firstshorts_cta_style').val() || 'primary'
-            });
-        } else {
-            bulkItems.forEach(function (item) {
-                if (item.selected && item.url) {
-                    items.push({
-                        url: item.url,
-                        description: item.description || '',
-                        ctaStyle: $('#firstshorts_cta_style').val() || 'primary' // Fallback to global style
-                    });
-                }
-            });
-        }
-
-        if (items.length === 0) {
-            container.hide();
-            if (previewEmpty.length) previewEmpty.show();
-            return;
-        }
-
-        if (previewEmpty.length) previewEmpty.hide();
-        container.show();
-        // Also show the parent wrapper if it was hidden by PHP
-        $('#firstshorts-preview-player').show();
+        // UI Scaling based on card dimensions (baseline 360x640)
+        var uiScale = Math.max(0.7, Math.min(1.3, Math.min(manualWidth / 360, manualHeight / 640)));
 
         var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
         $('.firstshorts-panel-preview').toggleClass('is-vertical', orientation === 'vertical');
@@ -461,6 +483,9 @@ jQuery(document).ready(function ($) {
             height: '100%'
         }));
 
+        // debouncedSync must be declared BEFORE the forEach loop so canplay handlers can use it
+        var debouncedSync = debounce(syncPreviewVideos, 150);
+
         sliderWrapper.empty();
 
         var showBuy = $('#firstshorts_show_buy_button').is(':checked');
@@ -477,11 +502,30 @@ jQuery(document).ready(function ($) {
                 overflow: 'hidden',
                 flexShrink: 0
             });
-            var video = $('<video playsinline loop muted controls preload="auto" style="width:100%; height:100%; object-fit:contain; background:#000;"></video>');
+
+            // Video: muted for autoplay compatibility, controls for TikTok-style seeking
+            var video = $('<video playsinline loop muted controls preload="auto" style="width:100%; height:100%; object-fit:contain; background:#000; cursor:pointer;"></video>');
             video.append($('<source>').attr('src', item.url).attr('type', 'video/mp4'));
-            video.on('click', function () {
-                if (this.paused) this.play(); else this.pause();
+
+            // Auto-play when video data is loaded
+            video.on('loadeddata canplay', function () {
+                debouncedSync();
             });
+
+            // Click on video area = pause/play (TikTok-style)
+            // We attach to the slide so clicks outside the controls bar also work
+            slide.on('click', function (e) {
+                // Don't intercept clicks on buttons inside the slide (CTA, share)
+                if ($(e.target).closest('button, a, .firstshorts-slide-meta').length) return;
+                var v = slide.find('video')[0];
+                if (!v) return;
+                if (v.paused) {
+                    v.play().catch(function () { });
+                } else {
+                    v.pause();
+                }
+            });
+
             slide.append(video);
 
             var metaContainer = $('<div class="firstshorts-slide-meta"></div>');
@@ -493,8 +537,8 @@ jQuery(document).ready(function ($) {
                 descDiv.text(item.description);
                 descDiv.css({
                     color: '#fff',
-                    fontSize: '13px',
-                    marginBottom: '10px',
+                    fontSize: (13 * uiScale) + 'px',
+                    marginBottom: (10 * uiScale) + 'px',
                     padding: '0 5px',
                     textShadow: '0 1px 2px rgba(0,0,0,0.8)',
                     display: '-webkit-box',
@@ -508,6 +552,11 @@ jQuery(document).ready(function ($) {
 
             if (showBuy) {
                 var ctaRow = $('<div class="firstshorts-video-cta-row"></div>');
+                ctaRow.css({
+                    'transform': 'scale(' + uiScale + ')',
+                    'transform-origin': 'bottom center',
+                    'margin-bottom': (8 * uiScale) + 'px'
+                });
                 var ctaClass = item.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : '';
 
                 var buyBtn = $('<button type="button" class="firstshorts-btn firstshorts-btn-cta ' + ctaClass + '"></button>');
@@ -532,32 +581,66 @@ jQuery(document).ready(function ($) {
 
             if (showShare) {
                 var actionRow = $('<div class="firstshorts-preview-actions"></div>');
-                actionRow.css('pointer-events', 'auto');
+                actionRow.css({
+                    'pointer-events': 'auto',
+                    'transform': 'translateY(-50%) scale(' + uiScale + ')',
+                    'transform-origin': 'right center',
+                    'right': (12 * uiScale) + 'px'
+                });
 
-                var shareBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay"><span class="firstshorts-btn-symbol">' + ICONS.SHARE + '</span></button>');
+                var shareBtn = $('<button type="button" class="firstshorts-preview-btn firstshorts-preview-btn-overlay firstshorts-preview-share-btn"><span class="firstshorts-btn-symbol">' + ICONS.SHARE + '</span></button>');
+                shareBtn.attr('data-video-url', item.videoUrl);
                 actionRow.append(shareBtn);
                 slide.append(actionRow);
             }
 
             sliderWrapper.append(slide);
+
+            // Auto-play first slide when data is available
+            if (sliderWrapper.find('.firstshorts-preview-slide').length === 1) {
+                var videoEl = video[0];
+                var tryPlay = function () {
+                    videoEl.muted = true;
+                    videoEl.play().catch(function () { });
+                };
+                if (videoEl.readyState >= 3) {
+                    // Already ready — play immediately
+                    tryPlay();
+                } else {
+                    // Wait for canplay event
+                    video.one('canplay', tryPlay);
+                    // Fallback: try after 800ms in case canplay doesn't fire
+                    setTimeout(function () {
+                        if (videoEl.paused) { tryPlay(); }
+                    }, 800);
+                }
+            }
+
             video[0].load();
         });
-        // --- PREVIEW NAVIGATION ARROWS ---
-        // Move back to container to scale with the video in "Fit" mode
-        var navWrapper = container.find('.firstshorts-preview-nav');
 
-        if (!navWrapper.length) {
-            navWrapper = $(
-                '<div class="firstshorts-preview-nav">' +
-                '<button type="button" id="firstshorts-preview-nav-prev" class="firstshorts-nav-btn prev" title="Previous Video"></button>' +
-                '<button type="button" id="firstshorts-preview-nav-next" class="firstshorts-nav-btn next" title="Next Video"></button>' +
-                '</div>'
-            );
-            container.append(navWrapper);
-        }
+        // NOTE: debouncedSync was already declared above the forEach loop
+
+        // --- PREVIEW NAVIGATION ARROWS ---
+        // IMPORTANT: Buttons must NOT be inside outerWrapper (which has transform:scale)
+        // Instead we measure outerWrapper visually and place buttons as siblings in previewContentBox
+
+        // Clean up old buttons from any previous parent
+        outerWrapper.find('.firstshorts-preview-nav').remove();
+        previewContentBox.find('.firstshorts-preview-nav').remove();
+
+        var navWrapper = $(
+            '<div class="firstshorts-preview-nav">' +
+            '<button type="button" id="firstshorts-preview-nav-prev" class="firstshorts-nav-btn prev" title="Previous Video"></button>' +
+            '<button type="button" id="firstshorts-preview-nav-next" class="firstshorts-nav-btn next" title="Next Video"></button>' +
+            '</div>'
+        );
+        previewContentBox.append(navWrapper);
 
         navWrapper.css({
-            'display': 'block',
+            'position': 'absolute',
+            'top': '0', 'left': '0',
+            'width': '100%', 'height': '100%',
             'pointer-events': 'none',
             'z-index': '9999'
         });
@@ -573,19 +656,88 @@ jQuery(document).ready(function ($) {
             nextBtn.html(ICONS.NEXT_H);
         }
 
-        navWrapper.find('.firstshorts-nav-btn').css('pointer-events', 'auto');
-
-        // Sync videos on first render
-        setTimeout(syncPreviewVideos, 300);
-
-        // Add scroll listener for manual swiping/scrolling
-        sliderWrapper.off('scroll.firstshorts').on('scroll.firstshorts', function () {
-            // Immediately pause all videos to avoid sound overlap during fast scrolling
-            $(this).find('video').each(function () { this.pause(); });
-            debouncedSync();
+        navWrapper.find('.firstshorts-nav-btn').css({
+            'pointer-events': 'auto',
+            'position': 'absolute',
+            'transform': 'none'
         });
 
-        var debouncedSync = debounce(syncPreviewVideos, 200);
+        // After browser renders the scaled outerWrapper, measure its visual rect
+        // and place buttons precisely outside its edges at 1:1 size
+        // Use jQuery offset() which accounts for scroll position correctly
+        function positionNavButtons() {
+            if (!outerWrapper.length || !previewContentBox.length) return;
+
+            // Use getBoundingClientRect for precise visual positions (accounts for CSS transforms/scale)
+            var rect = outerWrapper[0].getBoundingClientRect();
+            var boxRect = previewContentBox[0].getBoundingClientRect();
+
+            // Current scroll of the container
+            var sTop = previewContentBox.scrollTop();
+            var sLeft = previewContentBox.scrollLeft();
+
+            var btnSize = 40;
+            var gap = 30; // Increased gap to prevent overlap
+
+            // Get visual dimensions and position relative to the previewContentBox
+            var visW = rect.width;
+            var visH = rect.height;
+
+            // Visual left/top relative to the viewport-relative boxRect, then adjusted for container scroll
+            var relLeft = (rect.left - boxRect.left) + sLeft;
+            var relTop = (rect.top - boxRect.top) + sTop;
+
+            var relRight = relLeft + visW;
+            var relBottom = relTop + visH;
+            var relCX = relLeft + visW / 2;
+            var relCY = relTop + visH / 2;
+
+            if (orientation === 'vertical') {
+                prevBtn.css({
+                    'left': (relCX - btnSize / 2) + 'px',
+                    'top': (relTop - btnSize - gap) + 'px',
+                    'right': 'auto',
+                    'bottom': 'auto',
+                    'display': 'block'
+                });
+                nextBtn.css({
+                    'left': (relCX - btnSize / 2) + 'px',
+                    'top': (relBottom + gap) + 'px',
+                    'right': 'auto',
+                    'bottom': 'auto',
+                    'display': 'block'
+                });
+            } else {
+                prevBtn.css({
+                    'left': (relLeft - btnSize - gap) + 'px',
+                    'top': (relCY - btnSize / 2) + 'px',
+                    'right': 'auto',
+                    'bottom': 'auto',
+                    'display': 'block'
+                });
+                nextBtn.css({
+                    'left': (relRight + gap) + 'px',
+                    'top': (relCY - btnSize / 2) + 'px',
+                    'right': 'auto',
+                    'bottom': 'auto',
+                    'display': 'block'
+                });
+            }
+        }
+
+        // Run after layout paint — needs slight delay so outerWrapper dimensions are final
+        setTimeout(positionNavButtons, 50);
+        $(window).off('resize.fsnav').on('resize.fsnav', positionNavButtons);
+
+        // Sync videos (for slides beyond the first)
+        setTimeout(syncPreviewVideos, 500);
+        setTimeout(syncPreviewVideos, 1200);
+
+        // Sync on manual scroll
+        sliderWrapper.off('scroll.firstshorts').on('scroll.firstshorts', debounce(function () {
+            sliderWrapper.find('video').each(function () { this.pause(); });
+            syncPreviewVideos();
+        }, 200));
     }
 
     /**
@@ -596,25 +748,28 @@ jQuery(document).ready(function ($) {
         var slider = $('.firstshorts-preview-slider');
         if (!slider.length) return;
 
-        var sliderRect = slider[0].getBoundingClientRect();
+        var sliderEl = slider[0];
         var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
-        var centerX = sliderRect.left + sliderRect.width / 2;
-        var centerY = sliderRect.top + sliderRect.height / 2;
 
+        // Find the slide most centered in the slider viewport
+        var slides = slider.find('.firstshorts-preview-slide');
         var closestSlide = null;
         var minDistance = Infinity;
 
-        var slides = slider.find('.firstshorts-preview-slide');
         slides.each(function () {
-            var rect = this.getBoundingClientRect();
-            var distance = 0;
-
+            var distance;
             if (orientation === 'vertical') {
-                distance = Math.abs(centerY - (rect.top + rect.height / 2));
+                // Distance of slide's center from slider's scroll center
+                distance = Math.abs(
+                    (this.offsetTop + this.offsetHeight / 2) -
+                    (sliderEl.scrollTop + sliderEl.clientHeight / 2)
+                );
             } else {
-                distance = Math.abs(centerX - (rect.left + rect.width / 2));
+                distance = Math.abs(
+                    (this.offsetLeft + this.offsetWidth / 2) -
+                    (sliderEl.scrollLeft + sliderEl.clientWidth / 2)
+                );
             }
-
             if (distance < minDistance) {
                 minDistance = distance;
                 closestSlide = $(this);
@@ -626,18 +781,24 @@ jQuery(document).ready(function ($) {
             var video = slide.find('video')[0];
             if (!video) return;
 
-            var isClosest = (closestSlide && slide[0] === closestSlide[0]);
+            var isActive = (closestSlide && slide[0] === closestSlide[0]);
 
-            if (isClosest) {
-                // Unmute and play the active video
-                video.muted = false;
-                video.volume = 1.0;
-                var promise = video.play();
-                if (promise !== undefined) {
-                    promise.catch(function (error) {
-                        // If blocked, try muted autoplay
-                        video.muted = true;
-                        video.play().catch(function () { });
+            if (isActive) {
+                // Always start muted (browser policy) — user can unmute via native controls
+                video.muted = true;
+                // Only attempt play if video has enough data
+                if (video.readyState >= 2) {
+                    var promise = video.play();
+                    if (promise !== undefined) {
+                        promise.catch(function () {
+                            // Silently fail — user interaction required
+                        });
+                    }
+                } else {
+                    // Video not ready yet — wait for it
+                    $(video).one('canplay', function () {
+                        this.muted = true;
+                        this.play().catch(function () { });
                     });
                 }
             } else {
@@ -803,20 +964,15 @@ jQuery(document).ready(function ($) {
             if (target.length) {
                 target.empty();
 
-                // CRITICAL: Always ensure the video container exists so updatePreview can find it
+                // Always build a clean preview structure — updatePreview() fills it dynamically.
+                // The PHP-rendered preview content (previewContent) is intentionally discarded here
+                // to avoid nesting duplicate containers inside the fresh playerStructure.
                 var playerStructure = $('<div id="firstshorts-preview-player" class="firstshorts-preview-video-container" style="display:none;"></div>');
                 var emptyMsg = $('<p class="firstshorts-preview-empty" id="firstshorts-preview-empty">Select a video to see a preview.</p>');
 
                 var bodyWrapper = $('<div class="firstshorts-preview-body"></div>');
                 bodyWrapper.append(playerStructure, emptyMsg);
                 target.append(bodyWrapper);
-
-                // If we detached actual content (like from a previous session load), put it back
-                if (previewContent.length > 0 && !previewContent.hasClass('firstshorts-preview-empty')) {
-                    var container = target.find('.firstshorts-preview-video-container');
-                    container.append(previewContent).show();
-                    target.find('.firstshorts-preview-empty').hide();
-                }
             }
 
             // Navigation arrows are now managed dynamically in updatePreview() to ensure they always load.
@@ -909,6 +1065,20 @@ jQuery(document).ready(function ($) {
             // Trigger WordPress native publish/update button
             var publishBtn = $('#publish');
             var saveBtn = $('#save-post');
+
+            // Disable 'Leave site' prompt before saving
+            window.onbeforeunload = null;
+            $(window).off('beforeunload');
+            if (window.wp && window.wp.data && window.wp.data.dispatch) {
+                try {
+                    // Set as not dirty to prevent Gutenberg prompt
+                    window.wp.data.dispatch('core/editor').editPost({ status: 'publish' });
+                    // Also clear any notice about unsaved changes
+                    if (window.wp.data.select('core/editor').isEditedPostDirty()) {
+                        // We can't easily clear the dirty flag but killing onbeforeunload usually works.
+                    }
+                } catch (e) { }
+            }
 
             if (publishBtn.length) {
                 publishBtn.click();
@@ -1031,16 +1201,18 @@ jQuery(document).ready(function ($) {
 
     function navigatePreview(direction) {
         var slider = $('.firstshorts-preview-slider');
-        if (!slider.length || slider.is(':animated')) return;
+        if (!slider.length) return;
+        // If jQuery is already animating, cancel that animation first
+        slider.stop(true, false);
 
         var orientation = $('#firstshorts_slider_orientation').val() || 'horizontal';
         var amount = orientation === 'vertical' ? slider[0].clientHeight : slider[0].clientWidth;
         if (amount <= 0) return;
 
-        // Pause all videos immediately
+        // Pause all videos immediately to avoid audio bleed
         slider.find('video').each(function () { this.pause(); });
 
-        // Temporarily disable scroll-snap so jQuery animate() isn't cancelled by CSS
+        // Disable scroll-snap so jQuery animate() isn't interrupted by native scroll snap
         slider.css('scroll-snap-type', 'none');
 
         var animProp = {};
@@ -1050,14 +1222,15 @@ jQuery(document).ready(function ($) {
             animProp.scrollLeft = slider.scrollLeft() + (direction * amount);
         }
 
-        slider.animate(animProp, 400, 'swing', function () {
-            // Re-enable scroll snap after animation completes
+        slider.animate(animProp, 380, 'swing', function () {
+            // Re-enable scroll snap
             var snapType = (orientation === 'vertical' ? 'y' : 'x') + ' mandatory';
             slider.css({
                 'scroll-snap-type': snapType,
                 '-webkit-scroll-snap-type': snapType
             });
-            setTimeout(syncPreviewVideos, 50);
+            // Sync after a short delay to let scroll settle
+            setTimeout(syncPreviewVideos, 60);
         });
     }
 
@@ -1087,6 +1260,21 @@ jQuery(document).ready(function ($) {
     initFirstshortsAdminLayout();
     renderBulkList();
     document.body.classList.remove('firstshorts-admin-loading');
+
+    // Preview Share Button click
+    $(document).on('click', '.firstshorts-preview-share-btn', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var button = $(this);
+        var videoUrl = button.attr('data-video-url') || '';
+        if (!videoUrl) return;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(videoUrl).then(function () {
+                showCopied(button);
+            });
+        }
+    });
 
     // Copy shortcode button
     $(document).on('click', '.firstshorts-copy-btn', function (e) {

@@ -17,7 +17,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
  * wp_delete_post() handles the cleanup of post_meta automatically.
  */
 $firstshorts_posts = get_posts(array(
-    'post_type' => 'firstshorts',
+    'post_type' => 'firstshorts_video',
     'numberposts' => -1,
     'post_status' => 'any',
     'fields' => 'ids' // Only get IDs for better performance

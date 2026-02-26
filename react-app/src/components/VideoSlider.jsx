@@ -13,6 +13,7 @@ const VideoSliderCard = ({ video, isActive }) => {
   const [showPlayPause, setShowPlayPause] = useState(null);
   const [muteStatusTimer, setMuteStatusTimer] = useState(null);
   const [showMuteIndicator, setShowMuteIndicator] = useState(false);
+  const [toast, setToast] = useState('');
 
   useEffect(() => {
     const vid = videoRef.current;
@@ -98,6 +99,12 @@ const VideoSliderCard = ({ video, isActive }) => {
     setLastTap(now);
   };
 
+  const showToast = (message) => {
+    setToast(message);
+    window.clearTimeout(showToast.timeoutId);
+    showToast.timeoutId = window.setTimeout(() => setToast(''), 2200);
+  };
+
   const toggleMute = (e) => {
     if (e) e.stopPropagation();
     setIsMuted(!isMuted);
@@ -126,6 +133,7 @@ const VideoSliderCard = ({ video, isActive }) => {
       });
     } else if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(video.permalink);
+      showToast('Link copied');
     }
   };
 
@@ -136,19 +144,16 @@ const VideoSliderCard = ({ video, isActive }) => {
     }
     if (displayOptions.ctaLink) {
       window.location.href = displayOptions.ctaLink;
-    } else {
-      console.log('No CTA Link provided');
     }
-  };
-
-  const handleAddToCart = () => {
-    console.log('Add to cart clicked');
   };
 
   const maxWidth = Number(displayOptions.maxWidth) || 360;
   const maxHeight = Number(displayOptions.maxHeight) || 640;
   const clampedMaxWidth = Math.min(1200, Math.max(150, maxWidth));
   const clampedMaxHeight = Math.min(1500, Math.max(200, maxHeight));
+
+  // Dynamic scale factor based on dimensions (baseline: 360x640)
+  const scaleFactor = Math.max(0.7, Math.min(1.3, Math.min(clampedMaxWidth / 360, clampedMaxHeight / 640)));
 
   return (
     <div className="firstshorts-video-container" style={{ maxWidth: `${clampedMaxWidth}px`, padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
@@ -224,7 +229,12 @@ const VideoSliderCard = ({ video, isActive }) => {
 
         <div className="firstshorts-preview-overlay" style={{ pointerEvents: 'none' }}>
           {(displayOptions.showViewCount || displayOptions.showLikes || displayOptions.showSave || displayOptions.showShare) && (
-            <div className="firstshorts-preview-actions" style={{ pointerEvents: 'auto' }}>
+            <div className="firstshorts-preview-actions" style={{
+              pointerEvents: 'auto',
+              transform: `translateY(-50%) scale(${scaleFactor})`,
+              transformOrigin: 'right center',
+              right: `${12 * scaleFactor}px`
+            }}>
               {displayOptions.showViewCount && (
                 <div className="firstshorts-preview-btn firstshorts-preview-btn-overlay firstshorts-preview-btn-stat">
                   <span className="firstshorts-btn-symbol">
@@ -275,8 +285,8 @@ const VideoSliderCard = ({ video, isActive }) => {
             {video.description && (
               <div className="firstshorts-video-description" style={{
                 color: '#fff',
-                fontSize: '13px',
-                marginBottom: '10px',
+                fontSize: `${13 * scaleFactor}px`,
+                marginBottom: `${10 * scaleFactor}px`,
                 padding: '0 5px',
                 textShadow: '0 1px 2px rgba(0,0,0,0.8)',
                 display: '-webkit-box',
@@ -289,7 +299,11 @@ const VideoSliderCard = ({ video, isActive }) => {
               </div>
             )}
             {displayOptions.showBuyButton && (
-              <div className="firstshorts-slide-cta-row">
+              <div className="firstshorts-slide-cta-row" style={{
+                transform: `scale(${scaleFactor})`,
+                transformOrigin: 'bottom center',
+                marginBottom: `${8 * scaleFactor}px`
+              }}>
                 {displayOptions.ctaLink ? (
                   <a
                     className={`firstshorts-btn firstshorts-btn-cta ${displayOptions.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : ''}`}
@@ -317,21 +331,30 @@ const VideoSliderCard = ({ video, isActive }) => {
                     <span className="firstshorts-btn-text">{displayOptions.ctaText || 'Buy Now'}</span>
                   </button>
                 )}
-                <button
-                  className="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"
-                  onClick={handleAddToCart}
-                  type="button"
-                  aria-label="Add to cart"
-                >
-                  <span className="firstshorts-btn-symbol">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M20 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                  </span>
-                  <span className="firstshorts-btn-text">Add to Cart</span>
-                </button>
               </div>
             )}
           </div>
         </div>
+
+        {/* Toast Notification */}
+        {toast && (
+          <div className="firstshorts-toast" style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'rgba(0,0,0,0.8)',
+            color: '#fff',
+            padding: '12px 24px',
+            borderRadius: '30px',
+            fontSize: '14px',
+            fontWeight: '600',
+            zIndex: 1000,
+            animation: 'fadeIn 0.3s ease-out'
+          }}>
+            {toast}
+          </div>
+        )}
       </div >
     </div >
   );
@@ -398,18 +421,42 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
     }
   }, [currentIndex, maxIndex]);
 
-  const nextSlide = () => {
+  const nextSlide = React.useCallback(() => {
     setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
-  };
+  }, [maxIndex]);
 
-  const prevSlide = () => {
+  const prevSlide = React.useCallback(() => {
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
-  };
+  }, [maxIndex]);
 
-  const goToSlide = (index) => {
+  const goToSlide = React.useCallback((index) => {
     const clamped = Math.max(0, Math.min(index, maxIndex));
     setCurrentIndex(clamped);
-  };
+  }, [maxIndex]);
+
+  // Handle mouse wheel for vertical scrolling
+  useEffect(() => {
+    const handleWheel = (e) => {
+      if (orientation !== 'vertical') return;
+
+      if (Math.abs(e.deltaY) > 50) { // Threshold for deliberate wheel movement
+        if (e.deltaY > 0) {
+          nextSlide();
+        } else {
+          prevSlide();
+        }
+        e.preventDefault();
+      }
+    };
+
+    const container = sliderRef.current;
+    if (container && orientation === 'vertical') {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+    }
+    return () => {
+      if (container) container.removeEventListener('wheel', handleWheel);
+    };
+  }, [orientation, nextSlide, prevSlide]);
 
   // Touch handlers for mobile swipe
   const handleTouchStart = (e) => {
@@ -451,6 +498,7 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
   const containerMaxWidth = Number(globalOptions.maxWidth) || 360;
   const containerMaxHeight = Number(globalOptions.maxHeight) || 640;
   const clampedMaxWidth = Math.max(150, containerMaxWidth);
+  const clampedMaxHeight = Math.max(200, containerMaxHeight);
 
   return (
     <div
@@ -459,7 +507,7 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
         '--slides-per-view': slidesPerView,
         background: 'transparent',
         boxShadow: 'none',
-        padding: orientation === 'vertical' ? '40px 0' : '20px 70px',
+        padding: '20px 0',
         margin: '0 auto',
         position: 'relative',
         width: '100%',
@@ -467,84 +515,202 @@ const VideoSlider = ({ videos = [], count = 5 }) => {
       }}
     >
       <style>{`.firstshorts-slider-container::before { display: none !important; }`}</style>
+
+      {/* Main Area: Flexbox column to stack Top Arrow, Video, and Bottom Arrow */}
       <div
-        className={`firstshorts-slider-wrapper ${orientation === 'vertical' ? 'vertical' : 'horizontal'}`}
+        className="firstshorts-slider-main-area"
         style={{
-          background: 'transparent',
-          border: 'none',
-          backdropFilter: 'none',
-          height: orientation === 'vertical' ? `${containerMaxHeight}px` : 'auto',
-          maxWidth: orientation === 'horizontal' ? `${clampedMaxWidth}px` : 'none',
+          position: 'relative',
+          maxWidth: '100%',
+          width: orientation === 'horizontal' ? `${clampedMaxWidth + 160}px` : 'fit-content',
           margin: '0 auto',
-          overflow: 'hidden'
+          padding: orientation === 'horizontal' ? '0 80px' : '0',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxSizing: 'border-box'
         }}
-        role="region"
-        aria-roledescription="carousel"
-        aria-label="Video slider"
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
       >
-        <div
-          className={`firstshorts-slider ${orientation === 'vertical' ? 'vertical' : 'horizontal'}`}
-          ref={sliderRef}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          style={{
-            display: 'flex',
-            flexDirection: orientation === 'vertical' ? 'column' : 'row',
-            transform: orientation === 'vertical'
-              ? `translateY(-${currentIndex * 100}%)`
-              : `translateX(-${currentIndex * (100 / currentSlidesPerView)}%)`,
-            transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
-            height: orientation === 'vertical' ? '100%' : 'auto'
-          }}
-        >
-          {displayVideos.map((video, index) => (
-            <div
-              key={video.id}
-              className="firstshorts-slide"
-              style={orientation === 'vertical' ? {
-                flex: '0 0 100%',
-                height: '100%',
-                scrollSnapAlign: scrollSnap ? 'start' : 'none'
-              } : {
-                flex: `0 0 ${100 / currentSlidesPerView}%`,
-                scrollSnapAlign: scrollSnap ? 'start' : 'none'
+        {/* Top Navigation Row (Vertical Mode) - Physically above the video */}
+        {orientation === 'vertical' && displayVideos.length > currentSlidesPerView && (
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', paddingBottom: '15px', zIndex: 1000 }}>
+            <button
+              className="fs-frontend-nav-arrow-revised prev-v"
+              onClick={(e) => { e.stopPropagation(); prevSlide(); }}
+              aria-label="Previous slide"
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+                color: '#1e293b'
               }}
             >
-              <VideoSliderCard
-                video={video}
-                isActive={index === currentIndex}
-                displayOptions={video.displayOptions}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="18 15 12 9 6 15"></polyline>
+              </svg>
+            </button>
+          </div>
+        )}
 
-      {displayVideos.length > currentSlidesPerView && (
-        <>
+        {/* Horizontal Mode Prev Button (Absolute) */}
+        {orientation === 'horizontal' && displayVideos.length > currentSlidesPerView && (
           <button
-            className={`firstshorts-slider-nav firstshorts-slider-nav-prev ${orientation === 'vertical' ? 'vertical' : 'horizontal'}`}
-            onClick={prevSlide}
+            className="fs-frontend-nav-arrow-revised prev-h"
+            onClick={(e) => { e.stopPropagation(); prevSlide(); }}
             aria-label="Previous slide"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '15px',
+              transform: 'translateY(-50%)',
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+              color: '#1e293b'
+            }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              {orientation === 'vertical' ? <polyline points="18 15 12 9 6 15"></polyline> : <polyline points="15 18 9 12 15 6"></polyline>}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
           </button>
+        )}
+
+        {/* Video Card Wrapper */}
+        <div
+          className={`firstshorts-slider-wrapper ${orientation === 'vertical' ? 'vertical' : 'horizontal'}`}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            backdropFilter: 'none',
+            height: orientation === 'vertical' ? `${clampedMaxHeight}px` : 'auto',
+            width: orientation === 'horizontal' ? '100%' : `${clampedMaxWidth}px`,
+            margin: '0',
+            overflow: 'hidden',
+            borderRadius: '16px',
+            position: 'relative',
+            flexShrink: 0,
+            boxShadow: '0 12px 30px rgba(0,0,0,0.25)'
+          }}
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="Video slider"
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+        >
+          <div
+            className={`firstshorts-slider ${orientation === 'vertical' ? 'vertical' : 'horizontal'}`}
+            ref={sliderRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            style={{
+              display: 'flex',
+              flexDirection: orientation === 'vertical' ? 'column' : 'row',
+              transform: orientation === 'vertical'
+                ? `translateY(-${currentIndex * 100}%)`
+                : `translateX(-${currentIndex * (100 / currentSlidesPerView)}%)`,
+              transition: 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
+              height: orientation === 'vertical' ? '100%' : 'auto'
+            }}
+          >
+            {displayVideos.map((video, index) => (
+              <div
+                key={video.id}
+                className="firstshorts-slide"
+                style={orientation === 'vertical' ? {
+                  flex: '0 0 100%',
+                  height: '100%',
+                  scrollSnapAlign: scrollSnap ? 'start' : 'none'
+                } : {
+                  flex: `0 0 ${100 / currentSlidesPerView}%`,
+                  scrollSnapAlign: scrollSnap ? 'start' : 'none'
+                }}
+              >
+                <VideoSliderCard
+                  video={video}
+                  isActive={index === currentIndex}
+                  displayOptions={video.displayOptions}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom Navigation Row (Vertical Mode) - Physically below the video */}
+        {orientation === 'vertical' && displayVideos.length > currentSlidesPerView && (
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', paddingTop: '15px', zIndex: 1000 }}>
+            <button
+              className="fs-frontend-nav-arrow-revised next-v"
+              onClick={(e) => { e.stopPropagation(); nextSlide(); }}
+              aria-label="Next slide"
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+                color: '#1e293b'
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Horizontal Mode Next Button (Absolute) */}
+        {orientation === 'horizontal' && displayVideos.length > currentSlidesPerView && (
           <button
-            className={`firstshorts-slider-nav firstshorts-slider-nav-next ${orientation === 'vertical' ? 'vertical' : 'horizontal'}`}
-            onClick={nextSlide}
+            className="fs-frontend-nav-arrow-revised next-h"
+            onClick={(e) => { e.stopPropagation(); nextSlide(); }}
             aria-label="Next slide"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              right: '15px',
+              transform: 'translateY(-50%)',
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+              color: '#1e293b'
+            }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              {orientation === 'vertical' ? <polyline points="6 9 12 15 18 9"></polyline> : <polyline points="9 18 15 12 9 6"></polyline>}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </button>
-        </>
-      )}
+        )}
+      </div>
 
       {displayVideos.length > currentSlidesPerView && (
         <div className={`firstshorts-slider-dots ${orientation === 'vertical' ? 'vertical' : 'horizontal'}`}>

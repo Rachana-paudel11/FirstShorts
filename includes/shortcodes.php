@@ -49,6 +49,72 @@ add_action('template_redirect', 'firstshorts_maybe_disable_cache_on_shortcodes')
 
 
 /**
+ * Shortcode: [firstshorts_video]
+ * Displays a single video player
+ * 
+ * Usage:
+ * [firstshorts_video id="123"]
+ */
+function firstshorts_video_shortcode($atts)
+{
+    firstshorts_mark_no_cache();
+
+    $atts = shortcode_atts(array(
+        'id' => 0,
+    ), $atts);
+
+    $video_id = intval($atts['id']);
+    if (!$video_id) {
+        return '';
+    }
+
+    $video_url = wp_get_attachment_url($video_id);
+    if (!$video_url) {
+        // Fallback: If ID is a FirstShorts CPT, try to get the attached video URL
+        $attachment_id = get_post_meta($video_id, '_firstshorts_video_attachment_id', true);
+        if ($attachment_id) {
+            $video_url = wp_get_attachment_url($attachment_id);
+        }
+    }
+
+    if (!$video_url) {
+        return '';
+    }
+
+    // Enqueue React assets
+    firstshorts_enqueue_react_frontend();
+
+    $display_options = firstshorts_get_display_options($video_id);
+
+    $react_props = array(
+        'videoId' => $video_id,
+        'videoUrl' => $video_url,
+        'thumbnailUrl' => get_the_post_thumbnail_url($video_id, 'large'),
+        'title' => get_the_title($video_id),
+        'description' => get_the_excerpt($video_id),
+        'displayOptions' => array(
+            'showViewCount' => (bool) $display_options['view_count'],
+            'showLikes' => (bool) $display_options['likes'],
+            'showSave' => (bool) $display_options['save'],
+            'showShare' => (bool) $display_options['share'],
+            'showBuyButton' => (bool) $display_options['buy_button'],
+            'ctaText' => $display_options['cta_text'],
+            'ctaLink' => $display_options['cta_link'],
+            'ctaStyle' => $display_options['cta_style'],
+            'maxWidth' => (int) $display_options['max_width'],
+            'maxHeight' => (int) $display_options['max_height'],
+        ),
+    );
+
+    return sprintf(
+        '<div class="firstshorts-video-react-root" data-props="%s"></div>',
+        esc_attr(wp_json_encode($react_props))
+    );
+}
+add_shortcode('firstshorts_video', 'firstshorts_video_shortcode');
+
+
+/**
  * Shortcode: [fs_slider]
  * Displays multiple videos in slider format
  * 

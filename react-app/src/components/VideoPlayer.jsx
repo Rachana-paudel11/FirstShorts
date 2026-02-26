@@ -44,7 +44,7 @@ const VideoPlayer = ({
   const handleSave = () => {
     setSaved(!saved);
     showToast(!saved ? 'Saved' : 'Removed from saved');
-    // TODO: Send to WordPress API to save bookmark
+    // Bookmark saved locally in state
   };
 
   const handleShare = () => {
@@ -67,21 +67,18 @@ const VideoPlayer = ({
     }
     if (displayOptions.ctaLink) {
       window.location.href = displayOptions.ctaLink;
-    } else {
-      console.log('No CTA Link provided');
     }
   };
 
-  const handleAddToCart = () => {
-    // TODO: Integrate with WooCommerce
-    console.log('Add to cart functionality');
-  };
 
   const maxWidth = Number(displayOptions.maxWidth) || 360;
   const maxHeight = Number(displayOptions.maxHeight) || 640;
 
   const clampedMaxWidth = Math.min(1200, Math.max(150, maxWidth));
   const clampedMaxHeight = Math.min(1500, Math.max(200, maxHeight));
+
+  // Dynamic scale factor based on dimensions (baseline: 360x640)
+  const scaleFactor = Math.max(0.7, Math.min(1.3, Math.min(clampedMaxWidth / 360, clampedMaxHeight / 640)));
 
   return (
     <div className="firstshorts-video-container" style={{ maxWidth: `${clampedMaxWidth}px`, padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
@@ -108,7 +105,12 @@ const VideoPlayer = ({
 
         <div className="firstshorts-preview-overlay" style={{ pointerEvents: 'none' }}>
           {(displayOptions.showViewCount || displayOptions.showLikes || displayOptions.showSave || displayOptions.showShare) && (
-            <div className="firstshorts-preview-actions" style={{ pointerEvents: 'auto' }}>
+            <div className="firstshorts-preview-actions" style={{
+              pointerEvents: 'auto',
+              transform: `translateY(-50%) scale(${scaleFactor})`,
+              transformOrigin: 'right center',
+              right: `${12 * scaleFactor}px`
+            }}>
               {displayOptions.showViewCount && (
                 <div className="firstshorts-preview-btn firstshorts-preview-btn-overlay firstshorts-preview-btn-stat">
                   <span className="firstshorts-btn-symbol">
@@ -158,8 +160,8 @@ const VideoPlayer = ({
           {description && (
             <div className="firstshorts-video-description" style={{
               color: '#fff',
-              fontSize: '13px',
-              marginBottom: '10px',
+              fontSize: `${13 * scaleFactor}px`,
+              marginBottom: `${10 * scaleFactor}px`,
               padding: '0 5px',
               textShadow: '0 1px 2px rgba(0,0,0,0.8)',
               display: '-webkit-box',
@@ -174,7 +176,12 @@ const VideoPlayer = ({
           )}
 
           {displayOptions.showBuyButton && (
-            <div className="firstshorts-video-cta-row" style={{ pointerEvents: 'auto' }}>
+            <div className="firstshorts-video-cta-row" style={{
+              pointerEvents: 'auto',
+              transform: `scale(${scaleFactor})`,
+              transformOrigin: 'bottom center',
+              marginBottom: `${8 * scaleFactor}px`
+            }}>
               {displayOptions.ctaLink ? (
                 <a
                   className={`firstshorts-btn firstshorts-btn-cta ${displayOptions.ctaStyle === 'secondary' ? 'firstshorts-btn-cta-secondary' : ''}`}
@@ -202,22 +209,11 @@ const VideoPlayer = ({
                   <span className="firstshorts-btn-text">{displayOptions.ctaText || 'Buy Now'}</span>
                 </button>
               )}
-              <button
-                className="firstshorts-btn firstshorts-btn-cta firstshorts-btn-cta-secondary"
-                onClick={handleAddToCart}
-                type="button"
-                aria-label="Add to cart"
-              >
-                <span className="firstshorts-btn-symbol">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M20 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                </span>
-                <span className="firstshorts-btn-text">Add to Cart</span>
-              </button>
             </div>
           )}
         </div>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
 
